@@ -58,6 +58,7 @@ const DAY_ORDER = [
   "friday",
   "saturday",
 ];
+const TIMETABLE_FILES = ["4CSD01.xlsx"];
 
 // ─────────────────────────────────────────────
 // 2. LOCALSTORAGE HELPERS
