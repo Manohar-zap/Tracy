@@ -2095,7 +2095,6 @@ function mergeAds(local, sheet) {
 function showAdsPopup() {
   if (!adsList.length) return;
   adsCurrentSlide = 0;
-  adsViewed.add(adsCurrentSlide);
   adsViewed.clear();
   adsViewed.add(0);
   adsMustSwipeAll = true;
@@ -2164,7 +2163,6 @@ function updateAdsCloseBtn() {
 
 function adsGoTo(idx) {
   adsCurrentSlide = Math.max(0, Math.min(idx, adsList.length - 1));
-  adsViewed.add(adsCurrentSlide);
   document.querySelectorAll(".ads-slide").forEach((s, i) => {
     s.classList.toggle("active", i === adsCurrentSlide);
   });
@@ -2176,6 +2174,7 @@ function adsGoTo(idx) {
   new Image().src =
     "https://script.google.com/macros/s/AKfycbw5uW_Mtc2s3Uz9ZBRgyKKdo71jxSMgwluny58TKUNudKCOc8pBV9Cf3MOPXEkCG8D2/exec?action=view&title=" +
     encodeURIComponent(ad.title);
+  adsViewed.add(adsCurrentSlide);
   updateAdsCloseBtn();
 }
 
