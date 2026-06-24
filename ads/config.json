@@ -1,0 +1,14 @@
+{
+  "googleSheets": {
+    "adsCsvUrl": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRZSn8vjsjMhu2qgmDBuHYY-x-e4UuIGYSz1PmhbQlK_C_5Dd1ox_eFVGs29OQHXsMQ3mPudf8wD4uS/pub?gid=1594029099&single=true&output=csv",
+    "instructions": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRZlrMFAyTkyHzXMMHXaBSVYGU5Jtb-u5vN0Ai1FvGoe-fZD2MtXd7evVbaEBnZ6UlxPYxWprc35YZY/pub?gid=0&single=true&output=csv"
+  },
+  "googleForms": {
+    "submitAd": "https://docs.google.com/forms/d/e/1FAIpQLSfTu29FE7oib7PFiIdb14P-MZY5dV8rfTrsBjww3Lu-RAmS6A/viewform?usp=dialog",
+    "requestTimetable": "https://docs.google.com/forms/d/e/1FAIpQLSfTu29FE7oib7PFiIdb14P-MZY5dV8rfTrsBjww3Lu-RAmS6A/viewform?usp=dialog"
+  },
+  "popupSettings": {
+    "showOnEveryVisit": false,
+    "minSlidesBeforeClose": 3
+  }
+}

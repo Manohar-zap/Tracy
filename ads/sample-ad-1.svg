@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="340" viewBox="0 0 600 340">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4f46e5"/>
+      <stop offset="100%" style="stop-color:#2563eb"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="340" fill="url(#bg)" rx="16"/>
+  <text x="300" y="120" text-anchor="middle" fill="white" font-family="Inter,Arial,sans-serif" font-size="36" font-weight="700">ZapTrack</text>
+  <text x="300" y="170" text-anchor="middle" fill="#c7d2fe" font-family="Inter,Arial,sans-serif" font-size="18">Your Attendance Companion</text>
+  <text x="300" y="240" text-anchor="middle" fill="#e0e7ff" font-family="Inter,Arial,sans-serif" font-size="14">Upload Excel " Predict " Stay Safe</text>
+</svg>

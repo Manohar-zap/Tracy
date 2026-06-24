@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ZapTrack – Attendance Dashboard</title>
+  <title>Tracy – Attendance Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -63,7 +63,7 @@
     .sub-card:hover { transform: translateY(-2px); }
     .pct-safe { color: #22c55e; } .pct-warn { color: #f59e0b; } .pct-danger { color: #ef4444; }
 
-    .ctrl-box { display: flex; align-items: center; gap: 8px; background: #1e293b; padding: 6px 10px; border-radius: 10px; }
+    .ctrl-box { display: flex; align-items: center; gap: 8px; background: transparent; padding: 6px 10px; border-radius: 10px; }
     .ctrl-box span { min-width: 32px; text-align: center; font-weight: 700; font-size: 15px; }
     .ctrl-btn { width: 32px; height: 32px; border-radius: 8px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.15s; background: rgba(255,255,255,0.07); color: #f1f5f9; padding: 0; }
     .ctrl-btn.minus { background: rgba(239,68,68,0.18); color: #f87171; }
@@ -86,14 +86,16 @@
 
     select { background: #1e293b; color: #f1f5f9; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 8px 12px; font-size: 13px; outline: none; cursor: pointer; appearance: none; }
     select:focus { border-color: var(--primary); }
-    input[type="text"], input[type="number"] { background: #1e293b; color: #f1f5f9; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 8px 12px; font-size: 13px; outline: none; }
-    input:focus { border-color: var(--primary); }
+    input:not(.number-input)[type="text"],
+    input:not(.number-input)[type="number"] { background: transparent; color: #f1f5f9; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 8px 12px; font-size: 13px; outline: none; }
+   input:not(.number-input)[type="text"]:focus,
+    input:not(.number-input)[type="number"]:focus { border-color: var(--primary); }
 
     .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 100; display: none; align-items: center; justify-content: center; }
     .modal-backdrop.open { display: flex; }
     .modal { background: #141418; border: 1px solid var(--card-border); border-radius: 16px; padding: 24px; width: 90%; max-width: 460px; max-height: 85vh; overflow-y: auto; }
 
-    #toast { position: fixed; bottom: 24px; right: 24px; background: #1e293b; color: #f1f5f9; padding: 12px 18px; border-radius: 10px; font-size: 13px; font-weight: 500; z-index: 200; transform: translateY(80px); opacity: 0; transition: transform 0.3s, opacity 0.3s; border-left: 3px solid var(--primary); max-width: 320px; }
+    #toast { position: fixed; bottom: 24px; right: 24px; background: transparent; color: #f1f5f9; padding: 12px 18px; border-radius: 10px; font-size: 13px; font-weight: 500; z-index: 200; transform: translateY(80px); opacity: 0; transition: transform 0.3s, opacity 0.3s; border-left: 3px solid var(--primary); max-width: 320px; }
     #toast.show { transform: translateY(0); opacity: 1; }
 
     #mobileOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 20; }
@@ -114,6 +116,38 @@
 
     .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; margin-bottom: 12px; }
 
+    .help-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.15); background: rgba(99,102,241,0.15); color: #a5b4fc; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s; flex-shrink: 0; }
+    .help-btn:hover { background: rgba(99,102,241,0.3); }
+
+    .legal-link { display: block; padding: 6px 12px; font-size: 11px; color: #64748b; cursor: pointer; border-radius: 8px; transition: color 0.15s, background 0.15s; }
+    .legal-link:hover { color: #94a3b8; background: rgba(255,255,255,0.04); }
+
+    .ads-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); z-index: 150; display: none; align-items: center; justify-content: center; }
+    .ads-backdrop.open { display: flex; }
+    .ads-carousel { width: 92%; max-width: 520px; position: relative; }
+    .ads-slide { display: none; text-align: center; }
+    .ads-slide.active { display: block; animation: fadeUp 0.3s ease; }
+    .ads-slide img { width: 100%; max-height: 70vh; object-fit: contain; border-radius: 14px; }
+    .ads-dots { display: flex; justify-content: center; gap: 6px; margin-top: 14px; }
+    .ads-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.2); cursor: pointer; transition: background 0.2s; }
+    .ads-dot.active { background: #6366f1; }
+    .ads-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; border-radius: 50%; border: none; background: rgba(0,0,0,0.5); color: #fff; cursor: pointer; font-size: 14px; }
+    .ads-nav.prev { left: -12px; }
+    .ads-nav.next { right: -12px; }
+    .ads-close { position: absolute; top: -40px; right: 0; background: rgba(255,255,255,0.1); border: none; color: #fff; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: none; }
+    .ads-close.visible { display: flex; align-items: center; justify-content: center; }
+    .ads-swipe-hint { text-align: center; font-size: 11px; color: #94a3b8; margin-top: 10px; }
+
+    .excel-sample { background: #1a1a2e; border-radius: 10px; overflow: hidden; font-size: 11px; }
+    .excel-sample table { width: 100%; border-collapse: collapse; }
+    .excel-sample th, .excel-sample td { border: 1px solid rgba(255,255,255,0.08); padding: 6px 8px; text-align: left; }
+    .excel-sample th { background: rgba(99,102,241,0.2); color: #a5b4fc; }
+    .excel-sample .highlight { background: rgba(34,197,94,0.15); color: #4ade80; }
+
+    .legal-page h2 { font-size: 1.1rem; font-weight: 700; margin: 1.25rem 0 0.5rem; }
+    .legal-page p, .legal-page li { font-size: 13px; color: #94a3b8; line-height: 1.7; }
+    .legal-page ul { list-style: disc; padding-left: 1.25rem; margin: 0.5rem 0; }
+
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 100px; }
@@ -130,7 +164,7 @@
 
         .card-label-container { display: flex; align-items: center; color: #9e9e9e; font-size: 18px; font-weight: 500; }
 
-        .number-input { background: transparent; border: none; color: white; font-size: 56px; font-weight: 700; width: 100%; outline: none; line-height: 1; }
+        .number-input { background: transparent !important; border: none !important; color: white; font-size: 56px; }
 
         .orange { color: #f4511e; }
 
@@ -154,57 +188,112 @@
   </div>
 </div>
 
-<!-- Add Subject Modal -->
-<div id="subjectModal" class="modal-backdrop">
-  <div class="modal">
-    <h3 class="text-base font-semibold mb-4">Add Subject</h3>
-    <div class="space-y-3">
-      <div>
-        <label class="text-xs text-gray-400 block mb-1">Subject Name</label>
-        <input type="text" id="newSubjectName" class="w-full" placeholder="e.g. Mathematics (MA101)" />
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="text-xs text-gray-400 block mb-1">Classes Attended</label>
-          <input type="number" id="newSubjectAttended" class="w-full" placeholder="0" min="0" />
-        </div>
-        <div>
-          <label class="text-xs text-gray-400 block mb-1">Total Classes</label>
-          <input type="number" id="newSubjectTotal" class="w-full" placeholder="0" min="0" />
-        </div>
-      </div>
+<!-- Help: Attendance Excel -->
+<div id="helpAttendanceModal" class="modal-backdrop">
+  <div class="modal" style="max-width:540px">
+    <h3 class="text-base font-semibold mb-3"><i class="fas fa-circle-info text-indigo-400 mr-2"></i>How to Get
+      Attendance Excel</h3>
+    <ol class="text-sm text-gray-400 space-y-2 mb-4 list-decimal list-inside">
+      <li>Log in to your college ERP / attendance portal.</li>
+      <li>Go to <b class="text-gray-300">Reports → Attendance Summary</b> (or similar).</li>
+      <li>Select your term/batch and click <b class="text-gray-300">Export to Excel</b>.</li>
+      <li>Download the <b class="text-gray-300">.xlsx</b> file and drop it in Tracy.</li>
+    </ol>
+    <p class="text-xs text-gray-500 mb-2">Your file should look like this (sample):</p>
+    <div class="excel-sample mb-4">
+      <table>
+        <tr>
+          <th colspan="4" style="background:rgba(99,102,241,0.1)">Student Name: John Doe &nbsp;|&nbsp; Roll No: 21CS001
+          </th>
+        </tr>
+        <tr>
+          <th>Course Name</th>
+          <th>Total</th>
+          <th>—</th>
+          <th class="highlight">Attended (AHDL)</th>
+        </tr>
+        <tr>
+          <td>Mathematics (MA101)</td>
+          <td class="highlight">40</td>
+          <td></td>
+          <td class="highlight">32</td>
+        </tr>
+        <tr>
+          <td>Database Systems (CS201)</td>
+          <td class="highlight">38</td>
+          <td></td>
+          <td class="highlight">30</td>
+        </tr>
+        <tr>
+          <td>Data Structures (CS202)</td>
+          <td class="highlight">42</td>
+          <td></td>
+          <td class="highlight">35</td>
+        </tr>
+      </table>
     </div>
-    <div class="flex gap-3 justify-end mt-5">
-      <button class="btn-ghost" onclick="closeSubjectModal()">Cancel</button>
+    <p class="text-xs text-gray-500">Tracy reads the <b class="text-gray-400">Course Name</b>, <b
+        class="text-gray-400">Total</b>, and <b class="text-gray-400">attended</b> columns automatically.</p>
+    <div class="flex justify-end mt-5">
+      <button class="btn-ghost" onclick="closeHelpModal('helpAttendanceModal')">Got it</button>
+    </div>
+  </div>
+  </div>
+<!-- Help: Daily Report Excel -->
+<div id="helpDailyModal" class="modal-backdrop">
+  <div class="modal" style="max-width:540px">
+    <h3 class="text-base font-semibold mb-3"><i class="fas fa-circle-info text-indigo-400 mr-2"></i>How to Get Daily
+      Attendance Excel</h3>
+    <ol class="text-sm text-gray-400 space-y-2 mb-4 list-decimal list-inside">
+      <li>From your ERP, open <b class="text-gray-300">Daily Attendance Report</b>.</li>
+      <li>Pick a date range and export as <b class="text-gray-300">.xlsx</b>.</li>
+      <li>Make sure a <b class="text-gray-300">Date</b> column and <b class="text-gray-300">Hour 1, Hour 2…</b> columns
+        exist.</li>
+      <li>Select your class timetable first, then upload here.</li>
+    </ol>
+    <p class="text-xs text-gray-500 mb-2">Sample format:</p>
+    <div class="excel-sample mb-4">
+      <table>
+        <tr>
+          <th>Date</th>
+          <th>Hour 1</th>
+          <th>Hour 2</th>
+          <th>Hour 3</th>
+          <th>Hour 4</th>
+        </tr>
+        <tr>
+          <td class="highlight">03/06/2025</td>
+          <td class="highlight">P</td>
+          <td class="highlight">A</td>
+          <td class="highlight">P</td>
+          <td class="highlight">P</td>
+        </tr>
+        <tr>
+          <td class="highlight">04/06/2025</td>
+          <td class="highlight">P</td>
+          <td class="highlight">P</td>
+          <td class="highlight">P</td>
+          <td class="highlight">A</td>
+        </tr>
+      </table>
+    </div>
+    <p class="text-xs text-gray-500"><b class="text-gray-400">P</b> = Present, <b class="text-gray-400">A</b> = Absent.
+      Hours are mapped to subjects via your selected timetable.</p>
+    <div class="flex justify-end mt-5">
+      <button class="btn-ghost" onclick="closeHelpModal('helpDailyModal')">Got it</button>
     </div>
   </div>
 </div>
 
-<!-- Edit Subject Modal -->
-<div id="editSubjectModal" class="modal-backdrop">
-  <div class="modal">
-    <h3 class="text-base font-semibold mb-4">Edit Subject</h3>
-    <input type="hidden" id="editSubjectIndex" />
-    <div class="space-y-3">
-      <div>
-        <label class="text-xs text-gray-400 block mb-1">Subject Name</label>
-        <input type="text" id="editSubjectName" class="w-full" />
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="text-xs text-gray-400 block mb-1">Classes Attended</label>
-          <input type="number" id="editSubjectAttended" class="w-full" min="0" />
-        </div>
-        <div>
-          <label class="text-xs text-gray-400 block mb-1">Total Classes</label>
-          <input type="number" id="editSubjectTotal" class="w-full" min="0" />
-        </div>
-      </div>
-    </div>
-    <div class="flex gap-3 justify-end mt-5">
-      <button class="btn-ghost" onclick="closeEditSubjectModal()">Cancel</button>
-      <button class="btn-primary" onclick="saveEditedSubject()">Save</button>
-    </div>
+<!-- College Ads Popup -->
+<div id="adsPopup" class="ads-backdrop">
+  <div class="ads-carousel">
+    <button id="adsCloseBtn" class="ads-close" onclick="closeAdsPopup()" title="Close"><i
+        class="fas fa-times"></i></button>
+    <div id="adsSlides"></div>
+    <button class="ads-nav prev" onclick="adsNav(-1)"><i class="fas fa-chevron-left"></i></button>
+    <button class="ads-nav next" onclick="adsNav(1)"><i class="fas fa-chevron-right"></i></button>
+    <div id="adsDots" class="ads-dots"></div>
   </div>
 </div>
 
@@ -256,6 +345,8 @@
     <div class="nav-link" data-page="timetable" onclick="navigateTo('timetable')"><i class="fas fa-calendar-alt"></i><span>Timetable</span></div>
     <div class="nav-link" data-page="prediction" onclick="navigateTo('prediction')"><i class="fas fa-chart-line"></i><span>Prediction</span></div>
     <div class="nav-link" data-page="analytics" onclick="navigateTo('analytics')"><i class="fas fa-chart-pie"></i><span>Analytics</span></div>
+    <a href="https://docs.google.com/forms/d/e/1FAIpQLSfTYt4LKAwZpaEAU2ndEs7Lu5y1FWVSiLmUhRGAuAu0syNTqw/viewform?usp=dialog"
+      target="_blank" rel="noopener" class="nav-link"><i class="fas fa-bullhorn"></i><span>Advertisement</span></a>
   </nav>
 
   <div class="mt-auto pt-8">
@@ -268,6 +359,21 @@
     </div>
     <p class="text-xs text-gray-500 mt-2">Current: <span id="sideTarget" class="text-indigo-400 font-semibold">75%</span></p>
   </div>
+<div class="mt-6 pt-4 border-t border-white/5">
+  <div class="section-label">Info & Legal</div>
+  <div class="space-y-0.5">
+    <div class="legal-link" onclick="navigateTo('about')"><i class="fas fa-info-circle w-4 inline-block"></i> About Us
+    </div>
+    <div class="legal-link" onclick="navigateTo('terms')"><i class="fas fa-file-contract w-4 inline-block"></i> Terms &
+      Conditions</div>
+    <div class="legal-link" onclick="navigateTo('privacy')"><i class="fas fa-shield-alt w-4 inline-block"></i> Privacy
+      Policy</div>
+    <div class="legal-link" onclick="navigateTo('disclaimer')"><i
+        class="fas fa-exclamation-triangle w-4 inline-block"></i> Disclaimer</div>
+    <div class="legal-link" onclick="navigateTo('contact')"><i class="fas fa-envelope w-4 inline-block"></i> Contact Us
+    </div>
+  </div>
+</div>
 </aside>
 
 <!-- Main -->
@@ -289,6 +395,11 @@
     </div>
 
         <div class="mb-6">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs text-gray-500">Import Attendance</span>
+            <button class="help-btn" onclick="event.stopPropagation();openHelpModal('helpAttendanceModal')"
+              title="How to get Excel file">i</button>
+          </div>
           <input type="file" id="mainFileInput" class="hidden" accept=".xlsx,.xls">
           <div class="upload-zone" id="uploadZone" onclick="document.getElementById('mainFileInput').click()">
             <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-indigo-500/10 flex items-center justify-center">
@@ -329,7 +440,7 @@
     <div id="dashSubjectList" class="space-y-2">
       <div class="card p-8 text-center text-gray-500 text-sm">
         <i class="fas fa-cloud-upload-alt text-2xl mb-2 block"></i>
-        Import an Excel report or add subjects manually to get started.
+        Import an Excel report to view the data.
       </div>
     </div>
   </div>
@@ -361,6 +472,11 @@
     <!-- Selection -->
     <div class="card p-5 mb-5">
       <h3 class="font-semibold mb-3 text-sm">Select Class</h3>
+      <div class="flex gap-2 mb-3">
+        <input type="text" id="ttSearchInput" class="flex-1" placeholder="Search class name…"
+          onkeydown="if(event.key==='Enter')searchTimetable()" />
+        <button class="btn-primary text-xs" onclick="searchTimetable()"><i class="fas fa-search mr-1"></i>Search</button>
+      </div>
       <div class="grid md:grid-cols-2 gap-4">
         <select id="activeTimetableSelect" class="w-full" onchange="setActiveTimetable(this.value)">
           <option value="">-- None --</option>
@@ -369,8 +485,10 @@
     </div>
     <!-- Preview -->
     <div class="card p-4 overflow-x-auto">
-      <div class="flex gap-2 mb-3">
+      <div class="flex gap-2 mb-3 flex-wrap">
         <button class="btn-ghost text-xs preview-tab active" data-w="1" onclick="previewWeek(1)">Click To View</button>
+        <a id="requestTtBtn" href="#" target="_blank" rel="noopener" class="btn-ghost text-xs"><i
+            class="fas fa-paper-plane mr-1"></i>Request New TT</a>
       </div>
       <div id="ttPreviewGrid"><p class="text-center text-gray-500 text-sm py-8">Select a timetable to preview.</p></div>
     </div><br>
@@ -422,7 +540,11 @@
       </div>
     </div>
 
-    <h2 class="font-semibold mb-3">Subject-wise Prediction Cards</span></h2>
+    <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+      <h2 class="font-semibold">Subject-wise Prediction Cards</h2>
+      <button class="btn-ghost text-xs" onclick="addAllPredCardsToCalendar()"><i class="fas fa-calendar-plus mr-1"></i>Add
+        All to Calendar</button>
+    </div>
     <div class="mb-4">
       <select id="predCardsWeekSelect" onchange="renderPredCards()"
         class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2">
@@ -454,13 +576,15 @@
     <div class="card p-5">
       <div class="flex gap-5 flex-wrap md:flex-nowrap">
         <div class="w-full md:w-52 flex flex-col gap-3">
-          <div>
-            <label class="text-xs text-gray-400 block mb-1">Total Classes</label>
-            <input type="number" id="qcTotal" class="w-full" placeholder="0" min="0" oninput="renderQuickCalc()" />
+          <div class="card1" style="min-height:100px;padding:16px">
+            <div class="card-label-container" style="font-size:13px">Total Classes</div>
+            <input type="number" id="qcTotal" class="number-input" style="font-size:40px" placeholder="0" min="0"
+              oninput="renderQuickCalc()" />
           </div>
-          <div>
-            <label class="text-xs text-gray-400 block mb-1">Classes Attended</label>
-            <input type="number" id="qcAttended" class="w-full" placeholder="0" min="0" oninput="renderQuickCalc()" />
+          <div class="card1" style="min-height:100px;padding:16px">
+            <div class="card-label-container" style="font-size:13px">Classes Attended</div>
+            <input type="number" id="qcAttended" class="number-input" style="font-size:40px" placeholder="0" min="0"
+              oninput="renderQuickCalc()" />
           </div>
           <button class="btn-ghost text-xs" onclick="resetQuickCalc()"><i class="fas fa-undo mr-1"></i>Reset</button>
         </div>
@@ -487,18 +611,31 @@
           <select id="calcSubject">
             <option value="">Select Subject</option>
           </select>
-          <div class="ctrl-box justify-between">
-            <span class="text-xs text-gray-400">Total Cls</span>
-            <button class="ctrl-btn minus" onclick="updateCalc('total',-1)">−</button>
-            <span id="calcTotalVal">--</span>
-            <button class="ctrl-btn plus" onclick="updateCalc('total',1)">+</button>
-          </div>
-          <div class="ctrl-box justify-between">
-            <span class="text-xs text-gray-400">Attended</span>
-            <button class="ctrl-btn minus" onclick="updateCalc('attended',-1)">−</button>
-            <span id="calcAttendedVal">--</span>
-            <button class="ctrl-btn plus" onclick="updateCalc('attended',1)">+</button>
-          </div>
+<div class="card1" style="min-height:100px;padding:16px">
+  <div class="card-label-container" style="font-size:13px">Total Classes</div>
+  <input type="number" id="calcTotalInput" class="number-input" style="font-size:40px" placeholder="0"
+    oninput="updateSubjectCalc()" />
+</div>
+<div class="card1" style="min-height:100px;padding:16px">
+  <div class="card-label-container" style="font-size:13px">Classes Attended</div>
+  <input type="number" id="calcAttendedInput" class="number-input" style="font-size:40px" placeholder="0"
+    oninput="updateSubjectCalc()" />
+  <div class="ctrl-box">
+    <button class="ctrl-btn minus" onclick="changeFutureAttend(-1)">
+      -
+    </button>
+
+    <span id="futureAttendCount">
+      0
+    </span>
+
+    <button class="ctrl-btn plus" onclick="changeFutureAttend(1)">
+      +
+    </button>
+  </div>
+        </div>
+        
+
           <button class="btn-ghost text-xs" onclick="resetCalc()"><i class="fas fa-undo mr-1"></i>Reset</button>
         </div>
         <div class="flex-1 min-w-0">
@@ -516,6 +653,38 @@
         </div>
       </div>
     </div>
+<h2 class="font-semibold mb-3 mt-8">CGPA Calculator</h2>
+<p class="text-xs text-gray-500 mb-4">Enter your current and target CGPA to see how much you need to improve.</p>
+<div class="card p-5 mb-6">
+  <div class="flex gap-5 flex-wrap md:flex-nowrap">
+    <div class="w-full md:w-52 flex flex-col gap-3">
+      <div class="card1" style="min-height:100px;padding:16px">
+        <div class="card-label-container" style="font-size:13px">Current CGPA</div>
+        <input type="number" id="cgpaCurrent" class="number-input" style="font-size:40px" placeholder="0.0" min="0"
+          max="10" step="0.01" oninput="if(this.value>10)this.value=10; renderCgpaCalc()">
+      </div>
+      <div class="card1" style="min-height:100px;padding:16px">
+        <div class="card-label-container" style="font-size:13px">Target CGPA</div>
+        <input type="number" id="cgpaTarget" class="number-input" style="font-size:40px" placeholder="0.0" min="0"
+          max="10" step="0.01" oninput="if(this.value>10)this.value=10; renderCgpaCalc()" />
+      </div>
+      <button class="btn-ghost text-xs" onclick="resetCgpaCalc()"><i class="fas fa-undo mr-1"></i>Reset</button>
+    </div>
+    <div class="flex-1 min-w-0">
+      <div class="flex justify-between items-start mb-2">
+        <div>
+          <span id="cgpaDelta" class="text-3xl font-bold">--</span>
+          <p id="cgpaStatus" class="text-xs text-gray-400 mt-0.5">Enter values</p>
+        </div>
+        <div class="text-right text-xs text-gray-500">
+          <div>Scale: <span class="font-semibold text-indigo-400">out of 10</span></div>
+          <div>Gap to 10: <span id="cgpaGap10" class="font-semibold text-gray-400">--</span></div>
+        </div>
+      </div>
+      <div class="h-52"><canvas id="cgpaChart"></canvas></div>
+    </div>
+  </div>
+</div>
   </div>
 
   <!-- ── ANALYTICS ── -->
@@ -531,16 +700,145 @@
     </div>
 
     <div class="card p-5 mb-6">
-      <h3 class="font-semibold mb-4">Daily Attendance Analysis <span class="text-xs text-gray-500 font-normal">(subject-wise)</span></h3>
+      <h3 class="font-semibold mb-4">Daily Attendance Analysis <span
+          class="text-xs text-gray-500 font-normal">(subject-wise)</span>&nbsp;&nbsp;&nbsp;<button class="help-btn"
+          onclick="openHelpModal('helpDailyModal')" title="How to get daily Excel">i</button></h3>
 
       <input type="file" id="dailyFileInput" class="hidden" accept=".xlsx,.xls">
-      <div class="flex flex-col md:flex-row gap-3 mb-4">
+      <div class="flex flex-col md:flex-row gap-3 mb-4 items-center">
         <button class="btn-ghost text-xs flex items-center gap-2 self-end justify-center" onclick="document.getElementById('dailyFileInput').click()">
           <i class="fas fa-file-excel"></i><span id="dailyFileChosenLabel">Upload Daily Report</span>
         </button>
       </div>
 
       <div class="h-64 md:h-80"><canvas id="dailyChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ── ABOUT US ── -->
+  <div class="page fade-up legal-page" id="page-about">
+    <div class="flex items-center gap-3 mb-6">
+      <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+      <h1 class="text-xl font-bold">About Us</h1>
+    </div>
+    <div class="card p-6 max-w-2xl">
+      <p><b class="text-gray-200">Tracy</b> is a free attendance tracking and prediction tool built for college
+        students. We help you monitor subject-wise attendance, predict future percentages using your timetable, and
+        calculate safe bunks before you skip class.</p>
+      <h2>Our Mission</h2>
+      <p>To give students a simple, privacy-first way to stay on top of attendance requirements without relying on complex
+        spreadsheets.</p>
+      <h2>What We Offer</h2>
+      <ul>
+        <li>Excel-based attendance import from your college ERP</li>
+        <li>Subject-wise calculators and prediction engine</li>
+        <li>Timetable-based forecasting for current and next week</li>
+        <li>CGPA planning tools</li>
+      </ul>
+      <h2>Data Privacy</h2>
+      <p>All your attendance data is stored locally in your browser. We do not upload your personal attendance records to
+        any server.</p>
+    </div>
+  </div>
+  
+  <!-- ── TERMS ── -->
+  <div class="page fade-up legal-page" id="page-terms">
+    <div class="flex items-center gap-3 mb-6">
+      <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+      <h1 class="text-xl font-bold">Terms & Conditions</h1>
+    </div>
+    <div class="card p-6 max-w-2xl">
+      <p>Last updated: June 2025</p>
+      <h2>1. Acceptance of Terms</h2>
+      <p>By accessing and using Tracy, you agree to be bound by these Terms and Conditions. If you do not agree, please
+        do not use this service.</p>
+      <h2>2. Use of Service</h2>
+      <p>Tracy is provided for educational and informational purposes only. Attendance calculations and predictions are
+        estimates — always verify with your official college records.</p>
+      <h2>3. User Responsibilities</h2>
+      <ul>
+        <li>You are responsible for the accuracy of data you import.</li>
+        <li>You must not use this service for any unlawful purpose.</li>
+        <li>You must not attempt to disrupt or damage the service.</li>
+      </ul>
+      <h2>4. Intellectual Property</h2>
+      <p>All content, design, and code of Tracy are owned by the site operator. You may not copy or redistribute
+        without permission.</p>
+      <h2>5. Limitation of Liability</h2>
+      <p>Tracy is provided "as is" without warranties. We are not liable for any academic consequences arising from use
+        of this tool.</p>
+      <h2>6. Changes</h2>
+      <p>We reserve the right to modify these terms at any time. Continued use constitutes acceptance of updated terms.
+      </p>
+    </div>
+  </div>
+  
+  <!-- ── PRIVACY ── -->
+  <div class="page fade-up legal-page" id="page-privacy">
+    <div class="flex items-center gap-3 mb-6">
+      <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+      <h1 class="text-xl font-bold">Privacy Policy</h1>
+    </div>
+    <div class="card p-6 max-w-2xl">
+      <p>Last updated: June 2025</p>
+      <h2>Information We Collect</h2>
+      <p><b class="text-gray-300">Attendance data you import</b> is stored entirely in your browser's local storage. We do
+        not collect, transmit, or store your attendance records on our servers.</p>
+      <h2>Cookies & Local Storage</h2>
+      <p>We use browser local storage to save your preferences and attendance data on your device. No tracking cookies are
+        used for attendance data.</p>
+      <h2>Third-Party Services</h2>
+      <p>We may use third-party services including Google AdSense for advertising. These services may use cookies per
+        their own privacy policies. See Google's privacy policy for details on AdSense data collection.</p>
+      <h2>Google Forms</h2>
+      <p>If you submit ads or timetable requests via Google Forms, that data is handled by Google per their privacy
+        policy.</p>
+      <h2>Your Rights</h2>
+      <p>You can clear all local data at any time using "Full Reset" in Manage Data on the Dashboard.</p>
+      <h2>Contact</h2>
+      <p>For privacy concerns, use the Contact Us page.</p>
+    </div>
+  </div>
+  
+  <!-- ── DISCLAIMER ── -->
+  <div class="page fade-up legal-page" id="page-disclaimer">
+    <div class="flex items-center gap-3 mb-6">
+      <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+      <h1 class="text-xl font-bold">Disclaimer</h1>
+    </div>
+    <div class="card p-6 max-w-2xl">
+      <p>The information provided by Tracy is for general informational purposes only. All attendance percentages,
+        predictions, bunk calculations, and CGPA estimates are approximations based on user-provided data.</p>
+      <h2>No Academic Guarantee</h2>
+      <p>We make no guarantees about the accuracy of calculations. Official attendance records maintained by your
+        institution are the sole authoritative source.</p>
+      <h2>Not Affiliated</h2>
+      <p>Tracy is not affiliated with, endorsed by, or connected to any college, university, or educational institution
+        unless explicitly stated.</p>
+      <h2>Advertising</h2>
+      <p>This site may display advertisements through Google AdSense. Ad content is served by Google and does not
+        constitute endorsement by Tracy.</p>
+    </div>
+  </div>
+  
+  <!-- ── CONTACT ── -->
+  <div class="page fade-up legal-page" id="page-contact">
+    <div class="flex items-center gap-3 mb-6">
+      <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+      <h1 class="text-xl font-bold">Contact Us</h1>
+    </div>
+    <div class="card p-6 max-w-2xl">
+      <p>We'd love to hear from you. For questions, feedback, timetable updates, or ad submissions:</p>
+      <h2>Email</h2>
+      <p>contact@Tracy.app <span class="text-gray-500">(replace with your real email)</span></p>
+      <h2>Report Issues</h2>
+      <p>If you find incorrect timetable data, use the <b class="text-gray-300">Request New TT</b> button on the Timetable
+        page to submit an updated schedule.</p>
+      <h2>Submit Ads</h2>
+      <p>College clubs and organizations can submit promotional posters via our Google Form (configured in <code
+          class="text-indigo-400">ads/config.json</code>).</p>
+      <h2>Response Time</h2>
+      <p>We aim to respond within 2–3 business days.</p>
     </div>
   </div>
 

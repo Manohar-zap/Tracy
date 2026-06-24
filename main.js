@@ -58,7 +58,14 @@ const DAY_ORDER = [
   "friday",
   "saturday",
 ];
-const TIMETABLE_FILES = ["4CSD01.xlsx"];
+const TIMETABLE_FILES = [
+  "4CSD01.xlsx",
+  "2CSD01.xlsx",
+  "4CSD02.xlsx",
+  "2CSD02.xlsx",
+  "4CSD03.xlsx",
+  "2CSD03.xlsx",
+];
 
 // ─────────────────────────────────────────────
 // 2. LOCALSTORAGE HELPERS
@@ -102,9 +109,13 @@ function navigateTo(page) {
 
   const pageEl = document.getElementById("page-" + page);
   if (pageEl) pageEl.classList.add("active");
-  document
-    .querySelectorAll('[data-page="' + page + '"]')
-    .forEach((el) => el.classList.add("active"));
+
+  const navItem = document.querySelector('.nav-link[data-page="' + page + '"]');
+  if (navItem) navItem.classList.add("active");
+  const mobileItem = document.querySelector(
+    '.mobile-nav-item[data-page="' + page + '"]',
+  );
+  if (mobileItem) mobileItem.classList.add("active");
 
   STATE.currentPage = page;
   saveState();
@@ -117,8 +128,12 @@ function navigateTo(page) {
   if (page === "calculator") {
     populateCalcSubjects();
     renderQuickCalc();
+    renderCgpaCalc();
   }
   if (page === "analytics") renderAnalyticsPage();
+  if (["about", "terms", "privacy", "disclaimer", "contact"].includes(page)) {
+    closeSidebar();
+  }
 }
 
 function openSidebar() {
@@ -316,6 +331,8 @@ document.addEventListener("DOMContentLoaded", () => {
   updateTargetUI();
   navigateTo(STATE.currentPage || "dashboard");
   loadBuiltInTimetables();
+  initAdsSystem();
+  initSiteConfig();
 });
 
 function parseAttendanceExcel(file) {
@@ -426,8 +443,6 @@ function buildTimetableRows(jsonData) {
 }
 
 async function loadTimetablesFromFolder(isManualRefresh) {
-  const statusEl = document.getElementById("ttFolderStatus");
-
   try {
     const dirRes = await fetch("timetable/", { cache: "no-store" });
     if (!dirRes.ok)
@@ -667,7 +682,6 @@ function renderTimetablePage() {
   renderTimetableList();
   renderTimetableSelects();
   renderTimetablePreview();
-  populateDailyTimetableSelect();
 }
 
 function filterTimetables(query) {
@@ -1046,6 +1060,9 @@ function renderPredCards() {
               : `${bunk} safe bunks`
           }
         </p>
+        <button class="btn-ghost text-xs mt-2 w-full" style="padding:4px 8px" onclick="addSubjectToCalendar('${s.id}')">
+          <i class="fas fa-calendar-plus mr-1"></i>Add to Calendar
+        </button>
       </div>
     `;
     })
@@ -1155,6 +1172,7 @@ function renderAttendancePage() {
   renderCalcChart();
 }
 
+
 function renderAttendanceTable() {
   const tbody = document.getElementById("attendanceTableBody");
   if (!tbody) return;
@@ -1223,29 +1241,30 @@ document.addEventListener("change", (e) => {
   }
 });
 
-function updateCalc(type, delta) {
-  if (!calcState.total && type === "attended") return;
-  if (type === "attended") {
-    calcState.attended = Math.max(
-      calcState.min_attended,
-      Math.min(calcState.total, calcState.attended + delta),
-    );
-  }
-  if (type === "total") {
-    const newT = calcState.total + delta;
-    if (newT < calcState.min_total) return;
-    calcState.total = newT;
-    if (calcState.attended > calcState.total)
-      calcState.attended = calcState.total;
-  }
+function updateSubjectCalc() {
+  const total = parseInt(document.getElementById("calcTotalInput").value) || 0;
+
+  const attended =
+    parseInt(document.getElementById("calcAttendedInput").value) || 0;
+
+  renderCalc(attended, total);
+}
+
+let futureAttend = 0;
+
+function changeFutureAttend(delta) {
+  futureAttend += delta;
+
+  if (futureAttend < 0) futureAttend = 0;
+
   renderCalc();
 }
 
 function renderCalc() {
   const a = calcState.attended,
     t = calcState.total;
-  document.getElementById("calcAttendedVal").textContent = t ? a : "--";
-  document.getElementById("calcTotalVal").textContent = t ? t : "--";
+  document.getElementById("calcTotalInput").value = t;
+  document.getElementById("calcAttendedInput").value = a;
 
   if (!t) {
     document.getElementById("calcPercent").textContent = "--%";
@@ -1299,37 +1318,21 @@ function renderCalcChart(a, t) {
       data.push((((a + i) / (t + i)) * 100).toFixed(1));
     }
   }
+  const absent = t - a;
 
   calcChartInst = new Chart(ctx, {
-    type: "line",
+    type: "pie",
     data: {
-      labels,
+      labels: ["Attended", "Absent"],
       datasets: [
         {
-          data,
-          borderColor: "#6366f1",
-          backgroundColor: "rgba(99,102,241,0.1)",
-          fill: true,
-          tension: 0.4,
-          pointRadius: 2,
-        },
-        {
-          data: labels.map(() => STATE.target),
-          borderColor: "#22c55e",
-          borderDash: [4, 4],
-          borderWidth: 1.5,
-          pointRadius: 0,
+          data: [a, absent],
         },
       ],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        y: { min: 0, max: 100, ticks: { color: "#64748b" } },
-        x: { ticks: { color: "#64748b" } },
-      },
     },
   });
 }
@@ -1355,6 +1358,9 @@ function setQuickCalcTarget(t) {
     .forEach((b) => b.classList.toggle("active", Number(b.dataset.t) === t));
   renderQuickCalc();
 }
+
+let baseAttended = 0;
+let baseTotal = 0;
 
 function renderQuickCalc() {
   const totalEl = document.getElementById("qcTotal");
@@ -1421,38 +1427,24 @@ function renderQcChart(a, t) {
     }
   }
 
-  qcChartInst = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels,
-      datasets: [
-        {
-          data,
-          borderColor: "#6366f1",
-          backgroundColor: "rgba(99,102,241,0.1)",
-          fill: true,
-          tension: 0.4,
-          pointRadius: 2,
-        },
-        {
-          data: labels.map(() => quickCalcTarget),
-          borderColor: "#22c55e",
-          borderDash: [4, 4],
-          borderWidth: 1.5,
-          pointRadius: 0,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        y: { min: 0, max: 100, ticks: { color: "#64748b" } },
-        x: { ticks: { color: "#64748b" } },
-      },
-    },
-  });
+ const absent = t - a;
+
+ qcChartInst = new Chart(ctx, {
+   type: "pie",
+   data: {
+     labels: ["Attended", "Absent"],
+     datasets: [
+       {
+         data: [a, absent],
+         backgroundColor: ["#22c55e", "#ef4444"],
+       },
+     ],
+   },
+   options: {
+     responsive: true,
+     maintainAspectRatio: false,
+   },
+ });
 }
 
 function resetQuickCalc() {
@@ -1468,7 +1460,7 @@ let attendanceChartInst = null;
 
 function renderAnalyticsPage() {
   renderAttendanceBreakdownChart();
-  populateDailyTimetableSelect();
+
   if (Object.keys(dailySubjectMap).length)
     renderSubjectDailyChart(dailySubjectMap);
 }
@@ -1555,18 +1547,6 @@ function renderAttendanceBreakdownChart() {
 // ─────────────────────────────────────────────
 let dailySubjectMap = {}; // subjectName -> { dateLabel -> pct }
 let dailyChartInst = null;
-
-function populateDailyTimetableSelect() {
-  const sel = document.getElementById("dailyTimetableSelect");
-  if (!sel) return;
-  const cur = sel.value;
-  sel.innerHTML =
-    '<option value="">-- None --</option>' +
-    STATE.timetables
-      .map((t) => `<option value="${t.id}">${t.label}</option>`)
-      .join("");
-  if (cur && sel.querySelector(`option[value="${cur}"]`)) sel.value = cur;
-}
 
 function parseDailyExcel(file) {
   const tt = getTimetableById(STATE.week1TimetableId);
@@ -1986,6 +1966,515 @@ function refreshAll() {
   if (STATE.currentPage === "attendance") renderAttendancePage();
   if (STATE.currentPage === "timetable") renderTimetablePage();
   if (STATE.currentPage === "prediction") renderPredictionPage();
-  if (STATE.currentPage === "calculator") renderQuickCalc();
+  if (STATE.currentPage === "calculator") {
+    renderQuickCalc();
+    renderCgpaCalc();
+  }
   if (STATE.currentPage === "analytics") renderAnalyticsPage();
+}
+
+// ─────────────────────────────────────────────
+// 20. HELP MODALS
+// ─────────────────────────────────────────────
+function openHelpModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.add("open");
+}
+function closeHelpModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove("open");
+}
+
+// ─────────────────────────────────────────────
+// 21. TIMETABLE SEARCH
+// ─────────────────────────────────────────────
+function searchTimetable() {
+  const q = document.getElementById("ttSearchInput")?.value || "";
+  filterTimetables(q);
+  showToast(q ? `Filtered: "${q}"` : "Showing all classes");
+}
+
+// ─────────────────────────────────────────────
+// 22. SITE CONFIG (Google Forms URLs)
+// ─────────────────────────────────────────────
+let siteConfig = {};
+
+async function initSiteConfig() {
+  try {
+    const res = await fetch("ads/config.json");
+    if (res.ok) {
+      siteConfig = await res.json();
+      const ttBtn = document.getElementById("requestTtBtn");
+      const formUrl = siteConfig.googleForms?.requestTimetable;
+      if (ttBtn && formUrl && !formUrl.includes("PASTE_YOUR")) {
+        ttBtn.href = formUrl;
+      } else if (ttBtn) {
+        ttBtn.href = "#";
+        ttBtn.onclick = (e) => {
+          e.preventDefault();
+          showToast("Set requestTimetable URL in ads/config.json");
+        };
+      }
+    }
+  } catch (e) {
+    console.warn("Could not load site config:", e);
+  }
+}
+
+// ─────────────────────────────────────────────
+// 23. COLLEGE ADS SYSTEM
+// ─────────────────────────────────────────────
+let adsList = [];
+let adsCurrentSlide = 0;
+let adsMustSwipeAll = false;
+let adsViewed = new Set();
+let adsAutoSlide = null;
+
+async function initAdsSystem() {
+  const sheet = await fetchSheetAds();
+  adsList = sheet;
+  console.log(adsList);
+  console.log(sheet);
+  if (!adsList.length) return;
+  showAdsPopup();
+}
+
+async function fetchSheetAds() {
+  try {
+    const cfgRes = await fetch("ads/config.json");
+    if (!cfgRes.ok) return [];
+    const cfg = await cfgRes.json();
+    const url = cfg.googleSheets?.adsCsvUrl;
+    if (!url || url.includes("PASTE_YOUR")) return [];
+
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    const text = await res.text();
+    return parseAdsCsv(text);
+  } catch {
+    return [];
+  }
+}
+
+function parseAdsCsv(csv) {
+  const lines = csv.trim().split("\n");
+  if (lines.length < 2) return [];
+  const ads = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(",").map((c) => c.trim().replace(/^"|"$/g, ""));
+    if (cols.length < 2) continue;
+    const active = (cols[3] || "").toLowerCase();
+    if (
+    active !== "on" &&
+    active !== "yes" &&
+    active !== "true"
+    ) continue;
+    ads.push({
+      title: cols[0] || "Ad",
+      image: cols[1] || "",
+      linkUrl: cols[2] || "",
+      active: true,
+    });
+  }
+  return ads;
+}
+
+function mergeAds(local, sheet) {
+  const seen = new Set();
+  const merged = [];
+  [...sheet, ...local].forEach((ad) => {
+    const key = ad.image || ad.title;
+    if (!seen.has(key) && ad.image) {
+      seen.add(key);
+      merged.push(ad);
+    }
+  });
+  return merged;
+}
+
+function showAdsPopup() {
+  if (!adsList.length) return;
+  adsCurrentSlide = 0;
+  adsViewed.add(adsCurrentSlide);
+  adsViewed.clear();
+  adsViewed.add(0);
+  adsMustSwipeAll = true;
+  const closeBtn = document.getElementById("adsCloseBtn");
+  closeBtn?.classList.remove("visible");
+  const ad = adsList[adsCurrentSlide];
+
+  console.log("VIEW TRACK", ad.title);
+
+  new Image().src =
+  "https://script.google.com/macros/s/AKfycbw5uW_Mtc2s3Uz9ZBRgyKKdo71jxSMgwluny58TKUNudKCOc8pBV9Cf3MOPXEkCG8D2/exec?action=view&title=" +
+  encodeURIComponent(ad.title);
+
+  console.log("Ad Viewed:", adsList[adsCurrentSlide].title);
+  const slidesEl = document.getElementById("adsSlides");
+  const dotsEl = document.getElementById("adsDots");
+  const hintEl = document.getElementById("adsSwipeHint");
+  if (!slidesEl) return;
+
+  slidesEl.innerHTML = adsList
+    .map(
+      (ad, i) => `
+    <div class="ads-slide ${i === 0 ? "active" : ""}" data-idx="${i}">
+      ${
+        ad.linkUrl
+          ? `<a href="${ad.linkUrl}"target="_blank"onclick="trackAdClick('${ad.title}')">`: ""
+      }
+      <img src="${ad.image}" alt="${ad.title}" />
+      ${ad.linkUrl ? "</a>" : ""}
+      <p class="text-sm text-gray-300 mt-2">${ad.title}</p>
+    </div>`,
+    )
+    .join("");
+
+  dotsEl.innerHTML = adsList
+    .map((_, i) => `<div class="ads-dot ${i === 0 ? "active" : ""}" onclick="adsGoTo(${i})"></div>`)
+    .join("");
+
+  if (hintEl) hintEl.classList.toggle("hidden", !adsMustSwipeAll);
+  updateAdsCloseBtn();
+  document.getElementById("adsPopup")?.classList.add("open");
+
+  clearInterval(adsAutoSlide);
+  adsAutoSlide = setInterval(() => {
+    adsNav(1);
+  }, 2000);
+  initAdsSwipe();
+}
+
+function trackAdClick(title) {
+  new Image().src =
+    "https://script.google.com/macros/s/AKfycbw5uW_Mtc2s3Uz9ZBRgyKKdo71jxSMgwluny58TKUNudKCOc8pBV9Cf3MOPXEkCG8D2/exec?action=click&title=" +
+    encodeURIComponent(title);
+}
+
+function updateAdsCloseBtn() {
+  const btn = document.getElementById("adsCloseBtn");
+  if (!btn) return;
+  if (!adsMustSwipeAll) {
+    btn.classList.add("visible");
+    return;
+  }
+  const viewedAll = adsViewed.size >= adsList.length;
+  btn.classList.toggle("visible", viewedAll);
+}
+
+function adsGoTo(idx) {
+  adsCurrentSlide = Math.max(0, Math.min(idx, adsList.length - 1));
+  adsViewed.add(adsCurrentSlide);
+  document.querySelectorAll(".ads-slide").forEach((s, i) => {
+    s.classList.toggle("active", i === adsCurrentSlide);
+  });
+  document.querySelectorAll(".ads-dot").forEach((d, i) => {
+    d.classList.toggle("active", i === adsCurrentSlide);
+  });
+
+  const ad = adsList[adsCurrentSlide];
+  new Image().src =
+    "https://script.google.com/macros/s/AKfycbw5uW_Mtc2s3Uz9ZBRgyKKdo71jxSMgwluny58TKUNudKCOc8pBV9Cf3MOPXEkCG8D2/exec?action=view&title=" +
+    encodeURIComponent(ad.title);
+  updateAdsCloseBtn();
+}
+
+function adsNav(dir) {
+  let next = adsCurrentSlide + dir;
+
+  if (next >= adsList.length) next = 0;
+  if (next < 0) next = adsList.length - 1;
+
+  adsGoTo(next);
+
+  clearInterval(adsAutoSlide);
+
+  adsAutoSlide = setInterval(() => {
+    adsNav(1);
+  }, 2000);
+}
+
+function closeAdsPopup() {
+  if (adsMustSwipeAll && adsViewed.size < adsList.length) {
+    showToast("View all ads first");
+    return;
+  }
+ clearInterval(adsAutoSlide);
+ document.getElementById("adsPopup")?.classList.remove("open");
+}
+
+function initAdsSwipe() {
+  const carousel = document.querySelector(".ads-carousel");
+  if (!carousel) return;
+  let startX = 0;
+  carousel.ontouchstart = (e) => { startX = e.touches[0].clientX; };
+  carousel.ontouchend = (e) => {
+    const diff = e.changedTouches[0].clientX - startX;
+    if (Math.abs(diff) > 50) adsNav(diff < 0 ? 1 : -1);
+  };
+}
+
+// ─────────────────────────────────────────────
+// 24. CGPA CALCULATOR
+// ─────────────────────────────────────────────
+let cgpaChartInst = null;
+
+function renderCgpaCalc() {
+  const curEl = document.getElementById("cgpaCurrent");
+  const tgtEl = document.getElementById("cgpaTarget");
+  if (!curEl || !tgtEl) return;
+
+  let current = parseFloat(curEl.value);
+  let target = parseFloat(tgtEl.value);
+  if (current > 10) {
+    current = 10;
+    curEl.value = 10;
+  }
+
+  if (target > 10) {
+    target = 10;
+    tgtEl.value = 10;
+  }
+
+  if (current < 0) {
+    current = 0;
+    curEl.value = 0;
+  }
+
+  if (target < 0) {
+    target = 0;
+    tgtEl.value = 0;
+  }
+  const deltaEl = document.getElementById("cgpaDelta");
+  const statusEl = document.getElementById("cgpaStatus");
+  const gapEl = document.getElementById("cgpaGap10");
+
+  if (isNaN(current) || isNaN(target)) {
+    deltaEl.textContent = "--";
+    deltaEl.className = "text-3xl font-bold";
+    statusEl.textContent = "Enter values";
+    if (gapEl) gapEl.textContent = "--";
+    renderCgpaChart(0, 0);
+    return;
+  }
+
+  current = Math.min(10, Math.max(0, current));
+  target = Math.min(10, Math.max(0, target));
+  const increase = target - current;
+  const gap10 = 10 - target;
+
+  if (increase > 0) {
+    deltaEl.textContent = "+" + increase.toFixed(2);
+    deltaEl.className = "text-3xl font-bold text-yellow-400";
+    statusEl.textContent = `Need +${increase.toFixed(2)} to reach ${target.toFixed(2)}`;
+  } else if (increase < 0) {
+    deltaEl.textContent = increase.toFixed(2);
+    deltaEl.className = "text-3xl font-bold text-green-400";
+    statusEl.textContent = `Already ${Math.abs(increase).toFixed(2)} above target`;
+  } else {
+    deltaEl.textContent = "0.00";
+    deltaEl.className = "text-3xl font-bold text-green-400";
+    statusEl.textContent = "Target reached!";
+  }
+
+  if (gapEl) gapEl.textContent = gap10.toFixed(2);
+
+  renderCgpaChart(current, target);
+}
+
+function renderCgpaChart(current, target) {
+  const ctx = document.getElementById("cgpaChart");
+  if (!ctx) return;
+  if (cgpaChartInst) {
+    cgpaChartInst.destroy();
+    cgpaChartInst = null;
+  }
+
+  const gap = Math.max(0, target - current);
+  const rest = Math.max(0, 10 - target);
+
+  cgpaChartInst = new Chart(ctx, {
+    type: "pie",
+    data: {
+      labels: ["Current CGPA", "Required Increase", "Remaining to 10"],
+      datasets: [
+        {
+          data: [current, gap, rest],
+          backgroundColor: ["#6366f1", "#f59e0b", "#334155"],
+          borderWidth: 0,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: { color: "#94a3b8", font: { size: 11 }, padding: 12 },
+        },
+        tooltip: {
+          callbacks: {
+            label: (tooltipItem) => {
+              const label = tooltipItem.label ?? "";
+              const value = tooltipItem.parsed ?? tooltipItem.raw ?? 0;
+              return ` ${label}: ${Number(value).toFixed(2)}`;
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
+function resetCgpaCalc() {
+  const cur = document.getElementById("cgpaCurrent");
+  const tgt = document.getElementById("cgpaTarget");
+  if (cur) cur.value = "";
+  if (tgt) tgt.value = "";
+  renderCgpaCalc();
+}
+
+// ─────────────────────────────────────────────
+// 25. ADD TO CALENDAR (prediction cards)
+// ─────────────────────────────────────────────
+const HOUR_SCHEDULE = [
+  { start: "09:15", end: "10:10", label: "Hr 1" },
+  { start: "10:10", end: "11:05", label: "Hr 2" },
+  { start: "11:05", end: "12:00", label: "Hr 3" },
+  { start: "12:00", end: "12:55", label: "Hr 4" },
+  { start: "13:45", end: "14:40", label: "Hr 5" },
+  { start: "14:40", end: "15:35", label: "Hr 6" },
+  { start: "15:35", end: "16:30", label: "Hr 7" },
+  { start: "16:30", end: "17:25", label: "Hr 8" },
+];
+
+function getNextDateForDay(dayName) {
+  const norm = normalizeDayName(dayName);
+  const dayIdx = DAY_ORDER.findIndex((d) => norm.includes(d) || d.includes(norm));
+  if (dayIdx === -1) return new Date();
+
+  const now = new Date();
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(now);
+    d.setDate(now.getDate() + i);
+    if (d.getDay() === dayIdx) return d;
+  }
+  return now;
+}
+
+function getSubjectPredInfo(subjectId) {
+  const s = STATE.subjects.find((x) => x.id === subjectId);
+  if (!s) return null;
+
+  const week = document.getElementById("predCardsWeekSelect")?.value || "1";
+  const w1 = getTimetableById(STATE.week1TimetableId);
+  const w2 = getTimetableById(STATE.week2TimetableId);
+  const todayIdx = getTodayOrderIdx();
+
+  let extra = 0;
+  if (week === "1") {
+    extra = w1 ? countSubjectInRows(w1.rows, s.name, todayIdx, STATE.weekOverrides.week1) : 0;
+  } else {
+    const w1r = w1 ? countSubjectInRows(w1.rows, s.name, todayIdx, STATE.weekOverrides.week1) : 0;
+    const w2f = w2 ? countSubjectInRows(w2.rows, s.name, undefined, STATE.weekOverrides.week2) : 0;
+    extra = w1r + w2f;
+  }
+
+  const futureAttended = s.attended + extra;
+  const futureTotal = s.total + extra;
+  const { need, bunk } = calcNeedAndBunk({ attended: futureAttended, total: futureTotal }, predTarget);
+  const statusText = need > 0 ? `+${need} needed` : `${bunk} safe bunk`;
+
+  return { subject: s, statusText, tt: w1 };
+}
+
+function buildCalendarEventsForSubject(subjectId) {
+  const info = getSubjectPredInfo(subjectId);
+  if (!info || !info.tt) return [];
+
+  const events = [];
+  const clean = (str) => String(str || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const sKey = clean(info.subject.name);
+
+  info.tt.rows.forEach((row) => {
+    const dayOrder = weekdayOrderIndex(row.day);
+    const todayIdx = getTodayOrderIdx();
+    if (dayOrder !== -1 && dayOrder < todayIdx) return;
+
+    row.hours.forEach((cell, hIdx) => {
+      const text = String(cell || "").trim();
+      if (!text || text.toLowerCase().includes("holiday")) return;
+      const tKey = clean(text);
+      if (!(sKey.includes(tKey) || tKey.includes(sKey))) return;
+
+      const sched = HOUR_SCHEDULE[hIdx] || { start: "09:00", end: "10:00", label: `Hr ${hIdx + 1}` };
+      const date = getNextDateForDay(row.day);
+      const [sh, sm] = sched.start.split(":").map(Number);
+      const [eh, em] = sched.end.split(":").map(Number);
+
+      const start = new Date(date);
+      start.setHours(sh, sm, 0, 0);
+      const end = new Date(date);
+      end.setHours(eh, em, 0, 0);
+
+      events.push({
+        title: `${sched.label}: ${info.subject.name} — ${info.statusText}`,
+        start,
+        end,
+        day: row.day,
+      });
+    });
+  });
+
+  return events;
+}
+
+function formatIcsDate(d) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+}
+
+function downloadIcs(events, filename) {
+  if (!events.length) {
+    showToast("No upcoming classes found for this subject.");
+    return;
+  }
+
+  let ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//ZapTrack//EN\r\n";
+  events.forEach((ev) => {
+    ics += "BEGIN:VEVENT\r\n";
+    ics += `DTSTART:${formatIcsDate(ev.start)}\r\n`;
+    ics += `DTEND:${formatIcsDate(ev.end)}\r\n`;
+    ics += `SUMMARY:${ev.title.replace(/,/g, "\\,")}\r\n`;
+    ics += `DESCRIPTION:ZapTrack attendance prediction\r\n`;
+    ics += "END:VEVENT\r\n";
+  });
+  ics += "END:VCALENDAR";
+
+  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast(`Added ${events.length} event(s) to calendar file ✓`);
+}
+
+function addSubjectToCalendar(subjectId) {
+  const events = buildCalendarEventsForSubject(subjectId);
+  const s = STATE.subjects.find((x) => x.id === subjectId);
+  downloadIcs(events, `zaptrack-${(s?.name || "subject").replace(/\W+/g, "-").slice(0, 20)}.ics`);
+}
+
+function addAllPredCardsToCalendar() {
+  if (!STATE.subjects.length) {
+    showToast("No subjects loaded.");
+    return;
+  }
+  const allEvents = [];
+  STATE.subjects.forEach((s) => {
+    allEvents.push(...buildCalendarEventsForSubject(s.id));
+  });
+  downloadIcs(allEvents, "zaptrack-all-subjects.ics");
 }
