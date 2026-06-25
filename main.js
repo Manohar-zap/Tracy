@@ -405,27 +405,6 @@ function parseAttendanceExcel(file) {
   reader.readAsArrayBuffer(file);
 }
 
-// ─────────────────────────────────────────────
-// 6. TIMETABLES — FOLDER AUTO-DISCOVERY (primary) + MANUAL UPLOAD (fallback)
-//    No backend, no manifest file, no in-app editing. Just drop .xlsx files
-//    into a real "timetable/" folder next to index.html and they show up
-//    in the Week 1 / Week 2 select dropdowns automatically.
-//
-//    HOW IT WORKS: most static dev servers (Python's http.server, `npx serve`,
-//    VS Code Live Server, Apache/Nginx with autoindex on) return an HTML
-//    directory listing when you fetch a folder URL with no index.html inside
-//    it — e.g. GET /timetable/ returns a page full of <a href="4CSD1.xlsx">
-//    links. This function fetches that listing, parses out every .xlsx/.xls
-//    link, and loads each one. Nothing to maintain by hand.
-//
-//    Note: hosts that disable directory listing (GitHub Pages, Netlify, etc.)
-//    won't return that HTML page, so auto-discovery won't find anything there
-//    — that's a host limitation, not something fixable from pure client-side
-//    JS without a backend. Manual upload still works everywhere as a fallback.
-//
-//    Mark holidays as plain text (containing the word "holiday") in a cell
-//    and the prediction/daily-analytics engines will automatically skip it.
-// ─────────────────────────────────────────────
 let ttFileChosen = null;
 let previewWeekNum = 1;
 let dailyOverallMap = {};
@@ -704,8 +683,10 @@ function filterTimetables(query) {
       )
       .join("");
 }
+
 function renderTimetableList() {
   const el = document.getElementById("ttList");
+  
   if (!el) return;
   if (!STATE.timetables.length) {
     el.innerHTML = '<p class="text-xs text-gray-500">None loaded yet.</p>';
@@ -726,6 +707,25 @@ function renderTimetableList() {
     .join("");
 }
 
+function renderInlineAds() {
+  const el = document.getElementById("inlineAdsContainer");
+  if (!el || !adsList.length) return;
+
+  el.innerHTML = adsList
+    .map(
+      (ad) => `
+      <div class="card overflow-hidden">
+        <a href="${ad.linkUrl}"
+           target="_blank"
+           onclick="trackAdClick('${ad.title}')">
+          <img src="${ad.image}" alt="${ad.title}" style="width:100%">
+        </a>
+      </div>
+    `
+    )
+    .join("");
+}
+
 function renderTimetableSelects() {
   filterTimetables("");
 }
@@ -741,6 +741,7 @@ function renderTimetablePreview() {
       '<p class="text-center text-gray-500 text-sm py-8">Select a timetable to preview.</p>';
     return;
   }
+  
 
   const maxHours = Math.max(...tt.rows.map((r) => r.hours.length));
   let html = '<table class="tt-table w-full"><thead><tr><th>Day</th>';
@@ -763,6 +764,22 @@ function renderTimetablePreview() {
   el.innerHTML = html;
 }
 
+function renderInlineAdSlider() {
+  const el = document.getElementById("inlineAdsSlides");
+  if (!el || !adsList.length) return;
+
+  const ad = adsList[adsCurrentSlide];
+  new Image().src =
+    "https://script.google.com/macros/s/AKfycbw5uW_Mtc2s3Uz9ZBRgyKKdo71jxSMgwluny58TKUNudKCOc8pBV9Cf3MOPXEkCG8D2/exec?action=view&title=" +
+    encodeURIComponent(ad.title);
+
+  el.innerHTML = `
+    <a href="${ad.linkUrl}" target="_blank"
+       onclick="trackAdClick('${ad.title}')">
+      <img src="${ad.image}" style="width:100%">
+    </a>
+  `;
+}
 // ─────────────────────────────────────────────
 // 7. PREDICTION ENGINE (redesigned)
 // ─────────────────────────────────────────────
@@ -990,15 +1007,32 @@ function renderPredCards() {
     return;
   }
 
-  el.innerHTML = STATE.subjects
+  el.innerHTML = [...STATE.subjects]
+    .sort((a, b) => {
+      const aPct = a.total ? (a.attended / a.total) * 100 : 0;
+      const bPct = b.total ? (b.attended / b.total) * 100 : 0;
+      return aPct - bPct; // ascending
+    })
     .map((s) => {
       let extra = 0;
 
       if (week === "1") {
-        extra = w1 ? countSubjectInRows(w1.rows, s.name, todayIdx, STATE.weekOverrides.week1) : 0;
+        extra = w1
+          ? countSubjectInRows(
+              w1.rows,
+              s.name,
+              todayIdx,
+              STATE.weekOverrides.week1,
+            )
+          : 0;
       } else {
         const week1Remainder = w1
-          ? countSubjectInRows(w1.rows, s.name, todayIdx, STATE.weekOverrides.week1)
+          ? countSubjectInRows(
+              w1.rows,
+              s.name,
+              todayIdx,
+              STATE.weekOverrides.week1,
+            )
           : 0;
 
         const week2Full = w2
@@ -1054,15 +1088,8 @@ function renderPredCards() {
         <p class="text-xs mt-2 ${
           need > 0 ? "text-yellow-400" : "text-green-400"
         }">
-          ${
-            need > 0
-              ? `+${need} needed for ${predTarget}%`
-              : `${bunk} safe bunks`
-          }
+        ${need > 0 ? `+${need} needed for ${predTarget}%` : `${bunk} safe bunks`}
         </p>
-        <button class="btn-ghost text-xs mt-2 w-full" style="padding:4px 8px" onclick="addSubjectToCalendar('${s.id}')">
-          <i class="fas fa-calendar-plus mr-1"></i>Add to Calendar
-        </button>
       </div>
     `;
     })
@@ -1242,20 +1269,34 @@ document.addEventListener("change", (e) => {
 });
 
 function updateSubjectCalc() {
-  const total = parseInt(document.getElementById("calcTotalInput").value) || 0;
-
-  const attended =
-    parseInt(document.getElementById("calcAttendedInput").value) || 0;
-
-  renderCalc(attended, total);
+  calcState.total =
+    parseInt(document.getElementById("calcTotalInput").value, 10) || 0;
+  calcState.attended =
+    parseInt(document.getElementById("calcAttendedInput").value, 10) || 0;
+  renderCalc();
 }
 
 let futureAttend = 0;
 
 function changeFutureAttend(delta) {
-  futureAttend += delta;
+  const attendedInput = document.getElementById("calcAttendedInput");
+  const totalInput = document.getElementById("calcTotalInput");
 
-  if (futureAttend < 0) futureAttend = 0;
+  let attended = parseInt(attendedInput.value, 10) || 0;
+  let total = parseInt(totalInput.value, 10) || 0;
+
+  attended += delta;
+  total += delta;
+
+  // don't go below original sheet values
+  attended = Math.max(calcState.min_attended, attended);
+  total = Math.max(calcState.min_total, total);
+
+  attendedInput.value = attended;
+  totalInput.value = total;
+
+  calcState.attended = attended;
+  calcState.total = total;
 
   renderCalc();
 }
@@ -1281,7 +1322,8 @@ function renderCalc() {
 
   if (pct >= STATE.target) {
     pctEl.className = "text-3xl font-bold text-green-400";
-    document.getElementById("calcStatus").textContent = "Safe ✓";
+    const calcStatus = document.getElementById("calcStatus");
+    if (calcStatus) calcStatus.textContent = "Safe ✓";
   } else if (pct >= STATE.target - 10) {
     pctEl.className = "text-3xl font-bold text-yellow-400";
     document.getElementById("calcStatus").textContent = "Warning ⚠";
@@ -1294,10 +1336,12 @@ function renderCalc() {
     { attended: a, total: t },
     STATE.target,
   );
-  document.getElementById("calcNeed").textContent =
-    need > 0 ? "+" + need + " classes" : "0";
-  document.getElementById("calcBunk").textContent =
-    bunk > 0 ? bunk + " bunks" : "0";
+  const calcNeedEl = document.getElementById("calcNeed");
+  const calcBunkEl = document.getElementById("calcBunk");
+
+  if (calcNeedEl) calcNeedEl.textContent = need > 0 ? "+" + need : "0";
+
+  if (calcBunkEl) calcBunkEl.textContent = bunk > 0 ? bunk + " bunks" : "0";
 
   renderCalcChart(a, t);
 }
@@ -1413,7 +1457,7 @@ function renderQuickCalc() {
 
   const { need, bunk } = calcNeedAndBunk({ attended, total }, quickCalcTarget);
   document.getElementById("qcNeed").textContent =
-    need > 0 ? "+" + need + " classes" : "0";
+    need > 0 ? "+" + need + "" : "0";
   document.getElementById("qcBunk").textContent =
     bunk > 0 ? bunk + " bunks" : "0";
 
@@ -1458,22 +1502,28 @@ function renderQcChart(a, t) {
    },
    options: {
      responsive: true,
+     maintainAspectRatio: true,
      cutout: 0,
      plugins: {
-       legend: { display: false },
-       position: "right",
-       align: "end",
-       labels: {
-         boxWidth: 12,
-         padding: 15,
+       legend: {
+         display: false,
        },
      },
-     layout: {
-       padding: 10,
-     },
-     maintainAspectRatio: false,
    },
  });
+  const colors = qcChartInst.data.datasets[0].backgroundColor;
+
+  document.getElementById("attendedLegend").innerHTML =
+    `<span class="legend-dot" style="background:${colors[0]}"></span>`;
+
+  document.getElementById("bunkLegend").innerHTML =
+    `<span class="legend-dot" style="background:${colors[1]}"></span>`;
+
+  document.getElementById("needLegend").innerHTML =
+    `<span class="legend-dot" style="background:${colors[2]}"></span>`;
+
+  document.getElementById("absentLegend").innerHTML =
+    `<span class="legend-dot" style="background:${colors[3]}"></span>`;
 }
 
 function resetQuickCalc() {
@@ -1725,13 +1775,15 @@ function processDailyRows(rows, tt) {
         ? (runningPresent / runningTotal) * 100
         : 0;
     });
-    dailyOverallMap = {};
-
-    Object.entries(overallAgg).forEach(([date, obj]) => {
-      dailyOverallMap[date] = obj.t > 0 ? (obj.p / obj.t) * 100 : 0;
-    });
   });
 
+  dailyOverallMap = {};
+
+  Object.entries(overallAgg).forEach(([date, obj]) => {
+    dailyOverallMap[date] = obj.t > 0 ? (obj.p / obj.t) * 100 : 0;
+  });
+
+  console.log(dailySubjectMap);
   renderSubjectDailyChart(dailySubjectMap);
   showToast("Daily report processed ✓");
 }
@@ -1846,7 +1898,11 @@ function renderSubjectDailyChart(subjectMap) {
       plugins: {
         legend: {
           display: true,
-          labels: { color: "#94a3b8", font: { size: 10 } },
+          labels: {
+            usePointStyle: true,
+            boxWidth: 10,
+            color: "#f1f5f9",
+          },
         },
       },
       scales: {
@@ -2059,12 +2115,26 @@ let adsMustSwipeAll = false;
 let adsViewed = new Set();
 let adsAutoSlide = null;
 
+let inlineAdsAutoSlide = null;
+
 async function initAdsSystem() {
   const sheet = await fetchSheetAds();
   adsList = sheet;
-  console.log(adsList);
-  console.log(sheet);
+
+  renderInlineAdSlider();
+
+  if (adsList.length > 1) {
+    clearInterval(inlineAdsAutoSlide);
+
+    inlineAdsAutoSlide = setInterval(() => {
+      adsCurrentSlide = (adsCurrentSlide + 1) % adsList.length;
+
+      renderInlineAdSlider();
+    }, 3000);
+  }
+
   if (!adsList.length) return;
+
   showAdsPopup();
 }
 
@@ -2130,9 +2200,6 @@ function showAdsPopup() {
   const closeBtn = document.getElementById("adsCloseBtn");
   closeBtn?.classList.remove("visible");
   const ad = adsList[adsCurrentSlide];
-
-  console.log("VIEW TRACK", ad.title);
-
   new Image().src =
   "https://script.google.com/macros/s/AKfycbw5uW_Mtc2s3Uz9ZBRgyKKdo71jxSMgwluny58TKUNudKCOc8pBV9Cf3MOPXEkCG8D2/exec?action=view&title=" +
   encodeURIComponent(ad.title);
@@ -2197,6 +2264,7 @@ function adsGoTo(idx) {
   });
   document.querySelectorAll(".ads-dot").forEach((d, i) => {
     d.classList.toggle("active", i === adsCurrentSlide);
+    renderInlineAdSlider();
   });
 
   const ad = adsList[adsCurrentSlide];
@@ -2368,7 +2436,11 @@ function renderCgpaChart(completedSem, neededSem) {
   cgpaChartInst = new Chart(ctx, {
     type: "pie",
     data: {
-      labels: ["Completed", "Needed", "Unused"],
+      labels: [
+        `Completed (${completedSem})`,
+        `Needed (${neededSem})`,
+        `Unused (${unusedSem})`,
+      ],
       datasets: [
         {
           data: [completedSem, neededSem, unusedSem],
@@ -2379,12 +2451,26 @@ function renderCgpaChart(completedSem, neededSem) {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       cutout: 0,
       plugins: {
         legend: { display: false },
       },
+      layout: {
+        padding: 10,
+      },
     },
   });
+  const colors = ["#22c55e", "#f59e0b", "#3b82f6"];
+
+  document.getElementById("cgpaCompletedLegend").innerHTML =
+    `<span class="legend-dot" style="background:${colors[0]}"></span>`;
+
+  document.getElementById("cgpaNeededLegend").innerHTML =
+    `<span class="legend-dot" style="background:${colors[1]}"></span>`;
+
+  document.getElementById("cgpaUnusedLegend").innerHTML =
+    `<span class="legend-dot" style="background:${colors[2]}"></span>`;
 }
 
   
@@ -2403,14 +2489,14 @@ function resetCgpaCalc() {
 // 25. ADD TO CALENDAR (prediction cards)
 // ─────────────────────────────────────────────
 const HOUR_SCHEDULE = [
-  { start: "09:15", end: "10:10", label: "Hr 1" },
-  { start: "10:10", end: "11:05", label: "Hr 2" },
-  { start: "11:05", end: "12:00", label: "Hr 3" },
-  { start: "12:00", end: "12:55", label: "Hr 4" },
-  { start: "13:45", end: "14:40", label: "Hr 5" },
-  { start: "14:40", end: "15:35", label: "Hr 6" },
-  { start: "15:35", end: "16:30", label: "Hr 7" },
-  { start: "16:30", end: "17:25", label: "Hr 8" },
+  { start: "08:50", end: "09:45", label: "Hr 1" },
+  { start: "09:45", end: "10:40", label: "Hr 2" },
+  { start: "10:50", end: "11:45", label: "Hr 3" },
+  { start: "11:45", end: "12:35", label: "Hr 4" },
+  { start: "12:35", end: "13:25", label: "Hr 5" },
+  { start: "13:25", end: "13:20", label: "Hr 6" },
+  { start: "14:30", end: "15:25", label: "Hr 7" },
+  { start: "15:25", end: "16:15", label: "Hr 8" },
 ];
 
 function getNextDateForDay(dayName) {

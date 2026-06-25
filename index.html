@@ -12,29 +12,14 @@
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8172462535631846"
     crossorigin="anonymous"></script>
   <style>
-    :root {
-      --primary: #6366f1;
-      --primary-dark: #4f46e5;
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --card-bg: rgba(255,255,255,0.04);
-      --card-border: rgba(255,255,255,0.09);
-    }
+    :root { --primary: #6366f1; --primary-dark: #4f46e5; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --card-bg: rgba(255,255,255,0.04); --card-border: rgba(255,255,255,0.09); }
     * { box-sizing: border-box; }
     body { font-family: 'Inter', sans-serif; background: #0a0a0b; color: #f1f5f9; min-height: 100vh; overflow-x: hidden; }
 
-    .sidebar {
-      width: 240px; height: 100vh; position: fixed; left: 0; top: 0;
-      background: rgba(15,15,20,0.95); border-right: 1px solid var(--card-border);
-      padding: 20px 14px; overflow-y: auto; z-index: 30; transition: transform 0.3s ease;
-    }
+    .sidebar { width: 240px; height: 100vh; position: fixed; left: 0; top: 0; background: rgba(15,15,20,0.95); border-right: 1px solid var(--card-border); padding: 20px 14px; overflow-y: auto; z-index: 30; transition: transform 0.3s ease; }
     .main-content { margin-left: 240px; padding: 24px; min-height: 100vh; }
-    @media (max-width: 768px) {
-      .sidebar { transform: translateX(-100%); }
-      .sidebar.open { transform: translateX(0); }
-      .main-content { margin-left: 0; padding: 16px 14px 100px; }
-    }
+    @media (max-width: 768px) { .sidebar { transform: translateX(-100%); } .sidebar.open { transform: translateX(0); } .main-content { margin-left: 0; padding: 16px 14px 100px; } }
+    #inlineAdsSlides img{ width:100%; border-radius:12px; display:block; }
 
     .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; transition: box-shadow 0.2s, transform 0.2s; }
     .card:hover { box-shadow: 0 8px 28px rgba(0,0,0,0.35); transform: translateY(-1px); }
@@ -89,7 +74,7 @@
     select:focus { border-color: var(--primary); }
     input:not(.number-input)[type="text"],
     input:not(.number-input)[type="number"] { background: transparent; color: #f1f5f9; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 8px 12px; font-size: 13px; outline: none; }
-   input:not(.number-input)[type="text"]:focus,
+    input:not(.number-input)[type="text"]:focus,
     input:not(.number-input)[type="number"]:focus { border-color: var(--primary); }
 
     .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 100; display: none; align-items: center; justify-content: center; }
@@ -156,20 +141,17 @@
     button { cursor: pointer; }
     
      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
         .app-container { width: 100%; max-width: 480px; padding: 24px; }
-
         .cards-stack { display: flex; flex-direction: column; gap: 12px; }
-
         .card1 { background: #212121; border-radius: 12px; padding: 24px; min-height: 140px; display: flex; flex-direction: column; justify-content: center; gap: 12px; }
-
+        @media (max-width:768px){ .card1{ min-height:80px !important; padding:12px !important; } .number-input{ font-size:32px !important; } }
         .card-label-container { display: flex; align-items: center; color: #9e9e9e; font-size: 18px; font-weight: 500; }
-
         .number-input { background: transparent !important; border: none !important; color: white; font-size: 56px; }
-
         .orange { color: #f4511e; }
-
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; } input[type=number] { -moz-appearance: textfield; }
+  
+        .legend-dot{ display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:6px; vertical-align:middle; }
+  
   </style>
 </head>
 <body>
@@ -493,14 +475,10 @@
       </div>
       <div id="ttPreviewGrid"><p class="text-center text-gray-500 text-sm py-8">Select a timetable to preview.</p></div>
     </div><br>
-    <!-- List -->
-    <div class="card p-5 mb-5">
-      <h3 class="font-semibold mb-3 text-sm">All Timetables</h3>
-      <div id="ttList" class="space-y-1">
-        <p class="text-xs text-gray-500">None loaded yet.</p>
-      </div>
+    <div class="w-full"><div id="inlineAdsSlides"></div></div>
     </div>
   </div>
+
   <!-- ── PREDICTION ── -->
   <div class="page fade-up" id="page-prediction">
     <div class="flex items-center gap-3 mb-2">
@@ -575,8 +553,8 @@
     </div>
 
     <div class="card p-5">
-      <div class="flex gap-5 flex-wrap md:flex-nowrap">
-        <div class="w-full md:w-52 flex flex-col gap-3">
+      <div class="flex flex-col lg:flex-row gap-5">
+        <div class="w-full lg:w-36 flex-shrink-0 flex flex-col gap-3">
           <div class="card1" style="min-height:100px;padding:16px">
             <div class="card-label-container" style="font-size:13px">Total Classes</div>
             <input type="number" id="qcTotal" class="number-input" style="font-size:40px" placeholder="0" min="0"
@@ -590,17 +568,24 @@
           <button class="btn-ghost text-xs" onclick="resetQuickCalc()"><i class="fas fa-undo mr-1"></i>Reset</button>
         </div>
         <div class="flex-1 min-w-0">
-          <div class="flex justify-between items-start mb-2">
-            <div>
-              <span id="qcPercent" class="text-3xl font-bold">--%</span>
-              <p id="qcStatus" class="text-xs text-gray-400 mt-0.5">Enter values</p>
+          <div class="flex items-center justify-center gap-4">
+          
+            <div class="w-40 h-40 md:w-52 md:h-52 flex-shrink-0">
+              <canvas id="qcChart"></canvas>
             </div>
-            <div class="text-right text-xs text-gray-500">
-              <div>Need to reach target: <span id="qcNeed" class="font-semibold text-indigo-400">--</span></div>
-              <div>Safe bunks: <span id="qcBunk" class="font-semibold text-green-400">--</span></div>
-            </div>
+        <div class="flex flex-col min-w-0">
+          <div class="mb-6">
+            <span id="qcPercent" class="text-3xl md:text-5xl font-bold">--%</span>
+            <p id="qcStatus" class="text-sm text-gray-400 mt-2">Enter values</p>
           </div>
-          <div class="h-48"><canvas id="qcChart"></canvas></div>
+        <div class="space-y-3 text-sm">
+          <div><span id="attendedLegend"></span> Attended:</div>
+          <div><span id="bunkLegend"></span> Bunks:<span id="qcBunk"></span></div>
+          <div><span id="needLegend"></span> Need:<span id="qcNeed"></span></div>
+          <div><span id="absentLegend"></span> Absent:</div>
+              </div>
+            </div>
+            </div>
         </div>
       </div>
     </div><br>
@@ -608,7 +593,7 @@
     <h2 class="font-semibold mb-3">Subject Calculator <span class="text-xs text-gray-500 font-normal">(linked to a saved subject)</span></h2>
     <div class="card p-5 mb-6">
       <div class="flex gap-5 flex-wrap md:flex-nowrap">
-        <div class="w-full md:w-52 flex flex-col gap-3">
+        <div class="w-full md:w-40 flex flex-col gap-3">
           <select id="calcSubject">
             <option value="">Select Subject</option>
           </select>
@@ -617,50 +602,51 @@
   <input type="number" id="calcTotalInput" class="number-input" style="font-size:40px" placeholder="0"
     oninput="updateSubjectCalc()" />
 </div>
+
 <div class="card1" style="min-height:100px;padding:16px">
-  <div class="card-label-container" style="font-size:13px">Classes Attended</div>
-  <input type="number" id="calcAttendedInput" class="number-input" style="font-size:40px" placeholder="0"
-    oninput="updateSubjectCalc()" />
-  <div class="ctrl-box">
-    <button class="ctrl-btn minus" onclick="changeFutureAttend(-1)">
-      -
-    </button>
-
-    <span id="futureAttendCount">
-      0
-    </span>
-
-    <button class="ctrl-btn plus" onclick="changeFutureAttend(1)">
-      +
-    </button>
-  </div>
-        </div>
-        
+    <div class="card-label-container" style="font-size:13px">Classes Attended</div>
+  
+    <div class="flex items-center justify-between gap-3">
+      <input type="number" id="calcAttendedInput" class="number-input" style="font-size:40px; width:120px;" placeholder="0"
+        oninput="updateSubjectCalc()" />
+      <div class="ctrl-box">
+        <button class="ctrl-btn minus" onclick="changeFutureAttend(-1)">-</button>
+        <button class="ctrl-btn plus" onclick="changeFutureAttend(1)">+</button>
+      </div>
+      </div>
+      </div>
 
           <button class="btn-ghost text-xs" onclick="resetCalc()"><i class="fas fa-undo mr-1"></i>Reset</button>
-        </div>
+          </div>
+
         <div class="flex-1 min-w-0">
-          <div class="flex justify-between items-start mb-2">
-            <div>
-              <span id="calcPercent" class="text-3xl font-bold">--%</span>
-              <p id="calcStatus" class="text-xs text-gray-400 mt-0.5">Select a subject</p>
+          <div class="flex items-center justify-center gap-4">
+          
+            <div class="w-40 h-40 md:w-52 md:h-52 flex-shrink-0">
+              <canvas id="calcChart"></canvas>
             </div>
-            <div class="text-right text-xs text-gray-500">
-              <div>Need to reach target: <span id="calcNeed" class="font-semibold text-indigo-400">--</span></div>
-              <div>Safe bunks: <span id="calcBunk" class="font-semibold text-green-400">--</span></div>
+          <div class="flex flex-col min-w-0">
+            <div class="mb-6">
+              <span id="calcPercent" class="text-5xl font-bold">--%</span>
+              <p id="calcStatus" class="text-sm text-gray-400 mt-2">Select a subject</p>
+            </div>
+            <div class="space-y-3 text-sm">
+              <div><span id="attendedLegend"></span> Attended:</div>
+              <div><span id="bunkLegend"></span> Bunks: <span id="qcBunk"></span></div>
+              <div><span id="needLegend"></span> Need: <span id="qcNeed"></span></div>
+              <div><span id="absentLegend"></span> Absent:</div>
             </div>
           </div>
-          <div class="h-48 flex items-center justify-center">
-            <canvas id="calcChart"></canvas>
           </div>
         </div>
       </div>
     </div>
+    
 <h2 class="font-semibold mb-3 mt-8">CGPA Calculator</h2>
 <p class="text-xs text-gray-500 mb-4">Enter your current and target CGPA to see how much you need to improve.</p>
 <div class="card p-5 mb-6">
-  <div class="flex gap-5 flex-wrap md:flex-nowrap">
-    <div class="w-full md:w-52 flex flex-col gap-3">
+  <div class="flex flex-col lg:flex-row gap-5">
+    <div class="w-full lg:w-40 flex flex-col gap-3">
       <div class="card1" style="min-height:100px;padding:16px">
         <div class="card-label-container" style="font-size:13px">Current CGPA</div>
         <input type="number" id="cgpaCurrent" class="number-input" style="font-size:40px" placeholder="0.0" min="0"
@@ -679,9 +665,9 @@
       <button class="btn-ghost text-xs" onclick="resetCgpaCalc()"><i class="fas fa-undo mr-1"></i>Reset</button>
       </div>
       <div class="flex-1 min-w-0">
-        <div class="flex justify-between items-start mb-2">
+        <div class="flex flex-col md:flex-row justify-between items-start gap-3 mb-2">
         <div>
-          <span id="cgpaDelta" class="text-3xl font-bold">--</span>
+          <span id="cgpaDelta" class="text-2xl md:text-3xl font-bold">--</span>
           <p id="cgpaStatus" class="text-xs text-gray-400 mt-0.5">Enter values</p>
         </div>
         <div class="text-right text-xs text-gray-500">
@@ -689,7 +675,17 @@
           <div>Gap to 10: <span id="cgpaGap10" class="font-semibold text-gray-400">--</span></div>
         </div>
       </div>
-      <div class="h-52"><canvas id="cgpaChart"></canvas></div>
+      <div class="flex items-center justify-center gap-4">
+      
+        <div class="w-40 h-40 md:w-52 md:h-52 flex-shrink-0">
+          <canvas id="cgpaChart"></canvas>
+        </div>
+        <div class="space-y-2 text-sm">
+          <div><span id="cgpaCompletedLegend"></span> Completed</div>
+          <div><span id="cgpaNeededLegend"></span> Needed</div>
+          <div><span id="cgpaUnusedLegend"></span> Unused</div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
