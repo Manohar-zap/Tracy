@@ -455,7 +455,7 @@
     </div>
   </div>
 
-  <!-- ── TIMETABLE (folder-based read + manual upload fallback, read-only preview) ── -->
+  <!-- ── TIMETABLE (folder-based read) ── -->
   <div class="page fade-up" id="page-timetable">
     <div class="flex items-center gap-3 mb-2">
       <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
@@ -649,7 +649,9 @@
               <div>Safe bunks: <span id="calcBunk" class="font-semibold text-green-400">--</span></div>
             </div>
           </div>
-          <div class="h-48"><canvas id="calcChart"></canvas></div>
+          <div class="h-48 flex items-center justify-center">
+            <canvas id="calcChart"></canvas>
+          </div>
         </div>
       </div>
     </div>
@@ -664,14 +666,19 @@
           max="10" step="0.01" oninput="if(this.value>10)this.value=10; renderCgpaCalc()">
       </div>
       <div class="card1" style="min-height:100px;padding:16px">
+        <div class="card-label-container" style="font-size:13px">Sem completed</div>
+        <input type="number" id="semCompleted" class="number-input" style="font-size:40px" placeholder="1" min="1" max="7"
+          step="1" oninput="if(this.value<1)this.value=1; if(this.value>7)this.value=7; renderCgpaCalc();" />
+        </div>
+        <div class="card1" style="min-height:100px;padding:16px">
         <div class="card-label-container" style="font-size:13px">Target CGPA</div>
         <input type="number" id="cgpaTarget" class="number-input" style="font-size:40px" placeholder="0.0" min="0"
           max="10" step="0.01" oninput="if(this.value>10)this.value=10; renderCgpaCalc()" />
       </div>
       <button class="btn-ghost text-xs" onclick="resetCgpaCalc()"><i class="fas fa-undo mr-1"></i>Reset</button>
-    </div>
-    <div class="flex-1 min-w-0">
-      <div class="flex justify-between items-start mb-2">
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="flex justify-between items-start mb-2">
         <div>
           <span id="cgpaDelta" class="text-3xl font-bold">--</span>
           <p id="cgpaStatus" class="text-xs text-gray-400 mt-0.5">Enter values</p>
@@ -830,13 +837,12 @@
     <div class="card p-6 max-w-2xl">
       <p>We'd love to hear from you. For questions, feedback, timetable updates, or ad submissions:</p>
       <h2>Email</h2>
-      <p>contact@Tracy.app <span class="text-gray-500">(replace with your real email)</span></p>
+      <p>zapman007@gmail.com</p>
       <h2>Report Issues</h2>
       <p>If you find incorrect timetable data, use the <b class="text-gray-300">Request New TT</b> button on the Timetable
         page to submit an updated schedule.</p>
       <h2>Submit Ads</h2>
-      <p>College clubs and organizations can submit promotional posters via our Google Form (configured in <code
-          class="text-indigo-400">ads/config.json</code>).</p>
+      <p>College clubs and organizations can submit promotional posters via our Google Form.</p>
       <h2>Response Time</h2>
       <p>We aim to respond within 2–3 business days.</p>
     </div>

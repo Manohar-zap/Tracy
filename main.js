@@ -1318,21 +1318,31 @@ function renderCalcChart(a, t) {
       data.push((((a + i) / (t + i)) * 100).toFixed(1));
     }
   }
-  const absent = t - a;
+  const absent = Math.max(0, t - a);
+
+  const { need, bunk } = calcNeedAndBunk(
+    { attended: a, total: t },
+    STATE.target,
+  );
 
   calcChartInst = new Chart(ctx, {
-    type: "pie",
+    type: "doughnut",
     data: {
-      labels: ["Attended", "Absent"],
+      labels: ["Attended", "Safe Bunks", "Needed", "Absent"],
       datasets: [
         {
-          data: [a, absent],
+          data: [a, bunk, need, absent],
+          backgroundColor: ["#22c55e", "#f59e0b", "#3b82f6", "#64748b"],
+          borderWidth: 0,
         },
       ],
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false,
+      cutout: 0,
+      plugins: {
+        legend: { display: false },
+      },
     },
   });
 }
@@ -1427,21 +1437,40 @@ function renderQcChart(a, t) {
     }
   }
 
- const absent = t - a;
+ const absent = Math.max(0, t - a);
+
+ const { need, bunk } = calcNeedAndBunk(
+   { attended: a, total: t },
+   quickCalcTarget,
+ );
 
  qcChartInst = new Chart(ctx, {
-   type: "pie",
+   type: "doughnut",
    data: {
-     labels: ["Attended", "Absent"],
+     labels: ["Attended", "Safe Bunks", "Needed", "Absent"],
      datasets: [
        {
-         data: [a, absent],
-         backgroundColor: ["#22c55e", "#ef4444"],
+         data: [a, bunk, need, absent],
+         backgroundColor: ["#22c55e", "#f59e0b", "#3b82f6", "#64748b"],
+         borderWidth: 0,
        },
      ],
    },
    options: {
      responsive: true,
+     cutout: 0,
+     plugins: {
+       legend: { display: false },
+       position: "right",
+       align: "end",
+       labels: {
+         boxWidth: 12,
+         padding: 15,
+       },
+     },
+     layout: {
+       padding: 10,
+     },
      maintainAspectRatio: false,
    },
  });
@@ -2221,10 +2250,12 @@ let cgpaChartInst = null;
 function renderCgpaCalc() {
   const curEl = document.getElementById("cgpaCurrent");
   const tgtEl = document.getElementById("cgpaTarget");
-  if (!curEl || !tgtEl) return;
+  const semEl = document.getElementById("semCompleted");
+  if (!curEl || !tgtEl || !semEl) return;
 
   let current = parseFloat(curEl.value);
   let target = parseFloat(tgtEl.value);
+  let sem = parseInt(semEl.value, 10);
   if (current > 10) {
     current = 10;
     curEl.value = 10;
@@ -2233,6 +2264,11 @@ function renderCgpaCalc() {
   if (target > 10) {
     target = 10;
     tgtEl.value = 10;
+  }
+
+  if (sem > 7) {
+    sem = 7;
+    semEl.value = 7;
   }
 
   if (current < 0) {
@@ -2244,11 +2280,17 @@ function renderCgpaCalc() {
     target = 0;
     tgtEl.value = 0;
   }
+
+  if (sem < 1 || isNaN(sem)) {
+    sem = NaN;
+    semEl.value = "";
+  }
+
   const deltaEl = document.getElementById("cgpaDelta");
   const statusEl = document.getElementById("cgpaStatus");
   const gapEl = document.getElementById("cgpaGap10");
 
-  if (isNaN(current) || isNaN(target)) {
+  if (isNaN(current) || isNaN(target) || isNaN(sem)) {
     deltaEl.textContent = "--";
     deltaEl.className = "text-3xl font-bold";
     statusEl.textContent = "Enter values";
@@ -2259,78 +2301,101 @@ function renderCgpaCalc() {
 
   current = Math.min(10, Math.max(0, current));
   target = Math.min(10, Math.max(0, target));
-  const increase = target - current;
+  const totalSem = 8;
+  const completedSem = Math.min(totalSem - 1, Math.max(1, sem));
+
+  let bestPath = null;
+  const possiblePaths = [];
+
+  for (let futureSem = 1; futureSem <= 8 - completedSem; futureSem++) {
+    const requiredAvg =
+      (target * (completedSem + futureSem) - current * completedSem) /
+      futureSem;
+
+    if (requiredAvg <= 10) {
+      possiblePaths.push({
+        semesters: futureSem,
+        avg: requiredAvg,
+      });
+
+      if (!bestPath) {
+        bestPath = {
+          semesters: futureSem,
+          avg: requiredAvg,
+        };
+      }
+    }
+  }
   const gap10 = 10 - target;
 
-  if (increase > 0) {
-    deltaEl.textContent = "+" + increase.toFixed(2);
-    deltaEl.className = "text-3xl font-bold text-yellow-400";
-    statusEl.textContent = `Need +${increase.toFixed(2)} to reach ${target.toFixed(2)}`;
-  } else if (increase < 0) {
-    deltaEl.textContent = increase.toFixed(2);
-    deltaEl.className = "text-3xl font-bold text-green-400";
-    statusEl.textContent = `Already ${Math.abs(increase).toFixed(2)} above target`;
+  if (bestPath) {
+    deltaEl.textContent = bestPath.avg.toFixed(2);
+
+    if (bestPath.avg >= 9) {
+      deltaEl.className = "text-3xl font-bold text-red-400";
+    } else if (bestPath.avg >= 8) {
+      deltaEl.className = "text-3xl font-bold text-yellow-400";
+    } else {
+      deltaEl.className = "text-3xl font-bold text-green-400";
+    }
+    statusEl.innerHTML = possiblePaths
+      .map(
+        (p) => `Sem ${completedSem + p.semesters} → ${p.avg.toFixed(2)} SGPA`,
+      )
+      .join("<br>");
   } else {
-    deltaEl.textContent = "0.00";
-    deltaEl.className = "text-3xl font-bold text-green-400";
-    statusEl.textContent = "Target reached!";
+    deltaEl.textContent = "IMPOSSIBLE";
+    deltaEl.className = "text-3xl font-bold text-red-400";
+
+    statusEl.textContent = `Target ${target.toFixed(2)} cannot be reached within 8 semesters`;
   }
 
   if (gapEl) gapEl.textContent = gap10.toFixed(2);
-
-  renderCgpaChart(current, target);
+  renderCgpaChart(sem, bestPath ? bestPath.semesters : 0);
 }
 
-function renderCgpaChart(current, target) {
+function renderCgpaChart(completedSem, neededSem) {
   const ctx = document.getElementById("cgpaChart");
   if (!ctx) return;
+
   if (cgpaChartInst) {
     cgpaChartInst.destroy();
     cgpaChartInst = null;
   }
 
-  const gap = Math.max(0, target - current);
-  const rest = Math.max(0, 10 - target);
+  const unusedSem = Math.max(0, 8 - completedSem - neededSem);
 
   cgpaChartInst = new Chart(ctx, {
     type: "pie",
     data: {
-      labels: ["Current CGPA", "Required Increase", "Remaining to 10"],
+      labels: ["Completed", "Needed", "Unused"],
       datasets: [
         {
-          data: [current, gap, rest],
-          backgroundColor: ["#6366f1", "#f59e0b", "#334155"],
+          data: [completedSem, neededSem, unusedSem],
+          backgroundColor: ["#22c55e", "#f59e0b", "#3b82f6"],
           borderWidth: 0,
         },
       ],
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false,
+      cutout: 0,
       plugins: {
-        legend: {
-          position: "bottom",
-          labels: { color: "#94a3b8", font: { size: 11 }, padding: 12 },
-        },
-        tooltip: {
-          callbacks: {
-            label: (tooltipItem) => {
-              const label = tooltipItem.label ?? "";
-              const value = tooltipItem.parsed ?? tooltipItem.raw ?? 0;
-              return ` ${label}: ${Number(value).toFixed(2)}`;
-            },
-          },
-        },
+        legend: { display: false },
       },
     },
   });
 }
 
+  
+
 function resetCgpaCalc() {
   const cur = document.getElementById("cgpaCurrent");
   const tgt = document.getElementById("cgpaTarget");
+  const sem = document.getElementById("semCompleted");
   if (cur) cur.value = "";
   if (tgt) tgt.value = "";
+  if (sem) sem.value = "";
   renderCgpaCalc();
 }
 
