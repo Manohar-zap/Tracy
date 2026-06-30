@@ -29,7 +29,6 @@ const STATE = {
   week1TimetableId: null,
   week2TimetableId: null,
   target: 75, // global target — dashboard / attendance coloring
-  predTarget: 75, // prediction page target toggle
   quickCalcTarget: 75, // standalone calculator target toggle
   currentPage: "dashboard",
   weekOverrides: {
@@ -370,7 +369,8 @@ function parseAttendanceExcel(file) {
       if (!nameRaw || nameRaw === "Course Name" || nameRaw === "Total") return;
 
       const total = Number(row["__EMPTY_1"]) || 0;
-      const ahdl = Number(row["__EMPTY_4"]) || 0;
+      const attended = Number(row["__EMPTY_2"]) || 0;
+      const dutyLeave = Number(row["__EMPTY_3"]) || 0;
       if (total === 0) return;
 
       const existing = STATE.subjects.find(
@@ -379,7 +379,8 @@ function parseAttendanceExcel(file) {
       subjects.push({
         id: existing?.id || genId(),
         name: nameRaw,
-        attended: ahdl,
+        attended,
+        dutyLeave,
         total,
       });
     });
@@ -388,7 +389,7 @@ function parseAttendanceExcel(file) {
       showToast("No subjects found in file.");
       return;
     }
-
+    console.table(subjects);
     STATE.subjects = subjects;
     saveState();
 
@@ -783,40 +784,6 @@ function renderInlineAdSlider() {
 // ─────────────────────────────────────────────
 // 7. PREDICTION ENGINE (redesigned)
 // ─────────────────────────────────────────────
-//
-// LOGIC:
-//
-//  Week 1 prediction = "If I attend every remaining scheduled class for the
-//  rest of THIS week (today through the end of the Week-1 timetable),
-//  where does my attendance land?"
-//    → extra = count of this-subject's classes on rows whose weekday is
-//      >= today's weekday, in the Week-1 timetable. Cells containing the
-//      word "holiday" are skipped automatically.
-//
-//  Week 2 prediction = "If, on top of that, I also attend a FULL following
-//  week (every day in the Week-2 timetable), where do I land?"
-//    → extra = Week-1's remaining-this-week count + every class in the
-//      Week-2 timetable (no weekday filter — it's a complete week ahead).
-//
-//  This makes Week 2 a cumulative continuation of Week 1, not an unrelated
-//  duplicate calculation — so the two numbers always tell a coherent story
-//  ("by end of this week → by end of next week").
-//
-//  Both numbers assume every remaining class is ATTENDED (best case), since
-//  that's what a forward "prediction" is useful for: showing the ceiling
-//  you can realistically reach if you don't miss anything from now on.
-//
-let predTarget = 75;
-
-function setPredTarget(t) {
-  predTarget = t;
-  STATE.predTarget = t;
-  saveState();
-  document
-    .querySelectorAll(".pred-target-btn")
-    .forEach((b) => b.classList.toggle("active", Number(b.dataset.t) === t));
-  renderPredictionPage();
-}
 
 function normalizeDayName(raw) {
   return String(raw || "")
@@ -917,6 +884,22 @@ function renderPredictionPage() {
   renderPredCards();
 }
 
+function getShortSubjectName(name) {
+  const code = name.match(/\(([^)]+)\)/);
+  if (code) return code[1];
+
+  const words = name.replace(/[()]/g, "").split(/\s+/).filter(Boolean);
+
+  if (words.length > 1) {
+    return words
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase();
+  }
+
+  return name;
+}
+
 function renderPredTable(tableId, weekNum) {
   const tbody = document.getElementById(tableId);
   if (!tbody) return;
@@ -970,17 +953,17 @@ function renderPredTable(tableId, weekNum) {
       const pct = newT ? (newA / newT) * 100 : 0;
       const { need, bunk } = calcNeedAndBunk(
         { attended: newA, total: newT },
-        predTarget,
+        STATE.target,
       );
       const cls =
-        pct >= predTarget
+        pct >= STATE.target
           ? "text-green-400"
-          : pct >= predTarget - 10
+          : pct >= STATE.target - 10
             ? "text-yellow-400"
             : "text-red-400";
 
       return `<tr class="border-b border-white/5">
-      <td class="py-2 pr-2 max-w-[100px] truncate" title="${s.name}">${s.name.length > 15 ? s.name.substring(0, 14) + "…" : s.name}</td>
+      <td class="py-2 pr-2 max-w-[100px] truncate" title="${s.name}">${getShortSubjectName(s.name)}</td>
       <td class="py-2 text-indigo-400">+${extra}</td>
       <td class="py-2">${newA}</td>
       <td class="py-2">${newT}</td>
@@ -1056,14 +1039,14 @@ function renderPredCards() {
           attended: futureAttended,
           total: futureTotal,
         },
-        predTarget,
+        STATE.target,
       );
 
       let cls = "pct-danger";
 
-      if (pct >= predTarget) {
+      if (pct >= STATE.target) {
         cls = "pct-safe";
-      } else if (pct >= predTarget - 10) {
+      } else if (pct >= STATE.target - 10) {
         cls = "pct-warn";
       }
 
@@ -1088,7 +1071,7 @@ function renderPredCards() {
         <p class="text-xs mt-2 ${
           need > 0 ? "text-yellow-400" : "text-green-400"
         }">
-        ${need > 0 ? `+${need} needed for ${predTarget}%` : `${bunk} safe bunks`}
+        ${need > 0 ? `+${need} needed for ${STATE.target}%` : `${bunk} safe bunks`}
         </p>
       </div>
     `;
@@ -1100,7 +1083,10 @@ function renderPredCards() {
 // 8. SHARED ATTENDANCE-MATH HELPERS
 // ─────────────────────────────────────────────
 function calcStats(subjects) {
-  const totalAttended = subjects.reduce((a, s) => a + (s.attended || 0), 0);
+  const totalAttended = subjects.reduce(
+    (a, s) => a + (s.attended || 0) + (s.dutyLeave || 0),
+    0,
+  );
   const totalClasses = subjects.reduce((a, s) => a + (s.total || 0), 0);
   const overall = totalClasses === 0 ? 0 : (totalAttended / totalClasses) * 100;
   return { totalAttended, totalClasses, overall };
@@ -1118,13 +1104,24 @@ function calcNeedAndBunk(s, target) {
 
   if (!total) return { need: 0, bunk: 0 };
 
-  const requiredAttended = Math.ceil((target / 100) * total);
+  const t = target / 100;
 
-  const need = Math.max(0, requiredAttended - a);
+  let need = 0;
 
-  const bunk = Math.max(0, a - requiredAttended);
+  if (a / total < t) {
+    need = Math.ceil((t * total - a) / (1 - t));
+  }
 
-  return { need, bunk };
+  let bunk = 0;
+
+  if (a / total >= t) {
+    bunk = Math.floor((a - t * total) / t);
+  }
+
+  return {
+    need: Math.max(0, need),
+    bunk: Math.max(0, bunk),
+  };
 }
 
 // ─────────────────────────────────────────────
@@ -1168,7 +1165,9 @@ function renderDashboard() {
 
   listEl.innerHTML = STATE.subjects
     .map((s) => {
-      const pct = s.total ? (s.attended / s.total) * 100 : 0;
+      const pct = s.total
+        ? (((s.attended || 0) + (s.dutyLeave || 0)) / s.total) * 100
+        : 0;
       const { need, bunk } = calcNeedAndBunk(s, STATE.target);
       const cls = pctClass(pct);
       return `<div class="card p-3 flex items-center gap-3">
@@ -1180,7 +1179,7 @@ function renderDashboard() {
       </div>
       <div class="text-right flex-shrink-0">
         <span class="text-sm font-bold ${cls}">${pct.toFixed(1)}%</span>
-        <p class="text-xs text-gray-500">${s.attended}/${s.total}</p>
+       <p class="text-xs text-gray-500">${(s.attended || 0) + (s.dutyLeave || 0)}/${s.total}</p>
       </div>
       <div class="text-right text-xs flex-shrink-0">
         ${need > 0 ? `<span class="text-yellow-400">Need +${need}</span>` : `<span class="text-green-400">${bunk} bunks safe</span>`}
@@ -1212,11 +1211,13 @@ function renderAttendanceTable() {
 
   tbody.innerHTML = STATE.subjects
     .map((s) => {
-      const pct = s.total ? (s.attended / s.total) * 100 : 0;
+      const pct = s.total
+        ? (((s.attended || 0) + (s.dutyLeave || 0)) / s.total) * 100
+        : 0;
       const cls = pctClass(pct);
       return `<tr class="border-b border-white/5 hover:bg-white/2">
       <td class="px-4 py-3 text-sm font-medium">${s.name}</td>
-      <td class="px-4 py-3 text-center text-sm">${s.attended}</td>
+      <td class="px-4 py-3 text-center text-sm">${(s.attended || 0) + (s.dutyLeave || 0)}</td>
       <td class="px-4 py-3 text-center text-sm">${s.total}</td>
       <td class="px-4 py-3 text-center"><span class="font-semibold text-sm ${cls}">${pct.toFixed(1)}%</span></td>
       <td class="px-4 py-3 text-right">
@@ -1310,8 +1311,11 @@ function renderCalc() {
   if (!t) {
     document.getElementById("calcPercent").textContent = "--%";
     document.getElementById("calcStatus").textContent = "Select a subject";
-    document.getElementById("calcNeed").textContent = "--";
-    document.getElementById("calcBunk").textContent = "--";
+    const needEl = document.getElementById("calcNeed");
+    const bunkEl = document.getElementById("calcBunk");
+
+    if (needEl) needEl.textContent = "--";
+    if (bunkEl) bunkEl.textContent = "--";
     renderCalcChart();
     return;
   }
@@ -1336,13 +1340,13 @@ function renderCalc() {
     { attended: a, total: t },
     STATE.target,
   );
+
   const calcNeedEl = document.getElementById("calcNeed");
   const calcBunkEl = document.getElementById("calcBunk");
 
   if (calcNeedEl) calcNeedEl.textContent = need > 0 ? "+" + need : "0";
 
   if (calcBunkEl) calcBunkEl.textContent = bunk > 0 ? bunk + " bunks" : "0";
-
   renderCalcChart(a, t);
 }
 
@@ -1562,8 +1566,9 @@ function renderAttendanceBreakdownChart() {
         : s.name;
   });
   const present = STATE.subjects.map((s) => s.attended || 0);
+  const duty = STATE.subjects.map((s) => s.dutyLeave || 0);
   const absent = STATE.subjects.map((s) =>
-    Math.max(0, (s.total || 0) - (s.attended || 0)),
+    Math.max(0, (s.total || 0) - (s.attended || 0) - (s.dutyLeave || 0)),
   );
   const minLine = STATE.subjects.map(
     (s) => (s.total || 0) * (STATE.target / 100),
@@ -1578,6 +1583,14 @@ function renderAttendanceBreakdownChart() {
           label: "Present",
           data: present,
           backgroundColor: "rgba(99,102,241,0.85)",
+          borderRadius: 6,
+          order: 2,
+        },
+        {
+          type: "bar",
+          label: "Duty Leave",
+          data: duty,
+          backgroundColor: "rgba(245,158,11,0.85)",
           borderRadius: 6,
           order: 2,
         },
@@ -2313,7 +2326,6 @@ function initAdsSwipe() {
 // ─────────────────────────────────────────────
 // 24. CGPA CALCULATOR
 // ─────────────────────────────────────────────
-let cgpaChartInst = null;
 
 function renderCgpaCalc() {
   const curEl = document.getElementById("cgpaCurrent");
@@ -2349,9 +2361,8 @@ function renderCgpaCalc() {
     tgtEl.value = 0;
   }
 
-  if (sem < 1 || isNaN(sem)) {
+  if (isNaN(sem)) {
     sem = NaN;
-    semEl.value = "";
   }
 
   const deltaEl = document.getElementById("cgpaDelta");
@@ -2361,9 +2372,8 @@ function renderCgpaCalc() {
   if (isNaN(current) || isNaN(target) || isNaN(sem)) {
     deltaEl.textContent = "--";
     deltaEl.className = "text-3xl font-bold";
-    statusEl.textContent = "Enter values";
+    if (statusEl) statusEl.textContent = "Enter values";
     if (gapEl) gapEl.textContent = "--";
-    renderCgpaChart(0, 0);
     return;
   }
 
@@ -2372,108 +2382,41 @@ function renderCgpaCalc() {
   const totalSem = 8;
   const completedSem = Math.min(totalSem - 1, Math.max(1, sem));
 
-  let bestPath = null;
-  const possiblePaths = [];
+  const remainingSem = 8 - completedSem;
 
-  for (let futureSem = 1; futureSem <= 8 - completedSem; futureSem++) {
-    const requiredAvg =
-      (target * (completedSem + futureSem) - current * completedSem) /
-      futureSem;
+  const requiredAvg = (target * 8 - current * completedSem) / remainingSem;
 
-    if (requiredAvg <= 10) {
-      possiblePaths.push({
-        semesters: futureSem,
-        avg: requiredAvg,
-      });
-
-      if (!bestPath) {
-        bestPath = {
-          semesters: futureSem,
-          avg: requiredAvg,
-        };
-      }
-    }
-  }
   const gap10 = 10 - target;
 
-  if (bestPath) {
-    deltaEl.textContent = bestPath.avg.toFixed(2);
+  if (requiredAvg <= 10) {
+    deltaEl.textContent = requiredAvg.toFixed(2);
 
-    if (bestPath.avg >= 9) {
+    if (requiredAvg >= 9) {
       deltaEl.className = "text-3xl font-bold text-red-400";
-    } else if (bestPath.avg >= 8) {
+    } else if (requiredAvg >= 8) {
       deltaEl.className = "text-3xl font-bold text-yellow-400";
     } else {
       deltaEl.className = "text-3xl font-bold text-green-400";
     }
-    statusEl.innerHTML = possiblePaths
-      .map(
-        (p) => `Sem ${completedSem + p.semesters} → ${p.avg.toFixed(2)} SGPA`,
-      )
-      .join("<br>");
+
+    if (statusEl) statusEl.textContent = "";
   } else {
     deltaEl.textContent = "IMPOSSIBLE";
     deltaEl.className = "text-3xl font-bold text-red-400";
-
-    statusEl.textContent = `Target ${target.toFixed(2)} cannot be reached within 8 semesters`;
+    if (statusEl) statusEl.textContent = "";
   }
+  const card = document.getElementById("neededCgpaCard");
 
-  if (gapEl) gapEl.textContent = gap10.toFixed(2);
-  renderCgpaChart(sem, bestPath ? bestPath.semesters : 0);
-}
+  card.classList.remove("cgpa-green", "cgpa-yellow", "cgpa-red");
 
-function renderCgpaChart(completedSem, neededSem) {
-  const ctx = document.getElementById("cgpaChart");
-  if (!ctx) return;
-
-  if (cgpaChartInst) {
-    cgpaChartInst.destroy();
-    cgpaChartInst = null;
+  if (requiredAvg <= 7.5) {
+    card.classList.add("cgpa-green");
+  } else if (requiredAvg <= 8.5) {
+    card.classList.add("cgpa-yellow");
+  } else {
+    card.classList.add("cgpa-red");
   }
-
-  const unusedSem = Math.max(0, 8 - completedSem - neededSem);
-
-  cgpaChartInst = new Chart(ctx, {
-    type: "pie",
-    data: {
-      labels: [
-        `Completed (${completedSem})`,
-        `Needed (${neededSem})`,
-        `Unused (${unusedSem})`,
-      ],
-      datasets: [
-        {
-          data: [completedSem, neededSem, unusedSem],
-          backgroundColor: ["#22c55e", "#f59e0b", "#3b82f6"],
-          borderWidth: 0,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: 0,
-      plugins: {
-        legend: { display: false },
-      },
-      layout: {
-        padding: 10,
-      },
-    },
-  });
-  const colors = ["#22c55e", "#f59e0b", "#3b82f6"];
-
-  document.getElementById("cgpaCompletedLegend").innerHTML =
-    `<span class="legend-dot" style="background:${colors[0]}"></span>`;
-
-  document.getElementById("cgpaNeededLegend").innerHTML =
-    `<span class="legend-dot" style="background:${colors[1]}"></span>`;
-
-  document.getElementById("cgpaUnusedLegend").innerHTML =
-    `<span class="legend-dot" style="background:${colors[2]}"></span>`;
 }
-
-  
 
 function resetCgpaCalc() {
   const cur = document.getElementById("cgpaCurrent");
@@ -2533,7 +2476,10 @@ function getSubjectPredInfo(subjectId) {
 
   const futureAttended = s.attended + extra;
   const futureTotal = s.total + extra;
-  const { need, bunk } = calcNeedAndBunk({ attended: futureAttended, total: futureTotal }, predTarget);
+  const { need, bunk } = calcNeedAndBunk(
+    { attended: futureAttended, total: futureTotal },
+    STATE.target,
+  );
   const statusText = need > 0 ? `+${need} needed` : `${bunk} safe bunk`;
 
   return { subject: s, statusText, tt: w1 };

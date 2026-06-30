@@ -23,6 +23,7 @@
 
     .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; transition: box-shadow 0.2s, transform 0.2s; }
     .card:hover { box-shadow: 0 8px 28px rgba(0,0,0,0.35); transform: translateY(-1px); }
+    .card1::after{ content:""; position:absolute; inset:0; background-repeat:no-repeat;  background-position:right 16px bottom 18px; background-size:180px auto; opacity:.15; pointer-events:none; z-index:0; }
 
     .nav-link { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; color: #94a3b8; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.15s, color 0.15s; }
     .nav-link:hover { background: rgba(255,255,255,0.05); color: #f1f5f9; }
@@ -56,6 +57,13 @@
     .ctrl-btn.minus:hover { background: rgba(239,68,68,0.35); }
     .ctrl-btn.plus { background: rgba(34,197,94,0.18); color: #4ade80; }
     .ctrl-btn.plus:hover { background: rgba(34,197,94,0.35); }
+
+    .cgpa-green{ background:linear-gradient(135deg,#113327,#0f2b22); }
+    .cgpa-green::after{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 220'%3E%3Cpath d='M20 180 C90 170 130 145 180 130 S300 95 360 70 S430 40 470 20' fill='none' stroke='%2334d399' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E"); }
+    .cgpa-yellow{ background:linear-gradient(135deg,#3a2d08,#2a2106); }
+    .cgpa-yellow::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 220'%3E%3Cpath d='M20 175 C90 175 150 155 220 130 S340 105 410 80 S450 60 470 45' fill='none' stroke='%23fbbf24' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E"); }
+    .cgpa-red{ background:linear-gradient(135deg,#3a1010,#2b0d0d); }
+    .cgpa-red::after{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 220'%3E%3Cpath d='M20 185 C100 182 170 165 250 135 S360 90 430 60 S455 45 470 65' fill='none' stroke='%23ef4444' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E"); }
 
     .btn-primary { background: var(--primary); color: #fff; padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: background 0.15s; }
     .btn-primary:hover { background: var(--primary-dark); }
@@ -143,7 +151,7 @@
      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         .app-container { width: 100%; max-width: 480px; padding: 24px; }
         .cards-stack { display: flex; flex-direction: column; gap: 12px; }
-        .card1 { background: #212121; border-radius: 12px; padding: 24px; min-height: 140px; display: flex; flex-direction: column; justify-content: center; gap: 12px; }
+        .card1{ position:relative; overflow:hidden; background:#212121; border-radius:12px; padding:24px; min-height:140px; display:flex; flex-direction:column; justify-content:center; gap:12px; }
         @media (max-width:768px){ .card1{ min-height:80px !important; padding:12px !important; } .number-input{ font-size:32px !important; } }
         .card-label-container { display: flex; align-items: center; color: #9e9e9e; font-size: 18px; font-weight: 500; }
         .number-input { background: transparent !important; border: none !important; color: white; font-size: 56px; }
@@ -151,7 +159,6 @@
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; } input[type=number] { -moz-appearance: textfield; }
   
         .legend-dot{ display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:6px; vertical-align:middle; }
-  
   </style>
 </head>
 <body>
@@ -490,16 +497,6 @@
       <b>Next Week</b> = Current Week's result plus a full additional week from the Next Week timetable — a running, cumulative forecast.
     </p>
 
-    <div class="card p-4 mb-5">
-      <p class="section-label">Target</p>
-      <div class="flex gap-2 flex-wrap" id="predTargetBtns">
-        <button class="badge badge-safe pred-target-btn active" data-t="75" onclick="setPredTarget(75)">75%</button>
-        <button class="badge badge-warn pred-target-btn" data-t="80" onclick="setPredTarget(80)">80%</button>
-        <button class="badge pred-target-btn" style="background:rgba(99,102,241,0.15);color:#a5b4fc" data-t="85" onclick="setPredTarget(85)">85%</button>
-        <button class="badge pred-target-btn" style="background:rgba(239,68,68,0.15);color:#f87171" data-t="90" onclick="setPredTarget(90)">90%</button>
-      </div>
-    </div>
-
     <div class="grid md:grid-cols-2 gap-4 mb-6">
       <div class="card p-4 overflow-x-auto">
         <h3 class="font-semibold mb-3">Current Week Prediction</h3>
@@ -540,18 +537,8 @@
       <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
       <h1 class="text-xl font-bold">Quick Calculator</h1>
     </div>
-    <p class="text-xs text-gray-500 mb-5">Standalone — type any numbers you like. Not linked to your saved subjects.</p>
-
-    <div class="card p-4 mb-5">
-      <p class="section-label">Target</p>
-      <div class="flex gap-2 flex-wrap">
-        <button class="badge badge-safe quick-target-btn active" data-t="75" onclick="setQuickCalcTarget(75)">75%</button>
-        <button class="badge badge-warn quick-target-btn" data-t="80" onclick="setQuickCalcTarget(80)">80%</button>
-        <button class="badge quick-target-btn" style="background:rgba(99,102,241,0.15);color:#a5b4fc" data-t="85" onclick="setQuickCalcTarget(85)">85%</button>
-        <button class="badge quick-target-btn" style="background:rgba(239,68,68,0.15);color:#f87171" data-t="90" onclick="setQuickCalcTarget(90)">90%</button>
-      </div>
-    </div>
-
+    <p class="text-xs text-gray-500 mb-5">Note - Increasing Attended classses also increases Total classes</p>
+    <h2 class="font-semibold mb-3 mt-8">Manual Calculator</h2>
     <div class="card p-5">
       <div class="flex flex-col lg:flex-row gap-5">
         <div class="w-full lg:w-36 flex-shrink-0 flex flex-col gap-3">
@@ -579,10 +566,8 @@
             <p id="qcStatus" class="text-sm text-gray-400 mt-2">Enter values</p>
           </div>
         <div class="space-y-3 text-sm">
-          <div><span id="attendedLegend"></span> Attended:</div>
-          <div><span id="bunkLegend"></span> Bunks:<span id="qcBunk"></span></div>
-          <div><span id="needLegend"></span> Need:<span id="qcNeed"></span></div>
-          <div><span id="absentLegend"></span> Absent:</div>
+          <div><span id="qcBunkLegend"></span> Bunks:&nbsp; <span id="qcBunk"></span></div>
+          <div><span id="qcNeedLegend"></span> Need:&nbsp;<span id="qcNeed"></span></div>
               </div>
             </div>
             </div>
@@ -599,8 +584,7 @@
           </select>
 <div class="card1" style="min-height:100px;padding:16px">
   <div class="card-label-container" style="font-size:13px">Total Classes</div>
-  <input type="number" id="calcTotalInput" class="number-input" style="font-size:40px" placeholder="0"
-    oninput="updateSubjectCalc()" />
+  <input type="number" id="calcTotalInput" class="number-input" style="font-size:40px" placeholder="0" readonly />
 </div>
 
 <div class="card1" style="min-height:100px;padding:16px">
@@ -608,7 +592,7 @@
   
     <div class="flex items-center justify-between gap-3">
       <input type="number" id="calcAttendedInput" class="number-input" style="font-size:40px; width:120px;" placeholder="0"
-        oninput="updateSubjectCalc()" />
+        readonly />
       <div class="ctrl-box">
         <button class="ctrl-btn minus" onclick="changeFutureAttend(-1)">-</button>
         <button class="ctrl-btn plus" onclick="changeFutureAttend(1)">+</button>
@@ -631,10 +615,8 @@
               <p id="calcStatus" class="text-sm text-gray-400 mt-2">Select a subject</p>
             </div>
             <div class="space-y-3 text-sm">
-              <div><span id="attendedLegend"></span> Attended:</div>
-              <div><span id="bunkLegend"></span> Bunks: <span id="qcBunk"></span></div>
-              <div><span id="needLegend"></span> Need: <span id="qcNeed"></span></div>
-              <div><span id="absentLegend"></span> Absent:</div>
+              <div><span id="calcBunkLegend"></span> Bunks:&nbsp; <span id="calcBunk"></span></div>
+              <div><span id="calcNeedLegend"></span> Need:&nbsp;<span id="calcNeed"></span></div>
             </div>
           </div>
           </div>
@@ -643,7 +625,6 @@
     </div>
     
 <h2 class="font-semibold mb-3 mt-8">CGPA Calculator</h2>
-<p class="text-xs text-gray-500 mb-4">Enter your current and target CGPA to see how much you need to improve.</p>
 <div class="card p-5 mb-6">
   <div class="flex flex-col lg:flex-row gap-5">
     <div class="w-full lg:w-40 flex flex-col gap-3">
@@ -654,8 +635,7 @@
       </div>
       <div class="card1" style="min-height:100px;padding:16px">
         <div class="card-label-container" style="font-size:13px">Sem completed</div>
-        <input type="number" id="semCompleted" class="number-input" style="font-size:40px" placeholder="1" min="1" max="7"
-          step="1" oninput="if(this.value<1)this.value=1; if(this.value>7)this.value=7; renderCgpaCalc();" />
+        <input type="number" id="semCompleted" class="number-input" style="font-size:40px" placeholder="1" min="1" max="7" step="1" oninput="renderCgpaCalc()" onblur=" if(this.value==='') this.value=''; else if(+this.value<1) this.value=1; else if(+this.value>7) this.value=7; renderCgpaCalc(); " />
         </div>
         <div class="card1" style="min-height:100px;padding:16px">
         <div class="card-label-container" style="font-size:13px">Target CGPA</div>
@@ -665,26 +645,18 @@
       <button class="btn-ghost text-xs" onclick="resetCgpaCalc()"><i class="fas fa-undo mr-1"></i>Reset</button>
       </div>
       <div class="flex-1 min-w-0">
-        <div class="flex flex-col md:flex-row justify-between items-start gap-3 mb-2">
-        <div>
-          <span id="cgpaDelta" class="text-2xl md:text-3xl font-bold">--</span>
-          <p id="cgpaStatus" class="text-xs text-gray-400 mt-0.5">Enter values</p>
+      <div id="neededCgpaCard" class="card1" style="min-height:140px;padding:16px">
+        <div class="card-label-container" style="font-size:13px">
+          Needed Average CGPA
         </div>
-        <div class="text-right text-xs text-gray-500">
-          <div>Scale: <span class="font-semibold text-indigo-400">out of 10</span></div>
-          <div>Gap to 10: <span id="cgpaGap10" class="font-semibold text-gray-400">--</span></div>
-        </div>
-      </div>
-      <div class="flex items-center justify-center gap-4">
       
-        <div class="w-40 h-40 md:w-52 md:h-52 flex-shrink-0">
-          <canvas id="cgpaChart"></canvas>
+        <div id="cgpaDelta" class="text-4xl font-bold text-center mt-3">
+          --
         </div>
-        <div class="space-y-2 text-sm">
-          <div><span id="cgpaCompletedLegend"></span> Completed</div>
-          <div><span id="cgpaNeededLegend"></span> Needed</div>
-          <div><span id="cgpaUnusedLegend"></span> Unused</div>
-        </div>
+      <p id="cgpaStatus" class="text-sm text-gray-400 text-center mt-2">
+        Enter values
+      </p>
+      </div>
       </div>
     </div>
   </div>
@@ -834,7 +806,7 @@
     <div class="card p-6 max-w-2xl">
       <p>We'd love to hear from you. For questions, feedback, timetable updates, or ad submissions:</p>
       <h2>Email</h2>
-      <p>zapman007@gmail.com</p>
+      <p>youreallythinkiwatchthis@gmail.com</p>
       <h2>Report Issues</h2>
       <p>If you find incorrect timetable data, use the <b class="text-gray-300">Request New TT</b> button on the Timetable
         page to submit an updated schedule.</p>
