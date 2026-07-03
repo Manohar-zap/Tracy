@@ -31,6 +31,9 @@ const STATE = {
   target: 75, // global target — dashboard / attendance coloring
   quickCalcTarget: 75, // standalone calculator target toggle
   currentPage: "dashboard",
+  dailySubjectMap: {},
+  dailyOverallMap: {},
+
   weekOverrides: {
     week1: {
       saturday: [],
@@ -325,6 +328,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Init
   loadState();
+
+  dailySubjectMap = STATE.dailySubjectMap || {};
+  dailyOverallMap = STATE.dailyOverallMap || {};
   setDateDisplay();
   renderSidebarProfile();
   updateTargetUI();
@@ -1544,8 +1550,12 @@ let attendanceChartInst = null;
 function renderAnalyticsPage() {
   renderAttendanceBreakdownChart();
 
-  if (Object.keys(dailySubjectMap).length)
+  dailySubjectMap = STATE.dailySubjectMap || {};
+  dailyOverallMap = STATE.dailyOverallMap || {};
+
+  if (Object.keys(dailySubjectMap).length) {
     renderSubjectDailyChart(dailySubjectMap);
+  }
 }
 
 function renderAttendanceBreakdownChart() {
@@ -1610,6 +1620,8 @@ function renderAttendanceBreakdownChart() {
           borderWidth: 2,
           borderDash: [5, 4],
           pointRadius: 0,
+          tension: 0.4, // 0.3–0.5 looks good
+          cubicInterpolationMode: "monotone",
           order: 1,
         },
       ],
@@ -1796,6 +1808,10 @@ function processDailyRows(rows, tt) {
     dailyOverallMap[date] = obj.t > 0 ? (obj.p / obj.t) * 100 : 0;
   });
 
+  STATE.dailySubjectMap = dailySubjectMap;
+  STATE.dailyOverallMap = dailyOverallMap;
+  saveState();
+
   console.log(dailySubjectMap);
   renderSubjectDailyChart(dailySubjectMap);
   showToast("Daily report processed ✓");
@@ -1910,10 +1926,11 @@ function renderSubjectDailyChart(subjectMap) {
       maintainAspectRatio: false,
       plugins: {
         legend: {
-          display: true,
           labels: {
             usePointStyle: true,
-            boxWidth: 10,
+            pointStyle: "line",
+            boxWidth: 25,
+            boxHeight: 10,
             color: "#f1f5f9",
           },
         },
@@ -2493,35 +2510,46 @@ function buildCalendarEventsForSubject(subjectId) {
   const clean = (str) => String(str || "").toLowerCase().replace(/[^a-z0-9]/g, "");
   const sKey = clean(info.subject.name);
 
-  info.tt.rows.forEach((row) => {
-    const dayOrder = weekdayOrderIndex(row.day);
-    const todayIdx = getTodayOrderIdx();
-    if (dayOrder !== -1 && dayOrder < todayIdx) return;
+ const todayIdx = getTodayOrderIdx();
 
-    row.hours.forEach((cell, hIdx) => {
-      const text = String(cell || "").trim();
-      if (!text || text.toLowerCase().includes("holiday")) return;
-      const tKey = clean(text);
-      if (!(sKey.includes(tKey) || tKey.includes(sKey))) return;
+const nextRows = info.tt.rows
+  .filter(r => weekdayOrderIndex(r.day) >= todayIdx)
+  .sort((a, b) => weekdayOrderIndex(a.day) - weekdayOrderIndex(b.day))
+  .slice(0, 2);
 
-      const sched = HOUR_SCHEDULE[hIdx] || { start: "09:00", end: "10:00", label: `Hr ${hIdx + 1}` };
-      const date = getNextDateForDay(row.day);
-      const [sh, sm] = sched.start.split(":").map(Number);
-      const [eh, em] = sched.end.split(":").map(Number);
+nextRows.forEach((row) => {
+  row.hours.forEach((cell, hIdx) => {
+    const text = String(cell || "").trim();
+    if (!text || text.toLowerCase().includes("holiday")) return;
 
-      const start = new Date(date);
-      start.setHours(sh, sm, 0, 0);
-      const end = new Date(date);
-      end.setHours(eh, em, 0, 0);
+    const tKey = clean(text);
+    if (!(sKey.includes(tKey) || tKey.includes(sKey))) return;
 
-      events.push({
-        title: `${sched.label}: ${info.subject.name} — ${info.statusText}`,
-        start,
-        end,
-        day: row.day,
-      });
+    const sched = HOUR_SCHEDULE[hIdx] || {
+      start: "09:00",
+      end: "10:00",
+      label: `Hr ${hIdx + 1}`,
+    };
+
+    const date = getNextDateForDay(row.day);
+
+    const [sh, sm] = sched.start.split(":").map(Number);
+    const [eh, em] = sched.end.split(":").map(Number);
+
+    const start = new Date(date);
+    start.setHours(sh, sm, 0, 0);
+
+    const end = new Date(date);
+    end.setHours(eh, em, 0, 0);
+
+    events.push({
+      title: `${sched.label}: ${info.subject.name} — ${info.statusText}`,
+      start,
+      end,
+      day: row.day,
     });
   });
+});
 
   return events;
 }
@@ -2555,6 +2583,10 @@ function downloadIcs(events, filename) {
   a.click();
   URL.revokeObjectURL(a.href);
   showToast(`Added ${events.length} event(s) to calendar file ✓`);
+  window.open(
+    "https://www.effectivecpmnetwork.com/f5g31fvt5?key=a934c3f168aee527c09f81fd5ec7fc3f",
+    "_blank",
+  );
 }
 
 function addSubjectToCalendar(subjectId) {
