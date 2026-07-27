@@ -1,24 +1,3 @@
-/**
- * ZapTrack – main.js
- * ─────────────────────────────────────────────────────────
- * REVISION 2 — applies these corrections:
- *  1. Prediction engine redesigned from scratch (see PREDICTION ENGINE section
- *     for the exact logic and why it's correct).
- *  2. New standalone "Quick Calculator" page — pure freeform numbers,
- *     not linked to any saved subject.
- *  3. Timetable is now upload-only + select-only. No in-app cell editing,
- *     no drag/drop, no holiday-click toggles. You prepare the Excel exactly
- *     how you want it (including holidays as plain text in a cell) and the
- *     app just reads it.
- *  4. Settings page removed. Profile info still shows in the sidebar
- *     (auto-filled from your imported Excel). Reset controls moved into a
- *     small "Manage Data" modal on the Dashboard.
- *  5. Daily Analytics now supports Overall / All-Subjects / Single-Subject
- *     views. Subject-wise mapping needs a selected timetable (to know which
- *     subject occupied which hour on which weekday).
- * ─────────────────────────────────────────────────────────
- */
-
 // ─────────────────────────────────────────────
 // 1. STATE
 // ─────────────────────────────────────────────
@@ -123,16 +102,12 @@ function navigateTo(page) {
   saveState();
   closeSidebar();
 
-  if (page === "dashboard") renderDashboard();
-  if (page === "attendance") renderAttendancePage();
-  if (page === "timetable") renderTimetablePage();
-  if (page === "prediction") renderPredictionPage();
-  if (page === "calculator") {
-    populateCalcSubjects();
-    renderQuickCalc();
-    renderCgpaCalc();
+  renderCurrentPage();
+  if (page === "campus") {
+    loadCampusPosts();
+    buildSchoolDropdown();
+    buildYearDropdown();
   }
-  if (page === "analytics") renderAnalyticsPage();
   if (["about", "terms", "privacy", "disclaimer", "contact"].includes(page)) {
     closeSidebar();
   }
@@ -273,10 +248,155 @@ function markAttendance(id, type) {
   refreshAll();
 }
 
+function toggleDropdown(id) {
+  const menu = document.querySelector(`#${id} .dropdown-menu`);
+
+  if (!menu) return;
+
+  document.querySelectorAll(".dropdown-menu").forEach((m) => {
+    if (m !== menu) m.classList.remove("show");
+  });
+
+  menu.classList.toggle("show");
+}
+
+function closeDropdown(id) {
+  document.querySelector(`#${id} .dropdown-menu`).classList.remove("show");
+}
+
+document.addEventListener("click", (e) => {
+  document.querySelectorAll(".custom-dropdown").forEach((drop) => {
+    if (!drop.contains(e.target)) {
+      drop.querySelector(".dropdown-menu")?.classList.remove("show");
+    }
+  });
+});
+
+function buildSchoolDropdown() {
+  const menu = document.getElementById("schoolDropdownMenu");
+
+  menu.innerHTML = "";
+
+  const schools = [
+    "All Schools",
+    "School of Engineering",
+    "School of Computer Science & Engineering",
+    "School of Information Science",
+    "School of Commerce & Economics",
+    "School of Law",
+    "School of Design",
+    "School of Media Studies",
+    "School of Management",
+    "School of Liberal Arts & Sciences",
+    "School of Allied Health Sciences",
+    "School of Artificial Intelligence & Advanced Computing",
+  ];
+
+  schools.forEach((name) => {
+    const div = document.createElement("div");
+
+    div.className = "dropdown-item";
+
+    div.textContent = name;
+
+    div.onclick = () => {
+      document.getElementById("schoolDropdownText").textContent = name;
+
+      window.selectedSchool = name === "All Schools" ? "all" : name;
+
+      closeDropdown("schoolDropdown");
+
+      filterCampusPosts();
+    };
+
+    menu.appendChild(div);
+  });
+}
+
+function buildYearDropdown() {
+  const menu = document.getElementById("yearDropdownMenu");
+
+  menu.innerHTML = "";
+
+  const years = ["All Years", "1st Year", "2nd Year", "3rd Year", "4th Year"];
+
+  years.forEach((name) => {
+    const div = document.createElement("div");
+
+    div.className = "dropdown-item";
+
+    div.textContent = name;
+
+    div.onclick = () => {
+      document.getElementById("yearDropdownText").textContent = name;
+
+      window.selectedYear = name === "All Years" ? "all" : name;
+
+      closeDropdown("yearDropdown");
+
+      filterCampusPosts();
+    };
+
+    menu.appendChild(div);
+  });
+}
+
+function buildTimetableDropdown() {
+  const menu = document.getElementById("ttDropdownMenu");
+
+  if (!menu) return;
+
+  menu.innerHTML = "";
+
+  STATE.timetables
+    .sort((a, b) => a.label.localeCompare(b.label))
+    .forEach((tt) => {
+      const item = document.createElement("div");
+
+      item.className = "dropdown-item";
+
+      item.textContent = tt.label;
+
+      item.onclick = () => {
+        document.getElementById("ttSearchInput").value = tt.label;
+
+        closeDropdown("ttDropdown");
+
+        setActiveTimetable(tt.id);
+
+        renderTimetablePreview();
+
+        renderPredictionPage();
+      };
+
+      menu.appendChild(item);
+    });
+}
+
+function filterTimetableDropdown() {
+  const q = document.getElementById("ttSearchInput").value.toLowerCase();
+
+  document
+    .querySelectorAll("#ttDropdownMenu .dropdown-item")
+    .forEach((item) => {
+      item.style.display = item.textContent.toLowerCase().includes(q)
+        ? ""
+        : "none";
+    });
+}
+
 // ─────────────────────────────────────────────
 // 5. EXCEL IMPORT — ATTENDANCE REPORT
 // ─────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("click", (e) => {
+    const box = document.getElementById("dailyDropdown");
+    if (!box) return;
+
+    if (!box.contains(e.target)) {
+      document.getElementById("dailyDropdownList").classList.add("hidden");
+    }
+  });
   const mainInput = document.getElementById("mainFileInput");
   const uploadZone = document.getElementById("uploadZone");
 
@@ -320,17 +440,34 @@ document.addEventListener("DOMContentLoaded", () => {
     dailyInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      document.getElementById("dailyFileChosenLabel").textContent = file.name;
+      document.getElementById("dailyFileChosenLabel").textContent = "Upload";
       parseDailyExcel(file);
       dailyInput.value = "";
     });
   }
 
   // Init
+  // Init
   loadState();
+
+  // Theme
+  const saved = localStorage.getItem("theme");
+
+  if (saved === "light") {
+    document.body.classList.add("light-theme");
+    const icon = document.getElementById("themeIcon");
+    if (icon) icon.className = "fas fa-sun text-yellow-500";
+  }
+
+  const meta = document.querySelector('meta[name="theme-color"]');
+  meta.setAttribute(
+    "content",
+    document.body.classList.contains("light-theme") ? "#f8fafc" : "#0a0a0b",
+  );
 
   dailySubjectMap = STATE.dailySubjectMap || {};
   dailyOverallMap = STATE.dailyOverallMap || {};
+
   setDateDisplay();
   renderSidebarProfile();
   updateTargetUI();
@@ -339,6 +476,47 @@ document.addEventListener("DOMContentLoaded", () => {
   initAdsSystem();
   initSiteConfig();
 });
+
+function toggleDailyDropdown() {
+  document.getElementById("dailyDropdownList").classList.toggle("hidden");
+}
+
+function populateDailySubjectSelect() {
+  const list = document.getElementById("dailyDropdownList");
+  list.innerHTML = "";
+
+  const items = [
+    { value: "overall", text: "Overall" },
+    { value: "all", text: "All Subjects" },
+  ];
+
+  Object.keys(dailySubjectMap)
+    .sort()
+    .forEach((s) =>
+      items.push({
+        value: s,
+        text: s,
+      }),
+    );
+
+  items.forEach((item) => {
+    const div = document.createElement("div");
+
+    div.className = "px-4 py-2 hover:bg-indigo-600 cursor-pointer";
+
+    div.textContent = item.text;
+
+    div.onclick = () => {
+      document.getElementById("dailyDropdownText").textContent = item.text;
+
+      document.getElementById("dailyDropdownList").classList.add("hidden");
+
+      updateDailyChartView(item.value);
+    };
+
+    list.appendChild(div);
+  });
+}
 
 function parseAttendanceExcel(file) {
   const reader = new FileReader();
@@ -366,11 +544,45 @@ function parseAttendanceExcel(file) {
     });
     if (Object.keys(profile).length) STATE.profile = profile;
 
+    // Check report freshness
+    let reportDate = null;
+
+    raw.forEach((row) => {
+      row.forEach((cell) => {
+        const text = String(cell || "").trim();
+
+        // Change this if your Excel uses a different label
+        if (text.includes("Date range")) {
+          const match = text.match(/to\s+(\d{2}-\d{2}-\d{4})/);
+
+          if (match) {
+            const [day, month, year] = match[1].split("-");
+
+            reportDate = new Date(year, month - 1, day);
+          }
+        }
+      });
+    });
+
+    if (reportDate) {
+      const today = new Date();
+
+      reportDate.setHours(0, 0, 0, 0);
+      today.setHours(0, 0, 0, 0);
+
+      const daysOld = Math.floor((today - reportDate) / (1000 * 60 * 60 * 24));
+
+      if (daysOld > 1) {
+        showToast(
+          "⚠️ Attendance report is over 1 day old. Upload the latest report for accurate predictions.",
+        );
+      }
+    }
+
     // Extract subjects
-    const json = XLSX.utils.sheet_to_json(sheet);
     const subjects = [];
 
-    json.forEach((row) => {
+    XLSX.utils.sheet_to_json(sheet).forEach((row) => {
       const nameRaw = row["__EMPTY"];
       if (!nameRaw || nameRaw === "Course Name" || nameRaw === "Total") return;
 
@@ -416,118 +628,30 @@ let ttFileChosen = null;
 let previewWeekNum = 1;
 let dailyOverallMap = {};
 
-function buildTimetableRows(jsonData) {
-  const rows = [];
-  jsonData.forEach((row) => {
-    const values = Object.values(row);
-    const dayRaw = String(values[0] || "").trim();
-    if (!dayRaw) return;
-    const hours = values.slice(1).map((v) => String(v || "").trim());
-    rows.push({ day: dayRaw, hours });
+function buildTimetableRows(sheet) {
+  const raw = XLSX.utils.sheet_to_json(sheet, {
+    header: 1,
+    defval: "",
   });
-  return rows;
-}
 
-async function loadTimetablesFromFolder(isManualRefresh) {
-  try {
-    const dirRes = await fetch("timetable/", { cache: "no-store" });
-    if (!dirRes.ok)
-      throw new Error("Cannot list timetable/ folder (" + dirRes.status + ")");
-    const html = await dirRes.text();
+  const rows = [];
 
-    // Parse the server's auto-generated directory listing for .xlsx/.xls links.
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    const anchors = Array.from(doc.querySelectorAll("a"));
-    const fileNames = [
-      ...new Set(
-        anchors
-          .map((a) => a.getAttribute("href") || "")
-          .map((href) =>
-            decodeURIComponent(href.split("/").filter(Boolean).pop() || ""),
-          )
-          .filter((name) => /\.(xlsx|xls)$/i.test(name)),
-      ),
-    ];
+  // Skip header row
+  for (let i = 1; i < raw.length; i++) {
+    const row = raw[i];
 
-    if (!fileNames.length) {
-      if (statusEl)
-        statusEl.textContent =
-          "No .xlsx files found in the timetable/ folder yet.";
-      // Still drop any stale folder-sourced entries.
-      STATE.timetables = STATE.timetables.filter((t) => t.source !== "folder");
-      saveState();
-      renderTimetablePage();
-      return;
-    }
+    const dayRaw = String(row[0] || "").trim();
+    if (!dayRaw) continue;
 
-    let loaded = 0,
-      failed = 0;
-    for (const fileName of fileNames) {
-      const label = fileName.replace(/\.(xlsx|xls)$/i, "");
-      try {
-        const fileRes = await fetch("timetable/" + fileName, {
-          cache: "no-store",
-        });
-        if (!fileRes.ok) {
-          failed++;
-          continue;
-        }
-        const buf = await fileRes.arrayBuffer();
-        const wb = XLSX.read(buf, { type: "array" });
-        const sheet = wb.Sheets[wb.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(sheet);
-        const rows = buildTimetableRows(json);
-        if (!rows.length) {
-          failed++;
-          continue;
-        }
+    const hours = row.slice(1).map((v) => String(v || "").trim());
 
-        // Upsert: update if a folder-sourced entry with this label already exists, else insert.
-        const existingIdx = STATE.timetables.findIndex(
-          (t) => t.source === "folder" && t.label === label,
-        );
-        const record = {
-          id: existingIdx >= 0 ? STATE.timetables[existingIdx].id : genId(),
-          label,
-          rows,
-          source: "folder",
-        };
-        if (existingIdx >= 0) STATE.timetables[existingIdx] = record;
-        else STATE.timetables.push(record);
-        loaded++;
-      } catch (e) {
-        console.error("Failed to load timetable file", fileName, e);
-        failed++;
-      }
-    }
-
-    // Drop folder-sourced entries whose file is no longer present in the folder.
-    STATE.timetables = STATE.timetables.filter(
-      (t) =>
-        t.source !== "folder" ||
-        fileNames.some((f) => f.replace(/\.(xlsx|xls)$/i, "") === t.label),
-    );
-
-    saveState();
-    renderTimetablePage();
-
-    if (statusEl) {
-      statusEl.textContent = failed
-        ? `Found ${loaded + failed} file(s), loaded ${loaded}, ${failed} failed to parse.`
-        : `Found ${loaded} file(s) in timetable/ ✓ — auto-loaded, nothing to configure.`;
-    }
-    if (isManualRefresh) showToast("Folder refreshed ✓");
-  } catch (e) {
-    console.warn("Could not list timetable/ folder.", e);
-    if (statusEl) {
-      statusEl.textContent =
-        "Could not list the timetable/ folder. Either the app was opened directly as a file (use a local server instead — see README in that folder) or your server has directory listing turned off.";
-    }
-    if (isManualRefresh)
-      showToast(
-        "Could not read the timetable/ folder — see Timetable page for details.",
-      );
+    rows.push({
+      day: dayRaw,
+      hours,
+    });
   }
+
+  return rows;
 }
 
 async function loadBuiltInTimetables() {
@@ -546,9 +670,8 @@ async function loadBuiltInTimetables() {
       });
 
       const sheet = wb.Sheets[wb.SheetNames[0]];
-      const json = XLSX.utils.sheet_to_json(sheet);
 
-      const rows = buildTimetableRows(json);
+      const rows = buildTimetableRows(sheet);
 
       STATE.timetables.push({
         id: fileName,
@@ -589,8 +712,7 @@ function uploadTimetableFile() {
     const data = new Uint8Array(evt.target.result);
     const wb = XLSX.read(data, { type: "array" });
     const sheet = wb.Sheets[wb.SheetNames[0]];
-    const json = XLSX.utils.sheet_to_json(sheet);
-    const rows = buildTimetableRows(json);
+    const rows = buildTimetableRows(sheet);
 
     if (!rows.length) {
       showToast("No timetable rows found in file.");
@@ -666,34 +788,13 @@ function previewWeek(w) {
 
 function renderTimetablePage() {
   renderTimetableList();
-  renderTimetableSelects();
+  buildTimetableDropdown();
   renderTimetablePreview();
-}
-
-function filterTimetables(query) {
-  const sel = document.getElementById("activeTimetableSelect");
-  if (!sel) return;
-
-  const q = query.toLowerCase().trim();
-
-  sel.innerHTML =
-    '<option value="">Select Class</option>' +
-    STATE.timetables
-      .filter((t) => t.label.toLowerCase().includes(q))
-      .map(
-        (t) => `
-          <option value="${t.id}"
-            ${t.id === STATE.week1TimetableId ? "selected" : ""}>
-            ${t.label}
-          </option>
-        `,
-      )
-      .join("");
 }
 
 function renderTimetableList() {
   const el = document.getElementById("ttList");
-  
+
   if (!el) return;
   if (!STATE.timetables.length) {
     el.innerHTML = '<p class="text-xs text-gray-500">None loaded yet.</p>';
@@ -714,28 +815,27 @@ function renderTimetableList() {
     .join("");
 }
 
-function renderInlineAds() {
-  const el = document.getElementById("inlineAdsContainer");
-  if (!el || !adsList.length) return;
+let deferredPrompt;
 
-  el.innerHTML = adsList
-    .map(
-      (ad) => `
-      <div class="card overflow-hidden">
-        <a href="${ad.linkUrl}"
-           target="_blank"
-           onclick="trackAdClick('${ad.title}')">
-          <img src="${ad.image}" alt="${ad.title}" style="width:100%">
-        </a>
-      </div>
-    `
-    )
-    .join("");
-}
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
 
-function renderTimetableSelects() {
-  filterTimetables("");
-}
+  deferredPrompt = e;
+
+  document.getElementById("installBtn").classList.remove("hidden");
+});
+
+document.getElementById("installBtn").addEventListener("click", async () => {
+  if (!deferredPrompt) return;
+
+  deferredPrompt.prompt();
+
+  await deferredPrompt.userChoice;
+
+  deferredPrompt = null;
+
+  document.getElementById("installBtn").classList.add("hidden");
+});
 
 function renderTimetablePreview() {
   const el = document.getElementById("ttPreviewGrid");
@@ -748,7 +848,6 @@ function renderTimetablePreview() {
       '<p class="text-center text-gray-500 text-sm py-8">Select a timetable to preview.</p>';
     return;
   }
-  
 
   const maxHours = Math.max(...tt.rows.map((r) => r.hours.length));
   let html = '<table class="tt-table w-full"><thead><tr><th>Day</th>';
@@ -777,13 +876,12 @@ function renderInlineAdSlider() {
 
   const ad = adsList[adsCurrentSlide];
   new Image().src =
-    "https://script.google.com/macros/s/AKfycbw5uW_Mtc2s3Uz9ZBRgyKKdo71jxSMgwluny58TKUNudKCOc8pBV9Cf3MOPXEkCG8D2/exec?action=view&title=" +
-    encodeURIComponent(ad.title);
+    CAMPUS_API + "?action=view&title=" + encodeURIComponent(ad.title);
 
   el.innerHTML = `
-    <a href="${ad.linkUrl}" target="_blank"
+    <a href="${ad.link}" target="_blank"
        onclick="trackAdClick('${ad.title}')">
-      <img src="${ad.image}" style="width:100%">
+      <img src="${ad.poster}" style="width:100%">
     </a>
   `;
 }
@@ -926,7 +1024,6 @@ function renderPredTable(tableId, weekNum) {
   }
 
   const todayIdx = getTodayOrderIdx();
-
   tbody.innerHTML = STATE.subjects
     .map((s) => {
       let extra;
@@ -941,20 +1038,25 @@ function renderPredTable(tableId, weekNum) {
           : 0;
       } else {
         const week1Remainder = w1
-          ? countSubjectInRows(w1.rows, s.name, todayIdx, STATE.weekOverrides.week1)
+          ? countSubjectInRows(
+              w1.rows,
+              s.name,
+              todayIdx,
+              STATE.weekOverrides.week1,
+            )
           : 0;
-       const week2Full = w2
-         ? countSubjectInRows(
-             w2.rows,
-             s.name,
-             undefined,
-             STATE.weekOverrides.week2,
-           )
-         : 0;
+        const week2Full = w2
+          ? countSubjectInRows(
+              w2.rows,
+              s.name,
+              undefined,
+              STATE.weekOverrides.week2,
+            )
+          : 0;
         extra = week1Remainder + week2Full;
       }
 
-      const newA = s.attended + extra;
+      const newA = (s.attended || 0) + (s.dutyLeave || 0) + extra;
       const newT = s.total + extra;
       const pct = newT ? (newA / newT) * 100 : 0;
       const { need, bunk } = calcNeedAndBunk(
@@ -1036,7 +1138,7 @@ function renderPredCards() {
         extra = week1Remainder + week2Full;
       }
 
-      const futureAttended = s.attended + extra;
+      const futureAttended = (s.attended || 0) + (s.dutyLeave || 0) + extra;
       const futureTotal = s.total + extra;
       const pct = futureTotal ? (futureAttended / futureTotal) * 100 : 0;
 
@@ -1105,7 +1207,7 @@ function pctClass(p) {
 }
 
 function calcNeedAndBunk(s, target) {
-  const a = s.attended || 0;
+  const a = (s.attended || 0) + (s.dutyLeave || 0);
   const total = s.total || 0;
 
   if (!total) return { need: 0, bunk: 0 };
@@ -1204,7 +1306,6 @@ function renderAttendancePage() {
   renderCalcChart();
 }
 
-
 function renderAttendanceTable() {
   const tbody = document.getElementById("attendanceTableBody");
   if (!tbody) return;
@@ -1266,9 +1367,9 @@ document.addEventListener("change", (e) => {
     const s = STATE.subjects[parseInt(idx, 10)];
     if (!s) return;
     calcState = {
-      attended: s.attended || 0,
+      attended: (s.attended || 0) + (s.dutyLeave || 0),
       total: s.total || 0,
-      min_attended: s.attended || 0,
+      min_attended: (s.attended || 0) + (s.dutyLeave || 0),
       min_total: s.total || 0,
     };
     renderCalc();
@@ -1282,8 +1383,6 @@ function updateSubjectCalc() {
     parseInt(document.getElementById("calcAttendedInput").value, 10) || 0;
   renderCalc();
 }
-
-let futureAttend = 0;
 
 function changeFutureAttend(delta) {
   const attendedInput = document.getElementById("calcAttendedInput");
@@ -1364,14 +1463,6 @@ function renderCalcChart(a, t) {
     calcChartInst = null;
   }
 
-  const labels = [],
-    data = [];
-  if (t) {
-    for (let i = 0; i <= 12; i++) {
-      labels.push("+" + i);
-      data.push((((a + i) / (t + i)) * 100).toFixed(1));
-    }
-  }
   const absent = Math.max(0, t - a);
 
   const { need, bunk } = calcNeedAndBunk(
@@ -1422,9 +1513,6 @@ function setQuickCalcTarget(t) {
     .forEach((b) => b.classList.toggle("active", Number(b.dataset.t) === t));
   renderQuickCalc();
 }
-
-let baseAttended = 0;
-let baseTotal = 0;
 
 function renderQuickCalc() {
   const totalEl = document.getElementById("qcTotal");
@@ -1482,45 +1570,36 @@ function renderQcChart(a, t) {
     qcChartInst = null;
   }
 
-  const labels = [],
-    data = [];
-  if (t) {
-    for (let i = 0; i <= 12; i++) {
-      labels.push("+" + i);
-      data.push((((a + i) / (t + i)) * 100).toFixed(1));
-    }
-  }
+  const absent = Math.max(0, t - a);
 
- const absent = Math.max(0, t - a);
+  const { need, bunk } = calcNeedAndBunk(
+    { attended: a, total: t },
+    quickCalcTarget,
+  );
 
- const { need, bunk } = calcNeedAndBunk(
-   { attended: a, total: t },
-   quickCalcTarget,
- );
-
- qcChartInst = new Chart(ctx, {
-   type: "doughnut",
-   data: {
-     labels: ["Attended", "Safe Bunks", "Needed", "Absent"],
-     datasets: [
-       {
-         data: [a, bunk, need, absent],
-         backgroundColor: ["#22c55e", "#f59e0b", "#3b82f6", "#64748b"],
-         borderWidth: 0,
-       },
-     ],
-   },
-   options: {
-     responsive: true,
-     maintainAspectRatio: true,
-     cutout: 0,
-     plugins: {
-       legend: {
-         display: false,
-       },
-     },
-   },
- });
+  qcChartInst = new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels: ["Attended", "Safe Bunks", "Needed", "Absent"],
+      datasets: [
+        {
+          data: [a, bunk, need, absent],
+          backgroundColor: ["#22c55e", "#f59e0b", "#3b82f6", "#64748b"],
+          borderWidth: 0,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      cutout: 0,
+      plugins: {
+        legend: {
+          display: false,
+        },
+      },
+    },
+  });
   const colors = qcChartInst.data.datasets[0].backgroundColor;
 
   document.getElementById("attendedLegend").innerHTML =
@@ -1554,7 +1633,8 @@ function renderAnalyticsPage() {
   dailyOverallMap = STATE.dailyOverallMap || {};
 
   if (Object.keys(dailySubjectMap).length) {
-    renderSubjectDailyChart(dailySubjectMap);
+    populateDailySubjectSelect();
+    updateDailyChartView();
   }
 }
 
@@ -1629,14 +1709,40 @@ function renderAttendanceBreakdownChart() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: "#94a3b8", font: { size: 11 } } } },
+      plugins: {
+        legend: {
+          labels: {
+            color: document.body.classList.contains("light-theme")
+              ? "#334155"
+              : "#94a3b8",
+            font: { size: 11 },
+          },
+        },
+      },
       scales: {
         x: {
           stacked: true,
-          ticks: { color: "#64748b" },
+          ticks: {
+            color: document.body.classList.contains("light-theme")
+              ? "#475569"
+              : "#64748b",
+          },
           grid: { display: false },
         },
-        y: { stacked: true, beginAtZero: true, ticks: { color: "#64748b" } },
+        y: {
+          stacked: true,
+          beginAtZero: true,
+          ticks: {
+            color: document.body.classList.contains("light-theme")
+              ? "#475569"
+              : "#64748b",
+          },
+          grid: {
+            color: document.body.classList.contains("light-theme")
+              ? "#e2e8f0"
+              : "rgba(255, 255, 255, 0.05)",
+          },
+        },
       },
     },
   });
@@ -1811,9 +1917,10 @@ function processDailyRows(rows, tt) {
   STATE.dailySubjectMap = dailySubjectMap;
   STATE.dailyOverallMap = dailyOverallMap;
   saveState();
+  populateDailySubjectSelect();
 
   console.log(dailySubjectMap);
-  renderSubjectDailyChart(dailySubjectMap);
+  updateDailyChartView();
   showToast("Daily report processed ✓");
 }
 
@@ -1864,6 +1971,25 @@ function sortDateLabels(labels) {
     const [d2, m2, y2] = b.split(sep);
     return new Date(y1, m1 - 1, d1) - new Date(y2, m2 - 1, d2);
   });
+}
+
+function updateDailyChartView(value) {
+  const canvas = document.getElementById("dailyChart");
+
+  if (canvas) {
+    canvas.classList.remove("chart-slide-in");
+    void canvas.offsetWidth; // restart animation
+    canvas.classList.add("chart-slide-in");
+  }
+  if (value === "overall") {
+    renderDailyOverallChart();
+  } else if (value === "all") {
+    renderSubjectDailyChart(dailySubjectMap);
+  } else {
+    renderSubjectDailyChart({
+      [value]: dailySubjectMap[value],
+    });
+  }
 }
 
 function renderSubjectDailyChart(subjectMap) {
@@ -1931,13 +2057,36 @@ function renderSubjectDailyChart(subjectMap) {
             pointStyle: "line",
             boxWidth: 25,
             boxHeight: 10,
-            color: "#f1f5f9",
+            color: document.body.classList.contains("light-theme")
+              ? "#111827"
+              : "#f1f5f9",
           },
         },
       },
       scales: {
-        y: { min: 0, max: 100, ticks: { color: "#64748b" } },
-        x: { ticks: { color: "#64748b", maxRotation: 45 } },
+        y: {
+          min: 0,
+          max: 100,
+          ticks: {
+            color: document.body.classList.contains("light-theme")
+              ? "#475569"
+              : "#64748b",
+          },
+          grid: {
+            color: document.body.classList.contains("light-theme")
+              ? "#e2e8f0"
+              : "rgba(255, 255, 255, 0.05)",
+          },
+        },
+        x: {
+          ticks: {
+            color: document.body.classList.contains("light-theme")
+              ? "#475569"
+              : "#64748b",
+            maxRotation: 45,
+          },
+          grid: { display: false },
+        },
       },
     },
   });
@@ -2018,11 +2167,9 @@ function closeConfirm() {
   _confirmCallback = null;
   document.getElementById("confirmModal").classList.remove("open");
 }
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("confirmOk").addEventListener("click", () => {
-    if (_confirmCallback) _confirmCallback();
-    closeConfirm();
-  });
+document.getElementById("confirmOk").addEventListener("click", () => {
+  if (_confirmCallback) _confirmCallback();
+  closeConfirm();
 });
 
 // ─────────────────────────────────────────────
@@ -2076,16 +2223,38 @@ function setDateDisplay() {
   );
 }
 
-function refreshAll() {
-  if (STATE.currentPage === "dashboard") renderDashboard();
-  if (STATE.currentPage === "attendance") renderAttendancePage();
-  if (STATE.currentPage === "timetable") renderTimetablePage();
-  if (STATE.currentPage === "prediction") renderPredictionPage();
-  if (STATE.currentPage === "calculator") {
-    renderQuickCalc();
-    renderCgpaCalc();
+function renderCurrentPage() {
+  switch (STATE.currentPage) {
+    case "dashboard":
+      renderDashboard();
+      break;
+
+    case "attendance":
+      renderAttendancePage();
+      break;
+
+    case "timetable":
+      renderTimetablePage();
+      break;
+
+    case "prediction":
+      renderPredictionPage();
+      break;
+
+    case "calculator":
+      populateCalcSubjects();
+      renderQuickCalc();
+      renderCgpaCalc();
+      break;
+
+    case "analytics":
+      renderAnalyticsPage();
+      break;
   }
-  if (STATE.currentPage === "analytics") renderAnalyticsPage();
+}
+
+function refreshAll() {
+  renderCurrentPage();
 }
 
 // ─────────────────────────────────────────────
@@ -2098,15 +2267,6 @@ function openHelpModal(id) {
 function closeHelpModal(id) {
   const el = document.getElementById(id);
   if (el) el.classList.remove("open");
-}
-
-// ─────────────────────────────────────────────
-// 21. TIMETABLE SEARCH
-// ─────────────────────────────────────────────
-function searchTimetable() {
-  const q = document.getElementById("ttSearchInput")?.value || "";
-  filterTimetables(q);
-  showToast(q ? `Filtered: "${q}"` : "Showing all classes");
 }
 
 // ─────────────────────────────────────────────
@@ -2170,55 +2330,17 @@ async function initAdsSystem() {
 
 async function fetchSheetAds() {
   try {
-    const cfgRes = await fetch("ads/config.json");
-    if (!cfgRes.ok) return [];
-    const cfg = await cfgRes.json();
-    const url = cfg.googleSheets?.adsCsvUrl;
-    if (!url || url.includes("PASTE_YOUR")) return [];
+    const res = await fetch(CAMPUS_API);
 
-    const res = await fetch(url);
     if (!res.ok) return [];
-    const text = await res.text();
-    return parseAdsCsv(text);
-  } catch {
+
+    const data = await res.json();
+
+    return data.filter((ad) => ad.priority);
+  } catch (e) {
+    console.error(e);
     return [];
   }
-}
-
-function parseAdsCsv(csv) {
-  const lines = csv.trim().split("\n");
-  if (lines.length < 2) return [];
-  const ads = [];
-  for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(",").map((c) => c.trim().replace(/^"|"$/g, ""));
-    if (cols.length < 2) continue;
-    const active = (cols[3] || "").toLowerCase();
-    if (
-    active !== "on" &&
-    active !== "yes" &&
-    active !== "true"
-    ) continue;
-    ads.push({
-      title: cols[0] || "Ad",
-      image: cols[1] || "",
-      linkUrl: cols[2] || "",
-      active: true,
-    });
-  }
-  return ads;
-}
-
-function mergeAds(local, sheet) {
-  const seen = new Set();
-  const merged = [];
-  [...sheet, ...local].forEach((ad) => {
-    const key = ad.image || ad.title;
-    if (!seen.has(key) && ad.image) {
-      seen.add(key);
-      merged.push(ad);
-    }
-  });
-  return merged;
 }
 
 function showAdsPopup() {
@@ -2231,8 +2353,7 @@ function showAdsPopup() {
   closeBtn?.classList.remove("visible");
   const ad = adsList[adsCurrentSlide];
   new Image().src =
-  "https://script.google.com/macros/s/AKfycbw5uW_Mtc2s3Uz9ZBRgyKKdo71jxSMgwluny58TKUNudKCOc8pBV9Cf3MOPXEkCG8D2/exec?action=view&title=" +
-  encodeURIComponent(ad.title);
+    CAMPUS_API + "?action=view&title=" + encodeURIComponent(ad.title);
 
   console.log("Ad Viewed:", adsList[adsCurrentSlide].title);
   const slidesEl = document.getElementById("adsSlides");
@@ -2245,18 +2366,22 @@ function showAdsPopup() {
       (ad, i) => `
     <div class="ads-slide ${i === 0 ? "active" : ""}" data-idx="${i}">
       ${
-        ad.linkUrl
-          ? `<a href="${ad.linkUrl}"target="_blank"onclick="trackAdClick('${ad.title}')">`: ""
+        ad.link
+          ? `<a href="${ad.link}"target="_blank"onclick="trackAdClick('${ad.title}')">`
+          : ""
       }
-      <img src="${ad.image}" alt="${ad.title}" />
-      ${ad.linkUrl ? "</a>" : ""}
+      <img src="${ad.poster}" alt="${ad.title}" />
+      ${ad.link ? "</a>" : ""}
       <p class="text-sm text-gray-300 mt-2">${ad.title}</p>
     </div>`,
     )
     .join("");
 
   dotsEl.innerHTML = adsList
-    .map((_, i) => `<div class="ads-dot ${i === 0 ? "active" : ""}" onclick="adsGoTo(${i})"></div>`)
+    .map(
+      (_, i) =>
+        `<div class="ads-dot ${i === 0 ? "active" : ""}" onclick="adsGoTo(${i})"></div>`,
+    )
     .join("");
 
   if (hintEl) hintEl.classList.toggle("hidden", !adsMustSwipeAll);
@@ -2272,8 +2397,7 @@ function showAdsPopup() {
 
 function trackAdClick(title) {
   new Image().src =
-    "https://script.google.com/macros/s/AKfycbw5uW_Mtc2s3Uz9ZBRgyKKdo71jxSMgwluny58TKUNudKCOc8pBV9Cf3MOPXEkCG8D2/exec?action=click&title=" +
-    encodeURIComponent(title);
+    CAMPUS_API + "?action=click&title=" + encodeURIComponent(title);
 }
 
 function updateAdsCloseBtn() {
@@ -2299,8 +2423,7 @@ function adsGoTo(idx) {
 
   const ad = adsList[adsCurrentSlide];
   new Image().src =
-    "https://script.google.com/macros/s/AKfycbw5uW_Mtc2s3Uz9ZBRgyKKdo71jxSMgwluny58TKUNudKCOc8pBV9Cf3MOPXEkCG8D2/exec?action=view&title=" +
-    encodeURIComponent(ad.title);
+    CAMPUS_API + "?action=view&title=" + encodeURIComponent(ad.title);
   adsViewed.add(adsCurrentSlide);
   updateAdsCloseBtn();
 }
@@ -2325,15 +2448,17 @@ function closeAdsPopup() {
     showToast("View all ads first");
     return;
   }
- clearInterval(adsAutoSlide);
- document.getElementById("adsPopup")?.classList.remove("open");
+  clearInterval(adsAutoSlide);
+  document.getElementById("adsPopup")?.classList.remove("open");
 }
 
 function initAdsSwipe() {
   const carousel = document.querySelector(".ads-carousel");
   if (!carousel) return;
   let startX = 0;
-  carousel.ontouchstart = (e) => { startX = e.touches[0].clientX; };
+  carousel.ontouchstart = (e) => {
+    startX = e.touches[0].clientX;
+  };
   carousel.ontouchend = (e) => {
     const diff = e.changedTouches[0].clientX - startX;
     if (Math.abs(diff) > 50) adsNav(diff < 0 ? 1 : -1);
@@ -2343,6 +2468,7 @@ function initAdsSwipe() {
 // ─────────────────────────────────────────────
 // 24. CGPA CALCULATOR
 // ─────────────────────────────────────────────
+let cgpaChart = null;
 
 function renderCgpaCalc() {
   const curEl = document.getElementById("cgpaCurrent");
@@ -2426,12 +2552,17 @@ function renderCgpaCalc() {
 
   card.classList.remove("cgpa-green", "cgpa-yellow", "cgpa-red");
 
+  let lineColor = "#22c55e";
+
   if (requiredAvg <= 7.5) {
     card.classList.add("cgpa-green");
+    lineColor = "#22c55e";
   } else if (requiredAvg <= 8.5) {
     card.classList.add("cgpa-yellow");
+    lineColor = "#f59e0b";
   } else {
     card.classList.add("cgpa-red");
+    lineColor = "#ef4444";
   }
 }
 
@@ -2454,14 +2585,16 @@ const HOUR_SCHEDULE = [
   { start: "10:50", end: "11:45", label: "Hr 3" },
   { start: "11:45", end: "12:35", label: "Hr 4" },
   { start: "12:35", end: "13:25", label: "Hr 5" },
-  { start: "13:25", end: "13:20", label: "Hr 6" },
+  { start: "13:25", end: "14:20", label: "Hr 6" },
   { start: "14:30", end: "15:25", label: "Hr 7" },
   { start: "15:25", end: "16:15", label: "Hr 8" },
 ];
 
 function getNextDateForDay(dayName) {
   const norm = normalizeDayName(dayName);
-  const dayIdx = DAY_ORDER.findIndex((d) => norm.includes(d) || d.includes(norm));
+  const dayIdx = DAY_ORDER.findIndex(
+    (d) => norm.includes(d) || d.includes(norm),
+  );
   if (dayIdx === -1) return new Date();
 
   const now = new Date();
@@ -2484,14 +2617,25 @@ function getSubjectPredInfo(subjectId) {
 
   let extra = 0;
   if (week === "1") {
-    extra = w1 ? countSubjectInRows(w1.rows, s.name, todayIdx, STATE.weekOverrides.week1) : 0;
+    extra = w1
+      ? countSubjectInRows(w1.rows, s.name, todayIdx, STATE.weekOverrides.week1)
+      : 0;
   } else {
-    const w1r = w1 ? countSubjectInRows(w1.rows, s.name, todayIdx, STATE.weekOverrides.week1) : 0;
-    const w2f = w2 ? countSubjectInRows(w2.rows, s.name, undefined, STATE.weekOverrides.week2) : 0;
+    const w1r = w1
+      ? countSubjectInRows(w1.rows, s.name, todayIdx, STATE.weekOverrides.week1)
+      : 0;
+    const w2f = w2
+      ? countSubjectInRows(
+          w2.rows,
+          s.name,
+          undefined,
+          STATE.weekOverrides.week2,
+        )
+      : 0;
     extra = w1r + w2f;
   }
 
-  const futureAttended = s.attended + extra;
+  const futureAttended = (s.attended || 0) + (s.dutyLeave || 0) + extra;
   const futureTotal = s.total + extra;
   const { need, bunk } = calcNeedAndBunk(
     { attended: futureAttended, total: futureTotal },
@@ -2507,49 +2651,52 @@ function buildCalendarEventsForSubject(subjectId) {
   if (!info || !info.tt) return [];
 
   const events = [];
-  const clean = (str) => String(str || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const clean = (str) =>
+    String(str || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
   const sKey = clean(info.subject.name);
 
- const todayIdx = getTodayOrderIdx();
+  const todayIdx = getTodayOrderIdx();
 
-const nextRows = info.tt.rows
-  .filter(r => weekdayOrderIndex(r.day) >= todayIdx)
-  .sort((a, b) => weekdayOrderIndex(a.day) - weekdayOrderIndex(b.day))
-  .slice(0, 2);
+  const nextRows = info.tt.rows
+    .filter((r) => weekdayOrderIndex(r.day) >= todayIdx)
+    .sort((a, b) => weekdayOrderIndex(a.day) - weekdayOrderIndex(b.day))
+    .slice(0, 2);
 
-nextRows.forEach((row) => {
-  row.hours.forEach((cell, hIdx) => {
-    const text = String(cell || "").trim();
-    if (!text || text.toLowerCase().includes("holiday")) return;
+  nextRows.forEach((row) => {
+    row.hours.forEach((cell, hIdx) => {
+      const text = String(cell || "").trim();
+      if (!text || text.toLowerCase().includes("holiday")) return;
 
-    const tKey = clean(text);
-    if (!(sKey.includes(tKey) || tKey.includes(sKey))) return;
+      const tKey = clean(text);
+      if (!(sKey.includes(tKey) || tKey.includes(sKey))) return;
 
-    const sched = HOUR_SCHEDULE[hIdx] || {
-      start: "09:00",
-      end: "10:00",
-      label: `Hr ${hIdx + 1}`,
-    };
+      const sched = HOUR_SCHEDULE[hIdx] || {
+        start: "09:00",
+        end: "10:00",
+        label: `Hr ${hIdx + 1}`,
+      };
 
-    const date = getNextDateForDay(row.day);
+      const date = getNextDateForDay(row.day);
 
-    const [sh, sm] = sched.start.split(":").map(Number);
-    const [eh, em] = sched.end.split(":").map(Number);
+      const [sh, sm] = sched.start.split(":").map(Number);
+      const [eh, em] = sched.end.split(":").map(Number);
 
-    const start = new Date(date);
-    start.setHours(sh, sm, 0, 0);
+      const start = new Date(date);
+      start.setHours(sh, sm, 0, 0);
 
-    const end = new Date(date);
-    end.setHours(eh, em, 0, 0);
+      const end = new Date(date);
+      end.setHours(eh, em, 0, 0);
 
-    events.push({
-      title: `${sched.label}: ${info.subject.name} — ${info.statusText}`,
-      start,
-      end,
-      day: row.day,
+      events.push({
+        title: `${sched.label}: ${info.subject.name} — ${info.statusText}`,
+        start,
+        end,
+        day: row.day,
+      });
     });
   });
-});
 
   return events;
 }
@@ -2561,7 +2708,7 @@ function formatIcsDate(d) {
 
 function downloadIcs(events, filename) {
   if (!events.length) {
-    showToast("No upcoming classes found for this subject.");
+    showToast("No upcoming classes found today.");
     return;
   }
 
@@ -2584,7 +2731,7 @@ function downloadIcs(events, filename) {
   URL.revokeObjectURL(a.href);
   showToast(`Added ${events.length} event(s) to calendar file ✓`);
   window.open(
-    "https://www.effectivecpmnetwork.com/f5g31fvt5?key=a934c3f168aee527c09f81fd5ec7fc3f",
+    "https://talentpastryadvisedly.com/sen5s4u6?key=e38c1b4b9ee0c1e645327bfba533c629",
     "_blank",
   );
 }
@@ -2592,7 +2739,10 @@ function downloadIcs(events, filename) {
 function addSubjectToCalendar(subjectId) {
   const events = buildCalendarEventsForSubject(subjectId);
   const s = STATE.subjects.find((x) => x.id === subjectId);
-  downloadIcs(events, `zaptrack-${(s?.name || "subject").replace(/\W+/g, "-").slice(0, 20)}.ics`);
+  downloadIcs(
+    events,
+    `zaptrack-${(s?.name || "subject").replace(/\W+/g, "-").slice(0, 20)}.ics`,
+  );
 }
 
 function addAllPredCardsToCalendar() {
@@ -2605,4 +2755,187 @@ function addAllPredCardsToCalendar() {
     allEvents.push(...buildCalendarEventsForSubject(s.id));
   });
   downloadIcs(allEvents, "zaptrack-all-subjects.ics");
+}
+
+function toggleTheme() {
+  document.body.classList.toggle("light-theme");
+
+  const icon = document.getElementById("themeIcon");
+
+  if (document.body.classList.contains("light-theme")) {
+    icon.className = "fas fa-sun text-yellow-500";
+    localStorage.setItem("theme", "light");
+  } else {
+    icon.className = "fas fa-moon text-yellow-300";
+    localStorage.setItem("theme", "dark");
+  }
+  const meta = document.querySelector('meta[name="theme-color"]');
+
+  meta.setAttribute(
+    "content",
+    document.body.classList.contains("light-theme") ? "#f8fafc" : "#0a0a0b",
+  );
+  refreshAll();
+}
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", async () => {
+    await navigator.serviceWorker.register("service-worker.js");
+
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      showToast("✨ Tracy updated. Reloading...");
+
+      setTimeout(() => {
+        location.reload();
+      }, 1500);
+    });
+  });
+}
+
+const CAMPUS_API =
+  "https://script.google.com/macros/s/AKfycbzJN3ifkutdyS5LfCOpS3iKClUPa2n3y9QV8Rlc5myvxTv6X6IwS_mykedcEr3hq6Ud/exec";
+
+function renderCampusPosts(posts) {
+  const grid = document.getElementById("clubGrid");
+  grid.innerHTML = "";
+
+  if (!posts.length) {
+    grid.innerHTML = `
+            <div class="col-span-full text-center text-gray-500 py-8">
+                No events available.
+            </div>
+        `;
+    return;
+  }
+
+  posts.forEach((post) => {
+    new Image().src =
+      CAMPUS_API + "?action=view&title=" + encodeURIComponent(post.title);
+    const card = document.createElement("div");
+    card.className = `overflow-hidden rounded-2xl shadow-lg ${
+      post.priority
+        ? "bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-700 text-black border border-yellow-200"
+        : "card"
+    }`;
+    console.log(post.link);
+    card.innerHTML = `
+            <img src="${post.poster}" alt="${post.title}"
+    class="w-full aspect-[3/4] object-cover">
+
+            <div class="p-4">
+
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs font-semibold px-2 py-1 rounded-full ${
+                      post.status === "Open"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }">
+                        ${post.status === "Open" ? "Open" : "Registration Ended"}
+                    </span>
+                </div>
+
+               <h3 class="text-lg font-bold mb-2 ${post.priority ? "text-black" : ""}">
+    ${post.title}
+</h3>
+
+                <p
+  class="text-sm ${post.priority ? "text-black/80" : "text-gray-600"} truncate"
+  title="${post.school}">
+    🎓 ${post.school}
+</p>
+
+                <p class="text-sm ${post.priority ? "text-black/80" : "text-gray-600"}">
+                    👨‍🎓 ${post.year}
+                </p>
+
+                <p class="text-sm text-gray-600 mb-4">
+                    📅 Ends: ${post.endDate}
+                </p>
+
+                ${
+                  post.status === "Open"
+                    ? `
+                        <a href="${post.link}"
+   target="_blank"
+   onclick="trackAdClick('${post.title}')"
+   class="block w-full text-center ${
+     post.priority
+       ? "bg-black text-yellow-300 hover:bg-gray-900"
+       : "bg-blue-600 text-white hover:bg-blue-700"
+   } text-white py-2 rounded-xl font-semibold hover:bg-blue-700 transition">
+    Register
+</a>
+                        `
+                    : `
+                        <button
+                            disabled
+                            class="block w-full bg-gray-300 text-gray-600 py-2 rounded-xl cursor-not-allowed font-semibold">
+                            Registration Closed
+                        </button>
+                        `
+                }
+
+            </div>
+        `;
+
+    grid.appendChild(card);
+  });
+}
+
+let campusPosts = [];
+
+async function loadCampusPosts() {
+  try {
+    const response = await fetch(CAMPUS_API);
+
+    if (!response.ok) {
+      throw new Error("Failed to load events");
+    }
+
+    campusPosts = await response.json();
+
+    console.table(campusPosts);
+
+    filterCampusPosts();
+  } catch (error) {
+    console.error(error);
+
+    document.getElementById("clubGrid").innerHTML = `
+            <div class="text-center text-red-500 py-8">
+                Unable to load events.
+            </div>
+        `;
+  }
+  console.log(campusPosts);
+}
+
+function filterCampusPosts() {
+  const search = "";
+
+  const school = (window.selectedSchool || "all").trim().toLowerCase();
+  const year = (window.selectedYear || "all").trim().toLowerCase();
+
+  console.log("Dropdown value =", JSON.stringify(school));
+
+  const filtered = campusPosts.filter((post) => {
+    const matchName = !search || post.title.toLowerCase().includes(search);
+
+    const selected = school.trim().toLowerCase();
+    const matchSchool =
+      selected === "all" ||
+      post.school
+        .split(",")
+        .map((s) => s.trim().toLowerCase())
+        .includes(selected);
+    console.log({
+      dropdown: selected,
+      school: post.school,
+      split: post.school.split(",").map((s) => s.trim().toLowerCase()),
+      match: matchSchool,
+    });
+    const matchYear = year === "all" || post.year.trim().toLowerCase() === year;
+    return matchName && matchSchool && matchYear;
+  });
+
+  renderCampusPosts(filtered);
 }

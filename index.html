@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,378 +12,1502 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8172462535631846"
     crossorigin="anonymous"></script>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#6366f1">
   <style>
-    :root { --primary: #6366f1; --primary-dark: #4f46e5; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --card-bg: rgba(255,255,255,0.04); --card-border: rgba(255,255,255,0.09); }
-    * { box-sizing: border-box; }
-    body { font-family: 'Inter', sans-serif; background: #0a0a0b; color: #f1f5f9; min-height: 100vh; overflow-x: hidden; }
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --bg: #0a0a0b;
+      --text: #f1f5f9;
+      --sidebar: rgba(15, 15, 20, 0.95);
+      --card-bg: rgba(255, 255, 255, 0.04);
+      --card-border: rgba(255, 255, 255, 0.09);
+    }
 
-    .sidebar { width: 240px; height: 100vh; position: fixed; left: 0; top: 0; background: rgba(15,15,20,0.95); border-right: 1px solid var(--card-border); padding: 20px 14px; overflow-y: auto; z-index: 30; transition: transform 0.3s ease; }
-    .main-content { margin-left: 240px; padding: 24px; min-height: 100vh; }
-    @media (max-width: 768px) { .sidebar { transform: translateX(-100%); } .sidebar.open { transform: translateX(0); } .main-content { margin-left: 0; padding: 16px 14px 100px; } }
-    #inlineAdsSlides img{ width:100%; border-radius:12px; display:block; }
+    body.light-theme {
+      --bg: #f8fafc;
+      --text: #0f172a;
+      --sidebar: #ffffff;
+      --card-bg: #ffffff;
+      --card-border: #e2e8f0;
+    }
 
-    .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; transition: box-shadow 0.2s, transform 0.2s; }
-    .card:hover { box-shadow: 0 8px 28px rgba(0,0,0,0.35); transform: translateY(-1px); }
-    .card1::after{ content:""; position:absolute; inset:0; background-repeat:no-repeat;  background-position:right 16px bottom 18px; background-size:180px auto; opacity:.15; pointer-events:none; z-index:0; }
+    body.light-theme .card,
+    body.light-theme .sub-card,
+    body.light-theme .card1 {
+      background: #ffffff;
+      border-color: #e2e8f0;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+    }
 
-    .nav-link { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; color: #94a3b8; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.15s, color 0.15s; }
-    .nav-link:hover { background: rgba(255,255,255,0.05); color: #f1f5f9; }
-    .nav-link.active { background: rgba(99,102,241,0.18); color: #a5b4fc; }
-    .nav-link i { width: 18px; text-align: center; }
+    body.light-theme .sidebar {
+      background: #ffffff;
+      border-right: 1px solid #e2e8f0;
+      box-shadow: 1px 0 10px rgba(0, 0, 0, 0.03);
+    }
 
-    .page { display: none; }
-    .page.active { display: block; }
+    body.light-theme .mobile-nav {
+      background: #ffffff;
+      border-top: 1px solid #e2e8f0;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04);
+    }
 
-    .progress-track { background: rgba(255,255,255,0.07); border-radius: 100px; overflow: hidden; }
-    .progress-fill { height: 100%; border-radius: 100px; transition: width 0.6s ease; }
+    body.light-theme .mobile-nav-item {
+      color: #64748b;
+    }
 
-    .badge { display: inline-block; padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; border: none; }
-    .badge-safe { background: rgba(16,185,129,0.15); color: #34d399; }
-    .badge-warn { background: rgba(245,158,11,0.15); color: #fbbf24; }
-    .badge-danger { background: rgba(239,68,68,0.15); color: #f87171; }
+    body.light-theme .mobile-nav-item.active {
+      color: #4f46e5;
+    }
 
-    .tt-table { border-collapse: collapse; }
-    .tt-table td, .tt-table th { border: 1px solid rgba(255,255,255,0.07); padding: 8px 10px; font-size: 12px; white-space: nowrap; }
-    .tt-table th { color: #64748b; font-weight: 600; background: rgba(255,255,255,0.03); }
-    .tt-row:hover { background: rgba(255,255,255,0.03); }
+    body.light-theme .nav-link {
+      color: #475569;
+    }
 
-    .sub-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px; transition: transform 0.2s; }
-    .sub-card:hover { transform: translateY(-2px); }
-    .pct-safe { color: #22c55e; } .pct-warn { color: #f59e0b; } .pct-danger { color: #ef4444; }
+    body.light-theme .nav-link:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
 
-    .ctrl-box { display: flex; align-items: center; gap: 8px; background: transparent; padding: 6px 10px; border-radius: 10px; }
-    .ctrl-box span { min-width: 32px; text-align: center; font-weight: 700; font-size: 15px; }
-    .ctrl-btn { width: 32px; height: 32px; border-radius: 8px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.15s; background: rgba(255,255,255,0.07); color: #f1f5f9; padding: 0; }
-    .ctrl-btn.minus { background: rgba(239,68,68,0.18); color: #f87171; }
-    .ctrl-btn.minus:hover { background: rgba(239,68,68,0.35); }
-    .ctrl-btn.plus { background: rgba(34,197,94,0.18); color: #4ade80; }
-    .ctrl-btn.plus:hover { background: rgba(34,197,94,0.35); }
+    body.light-theme .nav-link.active {
+      background: #e0e7ff;
+      color: #4338ca;
+    }
 
-    .cgpa-green{ background:linear-gradient(135deg,#113327,#0f2b22); }
-    .cgpa-green::after{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 220'%3E%3Cpath d='M20 180 C90 170 130 145 180 130 S300 95 360 70 S430 40 470 20' fill='none' stroke='%2334d399' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E"); }
-    .cgpa-yellow{ background:linear-gradient(135deg,#3a2d08,#2a2106); }
-    .cgpa-yellow::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 220'%3E%3Cpath d='M20 175 C90 175 150 155 220 130 S340 105 410 80 S450 60 470 45' fill='none' stroke='%23fbbf24' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E"); }
-    .cgpa-red{ background:linear-gradient(135deg,#3a1010,#2b0d0d); }
-    .cgpa-red::after{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 220'%3E%3Cpath d='M20 185 C100 182 170 165 250 135 S360 90 430 60 S455 45 470 65' fill='none' stroke='%23ef4444' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E"); }
+    body.light-theme .page-header {
+      background: rgba(248, 250, 252, 0.85);
+      border-bottom: 1px solid #e2e8f0;
+    }
 
-    .btn-primary { background: var(--primary); color: #fff; padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: background 0.15s; }
-    .btn-primary:hover { background: var(--primary-dark); }
-    .btn-ghost { background: rgba(255,255,255,0.06); color: #cbd5e1; padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 500; border: none; cursor: pointer; transition: background 0.15s; }
-    .btn-ghost:hover { background: rgba(255,255,255,0.1); }
-    .btn-ghost.active { background: rgba(99,102,241,0.25); color: #a5b4fc; }
-    .btn-danger { background: rgba(239,68,68,0.15); color: #f87171; padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 500; border: none; cursor: pointer; transition: background 0.15s; }
-    .btn-danger:hover { background: rgba(239,68,68,0.3); }
-    .btn-success { background: rgba(16,185,129,0.15); color: #34d399; padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 500; border: none; cursor: pointer; transition: background 0.15s; }
-    .btn-success:hover { background: rgba(16,185,129,0.3); }
+    /* Muted and secondary text colors in light mode */
+    body.light-theme .text-gray-500,
+    body.light-theme .text-gray-400,
+    body.light-theme .text-slate-400,
+    body.light-theme .text-slate-500 {
+      color: #64748b !important;
+    }
 
-    .upload-zone { border: 2px dashed rgba(255,255,255,0.12); border-radius: 14px; padding: 28px; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
-    .upload-zone:hover, .upload-zone.drag-over { border-color: var(--primary); background: rgba(99,102,241,0.07); }
+    body.light-theme .text-gray-300,
+    body.light-theme .text-gray-200,
+    body.light-theme .text-slate-300,
+    body.light-theme .text-slate-200 {
+      color: #334155 !important;
+    }
 
-    select { background: #1e293b; color: #f1f5f9; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 8px 12px; font-size: 13px; outline: none; cursor: pointer; appearance: none; }
-    select:focus { border-color: var(--primary); }
+    body.light-theme .text-white,
+    body.light-theme .text-slate-100 {
+      color: #0f172a !important;
+    }
+
+    body.light-theme .text-indigo-400 {
+      color: #4f46e5 !important;
+    }
+
+    body.light-theme .text-purple-400 {
+      color: #7c3aed !important;
+    }
+
+    body.light-theme .text-green-400,
+    body.light-theme .pct-safe {
+      color: #16a34a !important;
+    }
+
+    body.light-theme .text-yellow-400,
+    body.light-theme .pct-warn {
+      color: #d97706 !important;
+    }
+
+    body.light-theme .text-red-400,
+    body.light-theme .pct-danger {
+      color: #dc2626 !important;
+    }
+
+    /* Hardcoded dark backgrounds & borders in light mode */
+    body.light-theme .bg-white\/5,
+    body.light-theme .bg-white\/10,
+    body.light-theme .bg-slate-800,
+    body.light-theme .bg-slate-900,
+    body.light-theme .bg-\[\#13131a\],
+    body.light-theme .bg-\[\#1b2233\],
+    body.light-theme .bg-\[\#0a0a0b\],
+    body.light-theme .bg-\[\#0f0f14\] {
+      background-color: #ffffff !important;
+    }
+
+    body.light-theme .border-white\/5,
+    body.light-theme .border-white\/10,
+    body.light-theme .border-white\/20,
+    body.light-theme .border-slate-800,
+    body.light-theme .border-slate-700 {
+      border-color: #e2e8f0 !important;
+    }
+
+    body.light-theme .upload-zone {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+
+    body.light-theme .upload-zone:hover {
+      background: #eef2ff;
+      border-color: #6366f1;
+    }
+
+    /* CGPA cards */
+    body.light-theme .cgpa-green {
+      background: linear-gradient(135deg, #ecfdf5, #d1fae5) !important;
+      color: #065f46 !important;
+    }
+
+    body.light-theme .cgpa-yellow {
+      background: linear-gradient(135deg, #fffbeb, #fef3c7) !important;
+      color: #92400e !important;
+    }
+
+    body.light-theme .cgpa-red {
+      background: linear-gradient(135deg, #fef2f2, #fee2e2) !important;
+      color: #991b1b !important;
+    }
+
+    /* Buttons & Controls */
+    body.light-theme .btn-ghost {
+      background: #f1f5f9;
+      color: #334155;
+    }
+
+    body.light-theme .btn-ghost:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+
+    body.light-theme .btn-ghost.active {
+      background: #e0e7ff;
+      color: #4338ca;
+    }
+
+    body.light-theme .btn-primary {
+      background: #4f46e5;
+      color: #ffffff;
+    }
+
+    body.light-theme .btn-primary:hover {
+      background: #4338ca;
+    }
+
+    body.light-theme .btn-danger {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    body.light-theme .btn-danger:hover {
+      background: #fca5a5;
+    }
+
+    body.light-theme .btn-success {
+      background: #d1fae5;
+      color: #059669;
+    }
+
+    body.light-theme .btn-success:hover {
+      background: #6ee7b7;
+    }
+
+    body.light-theme .badge-safe {
+      background: #d1fae5;
+      color: #059669;
+    }
+
+    body.light-theme .badge-warn {
+      background: #fef3c7;
+      color: #d97706;
+    }
+
+    body.light-theme .badge-danger {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    body.light-theme .help-btn {
+      background: #e0e7ff;
+      color: #4338ca;
+      border-color: #c7d2fe;
+    }
+
+    body.light-theme .help-btn:hover {
+      background: #c7d2fe;
+    }
+
+    body.light-theme .ctrl-btn {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+
+    body.light-theme .ctrl-btn.minus {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    body.light-theme .ctrl-btn.plus {
+      background: #d1fae5;
+      color: #16a34a;
+    }
+
+    body.light-theme .progress-track {
+      background: #e2e8f0;
+    }
+
+    body.light-theme input:not(.number-input)[type="text"],
+    body.light-theme input:not(.number-input)[type="number"] {
+      background: #ffffff;
+      color: #0f172a;
+      border: 1px solid #cbd5e1;
+    }
+
+    body.light-theme .dropdown-btn {
+      background: #ffffff;
+      color: #0f172a;
+      border: 1px solid #cbd5e1;
+    }
+
+    body.light-theme #dailyDropdownBtn {
+      background: #ffffff;
+      color: #0f172a;
+      border-color: #cbd5e1;
+    }
+
+    body.light-theme #dailyDropdownList {
+      background: #ffffff !important;
+      border-color: #cbd5e1 !important;
+      color: #0f172a !important;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, .12);
+    }
+
+    body.light-theme #dailyDropdownList>div {
+      color: #0f172a !important;
+    }
+
+    body.light-theme #dailyDropdownList>div:hover {
+      background: #eef2ff !important;
+      color: #312e81 !important;
+    }
+
+    body.light-theme .number-input {
+      color: #0f172a !important;
+    }
+
+    /* Tables */
+    body.light-theme .tt-table th,
+    body.light-theme .pred-table th {
+      background: #f1f5f9;
+      color: #334155;
+      border-color: #e2e8f0;
+    }
+
+    body.light-theme .tt-table td,
+    body.light-theme .pred-table td {
+      border-color: #e2e8f0;
+      color: #0f172a;
+    }
+
+    body.light-theme .tt-table tr:hover,
+    body.light-theme .pred-table tr:hover {
+      background: #f8fafc;
+    }
+
+    /* Modals & Toasts */
+    body.light-theme .modal-backdrop {
+      background: rgba(15, 23, 42, 0.4);
+    }
+
+    body.light-theme .modal {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      color: #0f172a;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    }
+
+    body.light-theme .modal h3,
+    body.light-theme .modal h2,
+    body.light-theme .modal b {
+      color: #0f172a;
+    }
+
+    body.light-theme .modal p,
+    body.light-theme .modal li,
+    body.light-theme .modal span {
+      color: #475569;
+    }
+
+    body.light-theme .excel-sample {
+      background: #f8fafc;
+    }
+
+    body.light-theme .excel-sample th {
+      background: rgba(99, 102, 241, .12);
+      color: #4338ca;
+    }
+
+    body.light-theme .excel-sample td {
+      color: #0f172a;
+    }
+
+    body.light-theme #toast {
+      background: #0f172a;
+      color: #f8fafc;
+      border: 1px solid #334155;
+    }
+
+    body.light-theme ::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .sidebar {
+      width: 240px;
+      height: 100vh;
+      position: fixed;
+      left: 0;
+      top: 0;
+      background: var(--sidebar);
+      padding: 20px 14px;
+      overflow-y: auto;
+      z-index: 30;
+      transition: transform 0.3s ease;
+    }
+
+    .main-content {
+      margin-left: 240px;
+      padding: 24px;
+      min-height: 100vh;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        margin-left: 0;
+        padding: 16px 14px 100px;
+      }
+    }
+
+    #inlineAdsSlides img {
+      width: 100%;
+      border-radius: 12px;
+      display: block;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+
+    .card:hover {
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .card1::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-repeat: no-repeat;
+      background-position: right 16px bottom 18px;
+      background-size: 180px auto;
+      opacity: .15;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .nav-link:hover {
+      background: var(--card-bg);
+      color: var(--text);
+    }
+
+    .nav-link.active {
+      background: rgba(99, 102, 241, 0.18);
+      color: #a5b4fc;
+    }
+
+    .nav-link i {
+      width: 18px;
+      text-align: center;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .progress-track {
+      background: rgba(255, 255, 255, 0.07);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 100px;
+      transition: width 0.6s ease;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+      border: none;
+    }
+
+    .badge-safe {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+    }
+
+    .badge-warn {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+    }
+
+    .badge-danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+    }
+
+    .tt-table {
+      border-collapse: collapse;
+    }
+
+    .tt-table td,
+    .tt-table th {
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      padding: 8px 10px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .tt-table th {
+      color: var(--text);
+      background: var(--card-bg);
+      font-weight: 600;
+    }
+
+    .sub-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px;
+      transition: transform 0.2s;
+    }
+
+    .sub-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .pct-safe {
+      color: #22c55e;
+    }
+
+    .pct-warn {
+      color: #f59e0b;
+    }
+
+    .pct-danger {
+      color: #ef4444;
+    }
+
+    .ctrl-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: transparent;
+      padding: 6px 10px;
+      border-radius: 10px;
+    }
+
+    .ctrl-box span {
+      min-width: 32px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .ctrl-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.15s;
+      background: rgba(255, 255, 255, 0.07);
+      color: #f1f5f9;
+      padding: 0;
+    }
+
+    .ctrl-btn.minus {
+      background: rgba(239, 68, 68, 0.18);
+      color: #f87171;
+    }
+
+    .ctrl-btn.minus:hover {
+      background: rgba(239, 68, 68, 0.35);
+    }
+
+    .ctrl-btn.plus {
+      background: rgba(34, 197, 94, 0.18);
+      color: #4ade80;
+    }
+
+    .ctrl-btn.plus:hover {
+      background: rgba(34, 197, 94, 0.35);
+    }
+
+    .cgpa-green {
+      background: linear-gradient(135deg, #113327, #0f2b22);
+    }
+
+    .cgpa-green::after {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 220'%3E%3Cpath d='M20 180 C90 170 130 145 180 130 S300 95 360 70 S430 40 470 20' fill='none' stroke='%2334d399' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E");
+    }
+
+    .cgpa-yellow {
+      background: linear-gradient(135deg, #3a2d08, #2a2106);
+    }
+
+    .cgpa-yellow::after {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 220'%3E%3Cpath d='M20 175 C90 175 150 155 220 130 S340 105 410 80 S450 60 470 45' fill='none' stroke='%23fbbf24' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E");
+    }
+
+    .cgpa-red {
+      background: linear-gradient(135deg, #3a1010, #2b0d0d);
+    }
+
+    .cgpa-red::after {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 220'%3E%3Cpath d='M20 185 C100 182 170 165 250 135 S360 90 430 60 S455 45 470 65' fill='none' stroke='%23ef4444' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E");
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-ghost {
+      background: var(--card-bg);
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-ghost:hover {
+      background: var(--sidebar);
+    }
+
+    .btn-ghost.active {
+      background: rgba(99, 102, 241, 0.25);
+      color: #a5b4fc;
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-success {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-success:hover {
+      background: rgba(16, 185, 129, 0.3);
+    }
+
+    .upload-zone {
+      border: 2px dashed var(--card-border);
+      background: var(--card-bg);
+      border-radius: 14px;
+      padding: 28px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .upload-zone:hover,
+    .upload-zone.drag-over {
+      border-color: var(--primary);
+      background: rgba(99, 102, 241, 0.07);
+    }
+
+    select {
+      background: var(--card-bg);
+      color: var(--text);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 8px 16px;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      color-scheme: dark;
+    }
+
+    body.light-theme select {
+      color-scheme: light;
+    }
+
+    select:focus {
+      border-color: var(--primary);
+    }
+
+    select option {
+      background: #1e293b;
+      color: #f1f5f9;
+    }
+
+    body.light-theme select option {
+      background: #ffffff;
+      color: #0f172a;
+    }
+
     input:not(.number-input)[type="text"],
-    input:not(.number-input)[type="number"] { background: transparent; color: #f1f5f9; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 8px 12px; font-size: 13px; outline: none; }
+    input:not(.number-input)[type="number"] {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 8px 16px;
+      font-size: 13px;
+      outline: none;
+    }
+
     input:not(.number-input)[type="text"]:focus,
-    input:not(.number-input)[type="number"]:focus { border-color: var(--primary); }
+    input:not(.number-input)[type="number"]:focus {
+      border-color: var(--primary);
+    }
 
-    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 100; display: none; align-items: center; justify-content: center; }
-    .modal-backdrop.open { display: flex; }
-    .modal { background: #141418; border: 1px solid var(--card-border); border-radius: 16px; padding: 24px; width: 90%; max-width: 460px; max-height: 85vh; overflow-y: auto; }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
 
-    #toast { position: fixed; bottom: 24px; right: 24px; background: transparent; color: #f1f5f9; padding: 12px 18px; border-radius: 10px; font-size: 13px; font-weight: 500; z-index: 200; transform: translateY(80px); opacity: 0; transition: transform 0.3s, opacity 0.3s; border-left: 3px solid var(--primary); max-width: 320px; }
-    #toast.show { transform: translateY(0); opacity: 1; }
+    .modal-backdrop.open {
+      display: flex;
+    }
 
-    #mobileOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 20; }
-    #mobileOverlay.open { display: block; }
+    .modal {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px;
+      width: 90%;
+      max-width: 460px;
+      max-height: 85vh;
+      overflow-y: auto;
+      color: var(--text);
+    }
 
-    .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,10,11,0.97); border-top: 1px solid var(--card-border); padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); z-index: 40; }
-    @media (max-width: 768px) { .mobile-nav { display: flex; } }
-    .mobile-nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; color: #64748b; padding: 6px 0; cursor: pointer; transition: color 0.15s; }
-    .mobile-nav-item.active { color: #a5b4fc; }
-    .mobile-nav-item i { font-size: 18px; }
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: rgba(20, 20, 24, 0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: var(--text);
+      padding: 12px 18px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .45);
+      font-size: 13px;
+      font-weight: 500;
+      z-index: 200;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: transform .3s, opacity .3s;
+      max-width: 320px;
+    }
 
-    @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-    .fade-up { animation: fadeUp 0.35s ease; }
+    #toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
 
-    .pred-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    .pred-table th { color: #64748b; padding: 6px 8px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.07); }
-    .pred-table td { padding: 7px 8px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    #mobileOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 20;
+    }
 
-    .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; margin-bottom: 12px; }
+    #mobileOverlay.open {
+      display: block;
+    }
 
-    .help-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.15); background: rgba(99,102,241,0.15); color: #a5b4fc; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s; flex-shrink: 0; }
-    .help-btn:hover { background: rgba(99,102,241,0.3); }
+    .mobile-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--sidebar);
+      border-top: 1px solid var(--card-border);
+      padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+      z-index: 40;
+    }
 
-    .legal-link { display: block; padding: 6px 12px; font-size: 11px; color: #64748b; cursor: pointer; border-radius: 8px; transition: color 0.15s, background 0.15s; }
-    .legal-link:hover { color: #94a3b8; background: rgba(255,255,255,0.04); }
+    @media (max-width: 768px) {
+      .mobile-nav {
+        display: flex;
+      }
+    }
 
-    .ads-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); z-index: 150; display: none; align-items: center; justify-content: center; }
-    .ads-backdrop.open { display: flex; }
-    .ads-carousel { width: 92%; max-width: 520px; position: relative; }
-    .ads-slide { display: none; text-align: center; }
-    .ads-slide.active { display: block; animation: fadeUp 0.3s ease; }
-    .ads-slide img { width: 100%; max-height: 70vh; object-fit: contain; border-radius: 14px; }
-    .ads-dots { display: flex; justify-content: center; gap: 6px; margin-top: 14px; }
-    .ads-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.2); cursor: pointer; transition: background 0.2s; }
-    .ads-dot.active { background: #6366f1; }
-    .ads-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; border-radius: 50%; border: none; background: rgba(0,0,0,0.5); color: #fff; cursor: pointer; font-size: 14px; }
-    .ads-nav.prev { left: -12px; }
-    .ads-nav.next { right: -12px; }
-    .ads-close { position: absolute; top: -40px; right: 0; background: rgba(255,255,255,0.1); border: none; color: #fff; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: none; }
-    .ads-close.visible { display: flex; align-items: center; justify-content: center; }
-    .ads-swipe-hint { text-align: center; font-size: 11px; color: #94a3b8; margin-top: 10px; }
+    .mobile-nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      color: #64748b;
+      padding: 6px 0;
+      cursor: pointer;
+      transition: color 0.15s;
+    }
 
-    .excel-sample { background: #1a1a2e; border-radius: 10px; overflow: hidden; font-size: 11px; }
-    .excel-sample table { width: 100%; border-collapse: collapse; }
-    .excel-sample th, .excel-sample td { border: 1px solid rgba(255,255,255,0.08); padding: 6px 8px; text-align: left; }
-    .excel-sample th { background: rgba(99,102,241,0.2); color: #a5b4fc; }
-    .excel-sample .highlight { background: rgba(34,197,94,0.15); color: #4ade80; }
+    .mobile-nav-item.active {
+      color: #a5b4fc;
+    }
 
-    .legal-page h2 { font-size: 1.1rem; font-weight: 700; margin: 1.25rem 0 0.5rem; }
-    .legal-page p, .legal-page li { font-size: 13px; color: #94a3b8; line-height: 1.7; }
-    .legal-page ul { list-style: disc; padding-left: 1.25rem; margin: 0.5rem 0; }
+    .mobile-nav-item i {
+      font-size: 18px;
+    }
 
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 100px; }
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
 
-    button { cursor: pointer; }
-    
-     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        .app-container { width: 100%; max-width: 480px; padding: 24px; }
-        .cards-stack { display: flex; flex-direction: column; gap: 12px; }
-        .card1{ position:relative; overflow:hidden; background:#212121; border-radius:12px; padding:24px; min-height:140px; display:flex; flex-direction:column; justify-content:center; gap:12px; }
-        @media (max-width:768px){ .card1{ min-height:80px !important; padding:12px !important; } .number-input{ font-size:32px !important; } }
-        .card-label-container { display: flex; align-items: center; color: #9e9e9e; font-size: 18px; font-weight: 500; }
-        .number-input { background: transparent !important; border: none !important; color: white; font-size: 56px; }
-        .orange { color: #f4511e; }
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; } input[type=number] { -moz-appearance: textfield; }
-  
-        .legend-dot{ display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:6px; vertical-align:middle; }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .fade-up {
+      animation: fadeUp 0.35s ease;
+    }
+
+    .pred-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .pred-table th {
+      color: var(--text);
+      padding: 6px 8px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .pred-table td {
+      padding: 7px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+
+    .help-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(99, 102, 241, 0.15);
+      color: #a5b4fc;
+      font-size: 13px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+
+    .help-btn:hover {
+      background: rgba(99, 102, 241, 0.3);
+    }
+
+    .legal-link {
+      display: block;
+      padding: 6px 12px;
+      font-size: 13px;
+      color: var(--text);
+      cursor: pointer;
+      border-radius: 8px;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    .legal-link:hover {
+      color: #94a3b8;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .ads-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(6px);
+      z-index: 150;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ads-backdrop.open {
+      display: flex;
+    }
+
+    .ads-carousel {
+      width: 92%;
+      max-width: 520px;
+      position: relative;
+    }
+
+    .ads-slide {
+      display: none;
+      text-align: center;
+    }
+
+    .ads-slide.active {
+      display: block;
+      animation: fadeUp 0.3s ease;
+    }
+
+    .ads-slide img {
+      width: 100%;
+      max-height: 70vh;
+      object-fit: contain;
+      border-radius: 14px;
+    }
+
+    .ads-dots {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 14px;
+    }
+
+    .ads-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .ads-dot.active {
+      background: #6366f1;
+    }
+
+    .ads-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(0, 0, 0, 0.5);
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .ads-nav.prev {
+      left: -12px;
+    }
+
+    .ads-nav.next {
+      right: -12px;
+    }
+
+    .ads-close {
+      position: absolute;
+      top: -40px;
+      right: 0;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #fff;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: none;
+    }
+
+    .ads-close.visible {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ads-swipe-hint {
+      text-align: center;
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 10px;
+    }
+
+    .adsense-box {
+      width: 100%;
+      overflow: hidden;
+      margin: 24px 0;
+      border-radius: 12px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 8px;
+      text-align: center;
+    }
+
+    .excel-sample {
+      background: #1a1a2e;
+      border-radius: 10px;
+      overflow: hidden;
+      font-size: 11px;
+    }
+
+    .excel-sample table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .excel-sample th,
+    .excel-sample td {
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 6px 8px;
+      text-align: left;
+    }
+
+    .excel-sample th {
+      background: rgba(99, 102, 241, 0.2);
+      color: #a5b4fc;
+    }
+
+    .excel-sample .highlight {
+      background: rgba(34, 197, 94, 0.15);
+      color: #4ade80;
+    }
+
+    .legal-page h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 1.25rem 0 0.5rem;
+    }
+
+    .legal-page p,
+    .legal-page li {
+      font-size: 13px;
+      color: #94a3b8;
+      line-height: 1.7;
+    }
+
+    .legal-page ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+      margin: 0.5rem 0;
+    }
+
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 100px;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    .app-container {
+      width: 100%;
+      max-width: 480px;
+      padding: 24px;
+    }
+
+    .cards-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card1 {
+      position: relative;
+      overflow: hidden;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 24px;
+      min-height: 140px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    @media (max-width:768px) {
+      .card1 {
+        min-height: 80px !important;
+        padding: 12px !important;
+      }
+
+      .number-input {
+        font-size: 32px !important;
+      }
+    }
+
+    .card-label-container {
+      display: flex;
+      align-items: center;
+      color: var(--text);
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .number-input {
+      background: transparent !important;
+      border: none !important;
+      color: var(--text);
+      font-size: 56px;
+    }
+
+    .orange {
+      color: #f4511e;
+    }
+
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+
+    .legend-dot {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .page-header {
+      position: sticky;
+      top: 0;
+      z-index: 15;
+      padding: 16px 0;
+      margin: -16px 0 16px;
+      background: color-mix(in srgb, var(--bg) 88%, transparent);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    @media (min-width: 769px) {
+      .page-header {
+        margin: -24px 0 24px;
+        padding: 24px 0 16px;
+      }
+    }
+
+    .custom-dropdown {
+      position: relative;
+      width: 100%;
+    }
+
+    .dropdown-btn {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      background: var(--card-bg);
+      color: var(--text);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: var(--sidebar);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      max-height: 220px;
+      overflow-y: auto;
+      display: none;
+      z-index: 100;
+    }
+
+    .dropdown-menu.show {
+      display: block;
+    }
+
+    .dropdown-item {
+      padding: 10px 14px;
+      cursor: pointer;
+    }
+
+    .dropdown-item:hover {
+      background: rgba(99, 102, 241, .18);
+    }
+
+    body.light-theme .dropdown-menu {
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      color: #111827;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, .12);
+    }
+
+    body.light-theme .dropdown-item {
+      color: #111827;
+    }
+
+    body.light-theme .dropdown-item:hover {
+      background: #eef2ff;
+      color: #312e81;
+    }
+
+    body.light-theme .dropdown-item.active {
+      background: #4f46e5;
+      color: #ffffff;
+    }
+
+    body.light-theme #ttSearchInput,
+    body.light-theme #dailySearchInput {
+      background: #ffffff;
+      color: #111827;
+      border: 1px solid #d1d5db;
+    }
+
+    body.light-theme #ttSearchInput::placeholder,
+    body.light-theme #dailySearchInput::placeholder {
+      color: #6b7280;
+    }
+
+    @keyframes chartSlideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .chart-slide-in {
+      animation: chartSlideIn 0.5s ease-out;
+    }
   </style>
 </head>
+
 <body>
 
-<div id="toast"></div>
-<div id="mobileOverlay" onclick="closeSidebar()"></div>
+  <div id="toast"></div>
+  <div id="mobileOverlay" onclick="closeSidebar()"></div>
 
-<!-- Confirm Modal -->
-<div id="confirmModal" class="modal-backdrop">
-  <div class="modal">
-    <h3 id="confirmTitle" class="text-base font-semibold mb-2">Confirm</h3>
-    <p id="confirmMsg" class="text-sm text-gray-400 mb-5">Are you sure?</p>
-    <div class="flex gap-3 justify-end">
-      <button class="btn-ghost" onclick="closeConfirm()">Cancel</button>
-      <button id="confirmOk" class="btn-danger">Confirm</button>
-    </div>
-  </div>
-</div>
-
-<!-- Help: Attendance Excel -->
-<div id="helpAttendanceModal" class="modal-backdrop">
-  <div class="modal" style="max-width:540px">
-    <h3 class="text-base font-semibold mb-3"><i class="fas fa-circle-info text-indigo-400 mr-2"></i>How to Get
-      Attendance Excel</h3>
-    <ol class="text-sm text-gray-400 space-y-2 mb-4 list-decimal list-inside">
-      <li>Log in to your college ERP / attendance portal.</li>
-      <li>Go to <b class="text-gray-300">Reports → Attendance Summary</b> (or similar).</li>
-      <li>Select your term/batch and click <b class="text-gray-300">Export to Excel</b>.</li>
-      <li>Download the <b class="text-gray-300">.xlsx</b> file and drop it in Tracy.</li>
-    </ol>
-    <p class="text-xs text-gray-500 mb-2">Your file should look like this (sample):</p>
-    <div class="excel-sample mb-4">
-      <table>
-        <tr>
-          <th colspan="4" style="background:rgba(99,102,241,0.1)">Student Name: John Doe &nbsp;|&nbsp; Roll No: 21CS001
-          </th>
-        </tr>
-        <tr>
-          <th>Course Name</th>
-          <th>Total</th>
-          <th>—</th>
-          <th class="highlight">Attended (AHDL)</th>
-        </tr>
-        <tr>
-          <td>Mathematics (MA101)</td>
-          <td class="highlight">40</td>
-          <td></td>
-          <td class="highlight">32</td>
-        </tr>
-        <tr>
-          <td>Database Systems (CS201)</td>
-          <td class="highlight">38</td>
-          <td></td>
-          <td class="highlight">30</td>
-        </tr>
-        <tr>
-          <td>Data Structures (CS202)</td>
-          <td class="highlight">42</td>
-          <td></td>
-          <td class="highlight">35</td>
-        </tr>
-      </table>
-    </div>
-    <p class="text-xs text-gray-500">Tracy reads the <b class="text-gray-400">Course Name</b>, <b
-        class="text-gray-400">Total</b>, and <b class="text-gray-400">attended</b> columns automatically.</p>
-    <div class="flex justify-end mt-5">
-      <button class="btn-ghost" onclick="closeHelpModal('helpAttendanceModal')">Got it</button>
-    </div>
-  </div>
-  </div>
-<!-- Help: Daily Report Excel -->
-<div id="helpDailyModal" class="modal-backdrop">
-  <div class="modal" style="max-width:540px">
-    <h3 class="text-base font-semibold mb-3"><i class="fas fa-circle-info text-indigo-400 mr-2"></i>How to Get Daily
-      Attendance Excel</h3>
-    <ol class="text-sm text-gray-400 space-y-2 mb-4 list-decimal list-inside">
-      <li>From your ERP, open <b class="text-gray-300">Daily Attendance Report</b>.</li>
-      <li>Pick a date range and export as <b class="text-gray-300">.xlsx</b>.</li>
-      <li>Make sure a <b class="text-gray-300">Date</b> column and <b class="text-gray-300">Hour 1, Hour 2…</b> columns
-        exist.</li>
-      <li>Select your class timetable first, then upload here.</li>
-    </ol>
-    <p class="text-xs text-gray-500 mb-2">Sample format:</p>
-    <div class="excel-sample mb-4">
-      <table>
-        <tr>
-          <th>Date</th>
-          <th>Hour 1</th>
-          <th>Hour 2</th>
-          <th>Hour 3</th>
-          <th>Hour 4</th>
-        </tr>
-        <tr>
-          <td class="highlight">03/06/2025</td>
-          <td class="highlight">P</td>
-          <td class="highlight">A</td>
-          <td class="highlight">P</td>
-          <td class="highlight">P</td>
-        </tr>
-        <tr>
-          <td class="highlight">04/06/2025</td>
-          <td class="highlight">P</td>
-          <td class="highlight">P</td>
-          <td class="highlight">P</td>
-          <td class="highlight">A</td>
-        </tr>
-      </table>
-    </div>
-    <p class="text-xs text-gray-500"><b class="text-gray-400">P</b> = Present, <b class="text-gray-400">A</b> = Absent.
-      Hours are mapped to subjects via your selected timetable.</p>
-    <div class="flex justify-end mt-5">
-      <button class="btn-ghost" onclick="closeHelpModal('helpDailyModal')">Got it</button>
-    </div>
-  </div>
-</div>
-
-<!-- College Ads Popup -->
-<div id="adsPopup" class="ads-backdrop">
-  <div class="ads-carousel">
-    <button id="adsCloseBtn" class="ads-close" onclick="closeAdsPopup()" title="Close"><i
-        class="fas fa-times"></i></button>
-    <div id="adsSlides"></div>
-    <button class="ads-nav prev" onclick="adsNav(-1)"><i class="fas fa-chevron-left"></i></button>
-    <button class="ads-nav next" onclick="adsNav(1)"><i class="fas fa-chevron-right"></i></button>
-    <div id="adsDots" class="ads-dots"></div>
-  </div>
-</div>
-
-<!-- Manage Data Modal (replaces old Settings danger zone) -->
-<div id="manageDataModal" class="modal-backdrop">
-  <div class="modal">
-    <h3 class="text-base font-semibold mb-4">Manage Data</h3>
-    <div class="space-y-4">
-      <div class="flex justify-between items-center gap-3">
-        <div>
-          <p class="text-sm font-medium">Reset Attendance</p>
-          <p class="text-xs text-gray-400">Clears present/absent counts, keeps subjects</p>
-        </div>
-        <button class="btn-danger text-xs flex-shrink-0" onclick="confirmAction('Reset all attendance counts?', resetAttendanceCounts)">Reset</button>
-      </div>
-      <div class="flex justify-between items-center gap-3">
-        <div>
-          <p class="text-sm font-medium">Clear Timetables</p>
-          <p class="text-xs text-gray-400">Removes all uploaded timetable files</p>
-        </div>
-        <button class="btn-danger text-xs flex-shrink-0" onclick="confirmAction('Delete all uploaded timetables?', resetTimetables)">Reset</button>
-      </div>
-      <div class="flex justify-between items-center gap-3 pt-3 border-t border-white/5">
-        <div>
-          <p class="text-sm font-medium text-red-400">Full Reset</p>
-          <p class="text-xs text-gray-400">Wipes everything — cannot be undone</p>
-        </div>
-        <button class="btn-danger text-xs flex-shrink-0" onclick="confirmAction('This will delete ALL data. This cannot be undone.', fullReset)">Reset</button>
+  <!-- Confirm Modal -->
+  <div id="confirmModal" class="modal-backdrop">
+    <div class="modal">
+      <h3 id="confirmTitle" class="text-base font-semibold mb-2">Confirm</h3>
+      <p id="confirmMsg" class="text-sm text-gray-400 mb-5">Are you sure?</p>
+      <div class="flex gap-3 justify-end">
+        <button class="btn-ghost" onclick="closeConfirm()">Cancel</button>
+        <button id="confirmOk" class="btn-danger">Confirm</button>
       </div>
     </div>
-    <div class="flex justify-end mt-5">
-      <button class="btn-ghost" onclick="closeManageData()">Close</button>
-    </div>
-  </div>
-</div>
-
-<!-- Sidebar -->
-<aside class="sidebar" id="sidebar">
-  <div class="flex items-center gap-2 mb-7">
-    <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center">
-      <i class="fas fa-bolt text-white text-sm"></i>
-    </div>
-    <span class="text-lg font-bold">T<span class="text-indigo-400">racy</span></span>
   </div>
 
-  <nav class="space-y-1">
-    <div class="nav-link active" data-page="dashboard" onclick="navigateTo('dashboard')"><i class="fas fa-home"></i><span>Dashboard</span></div>
-    <div class="nav-link" data-page="calculator" onclick="navigateTo('calculator')"><i class="fas fa-calculator"></i><span>Calculator</span></div>
-    <div class="nav-link" data-page="timetable" onclick="navigateTo('timetable')"><i class="fas fa-calendar-alt"></i><span>Timetable</span></div>
-    <div class="nav-link" data-page="prediction" onclick="navigateTo('prediction')"><i class="fas fa-chart-line"></i><span>Prediction</span></div>
-    <div class="nav-link" data-page="analytics" onclick="navigateTo('analytics')"><i class="fas fa-chart-pie"></i><span>Analytics</span></div>
-    <a href="https://docs.google.com/forms/d/e/1FAIpQLSfTYt4LKAwZpaEAU2ndEs7Lu5y1FWVSiLmUhRGAuAu0syNTqw/viewform?usp=dialog"
-      target="_blank" rel="noopener" class="nav-link"><i class="fas fa-bullhorn"></i><span>Advertisement</span></a>
-  </nav>
-
-  <div class="mt-auto pt-8">
-    <div class="section-label">Target Attendance</div>
-    <div class="flex gap-1 flex-wrap">
-      <button class="badge badge-safe target-btn" data-t="75" onclick="setTarget(75)">75%</button>
-      <button class="badge badge-warn target-btn" data-t="80" onclick="setTarget(80)">80%</button>
-      <button class="badge target-btn" style="background:rgba(99,102,241,0.15);color:#a5b4fc" data-t="85" onclick="setTarget(85)">85%</button>
-      <button class="badge target-btn" style="background:rgba(239,68,68,0.15);color:#f87171" data-t="90" onclick="setTarget(90)">90%</button>
-    </div>
-    <p class="text-xs text-gray-500 mt-2">Current: <span id="sideTarget" class="text-indigo-400 font-semibold">75%</span></p>
-  </div>
-<div class="mt-6 pt-4 border-t border-white/5">
-  <div class="section-label">Info & Legal</div>
-  <div class="space-y-0.5">
-    <div class="legal-link" onclick="navigateTo('about')"><i class="fas fa-info-circle w-4 inline-block"></i> About Us
-    </div>
-    <div class="legal-link" onclick="navigateTo('terms')"><i class="fas fa-file-contract w-4 inline-block"></i> Terms &
-      Conditions</div>
-    <div class="legal-link" onclick="navigateTo('privacy')"><i class="fas fa-shield-alt w-4 inline-block"></i> Privacy
-      Policy</div>
-    <div class="legal-link" onclick="navigateTo('disclaimer')"><i
-        class="fas fa-exclamation-triangle w-4 inline-block"></i> Disclaimer</div>
-    <div class="legal-link" onclick="navigateTo('contact')"><i class="fas fa-envelope w-4 inline-block"></i> Contact Us
+  <!-- Help: Attendance Excel -->
+  <div id="helpAttendanceModal" class="modal-backdrop">
+    <div class="modal" style="max-width:540px">
+      <h3 class="text-base font-semibold mb-3"><i class="fas fa-circle-info text-indigo-400 mr-2"></i>How to Get
+        Attendance Excel</h3>
+      <ol class="text-sm text-gray-400 space-y-2 mb-4 list-decimal list-inside">
+        <li>Open this <b class="text-gray-300"><u><a
+                href="https://presidencyuniversity.linways.com/ams/attendance/consolidated-attendance-report?redir=true">Link</u></a>
+          </b><span class="text-xs text-gray-500 font-normal">(make sure you are logged in)</span></li>
+        <li>Click <b class="text-gray-300">Export</b>.</li>
+        <li>Download the <b class="text-gray-300">.xlsx</b> file and drop it in Tracy.</li>
+      </ol>
+      <p class="text-xs text-gray-500">Tracy reads the <b class="text-gray-400">Course Name</b>, <b
+          class="text-gray-400">Total</b>, and <b class="text-gray-400">attended</b> columns automatically.</p>
+      <div class="flex justify-end mt-5">
+        <button class="btn-ghost" onclick="closeHelpModal('helpAttendanceModal')">Got it</button>
+      </div>
     </div>
   </div>
-</div>
-</aside>
+  <!-- Help: Daily Report Excel -->
+  <div id="helpDailyModal" class="modal-backdrop">
+    <div class="modal" style="max-width:540px">
+      <h3 class="text-base font-semibold mb-3"><i class="fas fa-circle-info text-indigo-400 mr-2"></i>How to Get Daily
+        Attendance Excel</h3>
+      <ol class="text-sm text-gray-400 space-y-2 mb-4 list-decimal list-inside">
+        <li>Open this <b class="text-gray-300"><u><a
+                href="https://presidencyuniversity.linways.com/ams/attendance/daily-attendance?redir=true">Link</u></a>
+          </b><span class="text-xs text-gray-500 font-normal">(make sure you are logged in)</span></li>
+        <li>Click <b class="text-gray-300">Export</b>.</li>
+        <li>Download the <b class="text-gray-300">.xlsx</b> file and drop it in Tracy.</li>
+      </ol>
+      <div class="flex justify-end mt-5">
+        <button class="btn-ghost" onclick="closeHelpModal('helpDailyModal')">Got it</button>
+      </div>
+    </div>
+  </div>
 
-<!-- Main -->
-<main class="main-content" id="mainContent">
+  <!-- College Ads Popup -->
+  <div id="adsPopup" class="ads-backdrop">
+    <div class="ads-carousel">
+      <button id="adsCloseBtn" class="ads-close" onclick="closeAdsPopup()" title="Close"><i
+          class="fas fa-times"></i></button>
+      <div id="adsSlides"></div>
+      <button class="ads-nav prev" onclick="adsNav(-1)"><i class="fas fa-chevron-left"></i></button>
+      <button class="ads-nav next" onclick="adsNav(1)"><i class="fas fa-chevron-right"></i></button>
+      <div id="adsDots" class="ads-dots"></div>
+    </div>
+  </div>
 
-  <!-- ── DASHBOARD ── -->
-  <div class="page active fade-up" id="page-dashboard">
-    <div class="flex items-center justify-between mb-6">
-      <div class="flex items-center gap-3">
-        <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
-        <div>
-          <h1 class="text-xl font-bold">Dashboard</h1>
-          <p id="currentDate" class="text-xs text-gray-400 mt-0.5"></p>
+  <!-- Manage Data Modal (replaces old Settings danger zone) -->
+  <div id="manageDataModal" class="modal-backdrop">
+    <div class="modal">
+      <h3 class="text-base font-semibold mb-4">Manage Data</h3>
+      <div class="space-y-4">
+        <div class="flex justify-between items-center gap-3">
+          <div>
+            <p class="text-sm font-medium">Reset Attendance</p>
+            <p class="text-xs text-gray-400">Clears present/absent counts, keeps subjects</p>
+          </div>
+          <button class="btn-danger text-xs flex-shrink-0"
+            onclick="confirmAction('Reset all attendance counts?', resetAttendanceCounts)">Reset</button>
+        </div>
+        <div class="flex justify-between items-center gap-3">
+          <div>
+            <p class="text-sm font-medium">Clear Timetables</p>
+            <p class="text-xs text-gray-400">Removes all uploaded timetable files</p>
+          </div>
+          <button class="btn-danger text-xs flex-shrink-0"
+            onclick="confirmAction('Delete all uploaded timetables?', resetTimetables)">Reset</button>
+        </div>
+        <div class="flex justify-between items-center gap-3 pt-3 border-t border-white/5">
+          <div>
+            <p class="text-sm font-medium text-red-400">Full Reset</p>
+            <p class="text-xs text-gray-400">Wipes everything — cannot be undone</p>
+          </div>
+          <button class="btn-danger text-xs flex-shrink-0"
+            onclick="confirmAction('This will delete ALL data. This cannot be undone.', fullReset)">Reset</button>
         </div>
       </div>
-      <div class="flex gap-2">
-        <button class="btn-ghost text-xs" onclick="openManageData()"><i class="fas fa-database mr-1"></i>Manage Data</button>
+      <div class="flex justify-end mt-5">
+        <button class="btn-ghost" onclick="closeManageData()">Close</button>
       </div>
     </div>
+  </div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="flex items-center justify-between mb-7">
+
+      <div class="flex items-center gap-2">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center">
+          <i class="fas fa-bolt text-white text-sm"></i>
+        </div>
+        <span class="text-lg font-bold">
+          T<span class="text-indigo-400">racy</span>
+        </span>
+      </div>
+
+      <button id="themeToggle" onclick="toggleTheme()"
+        class="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 transition flex items-center justify-center">
+        <i id="themeIcon" class="fas fa-moon text-yellow-300"></i>
+      </button>
+    </div>
+
+    <nav class="space-y-1">
+      <div class="nav-link active" data-page="dashboard" onclick="navigateTo('dashboard')"><i
+          class="fas fa-home"></i><span>Dashboard</span></div>
+      <div class="nav-link" data-page="calculator" onclick="navigateTo('calculator')"><i
+          class="fas fa-calculator"></i><span>Calculator</span></div>
+      <div class="nav-link" data-page="timetable" onclick="navigateTo('timetable')"><i
+          class="fas fa-calendar-alt"></i><span>Timetable</span></div>
+      <div class="nav-link" data-page="prediction" onclick="navigateTo('prediction')"><i
+          class="fas fa-chart-line"></i><span>Prediction</span></div>
+      <div class="nav-link" data-page="analytics" onclick="navigateTo('analytics')"><i
+          class="fas fa-chart-pie"></i><span>Analytics</span></div>
+      <div class="nav-link" data-page="campus" onclick="navigateTo('campus')"> <i class="fas fa-users"></i> <span>Campus
+          Hub</span> </div>
+    </nav>
+
+    <div class="mt-auto pt-8">
+      <div class="section-label">Target Attendance</div>
+      <div class="flex gap-1 flex-wrap">
+        <button class="badge badge-safe target-btn" data-t="75" onclick="setTarget(75)">75%</button>
+        <button class="badge badge-warn target-btn" data-t="80" onclick="setTarget(80)">80%</button>
+        <button class="badge target-btn" style="background:rgba(99,102,241,0.15);color:#a5b4fc" data-t="85"
+          onclick="setTarget(85)">85%</button>
+        <button class="badge target-btn" style="background:rgba(239,68,68,0.15);color:#f87171" data-t="90"
+          onclick="setTarget(90)">90%</button>
+      </div>
+    </div>
+    <div class="mt-6 pt-4 border-t border-white/5">
+      <div class="section-label">Info & Legal</div>
+      <div class="space-y-0.5">
+        <div class="legal-link" onclick="navigateTo('about')"><i class="fas fa-info-circle w-4 inline-block"></i> About
+          Us
+        </div>
+        <div class="legal-link" onclick="navigateTo('terms')"><i class="fas fa-file-contract w-4 inline-block"></i>
+          Terms &
+          Conditions</div>
+        <div class="legal-link" onclick="navigateTo('privacy')"><i class="fas fa-shield-alt w-4 inline-block"></i>
+          Privacy
+          Policy</div>
+        <div class="legal-link" onclick="navigateTo('disclaimer')"><i
+            class="fas fa-exclamation-triangle w-4 inline-block"></i> Disclaimer</div>
+        <div class="legal-link" onclick="navigateTo('contact')"><i class="fas fa-envelope w-4 inline-block"></i> Contact
+          Us
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content" id="mainContent">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="page active fade-up" id="page-dashboard">
+      <div class="page-header">
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center gap-3">
+            <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+            <div>
+              <h1 class="text-xl font-bold">Dashboard</h1>
+              <p id="currentDate" class="text-xs text-gray-400 mt-0.5"></p>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button id="installBtn" class="btn-primary text-xs hidden">
+              <i class="fas fa-download mr-1"></i>Install
+            </button>
+            <button class="btn-ghost text-xs" onclick="openManageData()">
+              <i class="fas fa-database mr-1"></i>Manage Data
+            </button>
+          </div>
+        </div>
 
         <div class="mb-6">
           <div class="flex items-center justify-between mb-2">
@@ -401,425 +1526,569 @@
           <p id="importedFileName" class="text-xs text-gray-500 text-center mt-2 hidden"></p>
         </div>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <div class="card p-4">
-        <p class="text-xs text-gray-400 mb-1">Overall</p>
-        <p id="dashOverall" class="text-2xl font-bold">--%</p>
-        <div class="progress-track h-1.5 mt-2"><div id="dashOverallBar" class="progress-fill bg-indigo-500" style="width:0%"></div></div>
-      </div>
-      <div class="card p-4">
-        <p class="text-xs text-gray-400 mb-1">Present</p>
-        <p id="dashPresent" class="text-2xl font-bold text-green-400">--</p>
-        <p class="text-xs text-gray-500 mt-1">Total classes attended</p>
-      </div>
-      <div class="card p-4">
-        <p class="text-xs text-gray-400 mb-1">Absent</p>
-        <p id="dashAbsent" class="text-2xl font-bold text-red-400">--</p>
-        <p class="text-xs text-gray-500 mt-1">Missed classes</p>
-      </div>
-      <div class="card p-4">
-        <p class="text-xs text-gray-400 mb-1">Status</p>
-        <p id="dashStatus" class="text-2xl font-bold">--</p>
-        <p class="text-xs text-gray-500 mt-1">vs <span id="dashTarget">75%</span> target</p>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div class="card p-4">
+            <p class="text-xs text-gray-400 mb-1">Overall</p>
+            <p id="dashOverall" class="text-2xl font-bold">--%</p>
+            <div class="progress-track h-1.5 mt-2">
+              <div id="dashOverallBar" class="progress-fill bg-indigo-500" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="card p-4">
+            <p class="text-xs text-gray-400 mb-1">Present</p>
+            <p id="dashPresent" class="text-2xl font-bold text-green-400">--</p>
+            <p class="text-xs text-gray-500 mt-1">Total classes attended</p>
+          </div>
+          <div class="card p-4">
+            <p class="text-xs text-gray-400 mb-1">Absent</p>
+            <p id="dashAbsent" class="text-2xl font-bold text-red-400">--</p>
+            <p class="text-xs text-gray-500 mt-1">Missed classes</p>
+          </div>
+          <div class="card p-4">
+            <p class="text-xs text-gray-400 mb-1">Status</p>
+            <p id="dashStatus" class="text-2xl font-bold">--</p>
+            <p class="text-xs text-gray-500 mt-1">vs <span id="dashTarget">75%</span> target</p>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-semibold">Subjects</h2>
+        </div>
+        <div id="dashSubjectList" class="space-y-2">
+          <div class="card p-8 text-center text-gray-500 text-sm">
+            <i class="fas fa-cloud-upload-alt text-2xl mb-2 block"></i>
+            Import an Excel report to view the data.
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="flex items-center justify-between mb-3">
-      <h2 class="font-semibold">Subjects</h2>
-    </div>
-    <div id="dashSubjectList" class="space-y-2">
-      <div class="card p-8 text-center text-gray-500 text-sm">
-        <i class="fas fa-cloud-upload-alt text-2xl mb-2 block"></i>
-        Import an Excel report to view the data.
+    <!-- ── ATTENDANCE ── -->
+    <div class="page fade-up" id="page-attendance">
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+          <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+          <h1 class="text-xl font-bold">Attendance</h1>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- ── ATTENDANCE ── -->
-  <div class="page fade-up" id="page-attendance">
-    <div class="flex items-center justify-between mb-6">
-      <div class="flex items-center gap-3">
+    <!-- ── TIMETABLE (folder-based read) ── -->
+    <div class="page fade-up" id="page-timetable">
+      <div class="flex items-center gap-3 mb-2">
         <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
-        <h1 class="text-xl font-bold">Attendance</h1>
+        <h1 class="text-xl font-bold">Timetables</h1>
       </div>
-    </div>
-  </div>
+      <p class="text-xs text-gray-500 mb-5">If you find that your class timetable is outdated or incorrect, you can
+        request an update.</p>
+      <!-- Selection -->
+      <div class="card p-5 mb-5">
+        <h3 class="font-semibold mb-3 text-sm">Select Class</h3>
 
-  <!-- ── TIMETABLE (folder-based read) ── -->
-  <div class="page fade-up" id="page-timetable">
-    <div class="flex items-center gap-3 mb-2">
-      <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
-      <h1 class="text-xl font-bold">Timetables</h1>
-    </div>
-    <p class="text-xs text-gray-500 mb-5">If you find that your class timetable is outdated or incorrect, you can request an update.</p>
-    <!-- Selection -->
-    <div class="card p-5 mb-5">
-      <h3 class="font-semibold mb-3 text-sm">Select Class</h3>
-      <div class="flex gap-2 mb-3">
-        <input type="text" id="ttSearchInput" class="flex-1" placeholder="Search class name…"
-          onkeydown="if(event.key==='Enter')searchTimetable()" />
-        <button class="btn-primary text-xs" onclick="searchTimetable()"><i class="fas fa-search mr-1"></i>Search</button>
+        <div id="ttDropdown" class="custom-dropdown">
+
+          <div class="relative">
+
+            <input id="ttSearchInput" type="text" placeholder="Search Class" class="dropdown-btn pr-10"
+              onclick="toggleDropdown('ttDropdown')" oninput="filterTimetableDropdown()" autocomplete="off">
+
+            <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+
+          </div>
+
+          <div id="ttDropdownMenu" class="dropdown-menu"></div>
+
+        </div>
       </div>
-      <div class="grid md:grid-cols-2 gap-4">
-        <select id="activeTimetableSelect" class="w-full" onchange="setActiveTimetable(this.value)">
-          <option value="">-- None --</option>
+      <!-- Preview -->
+      <div class="card p-4 overflow-x-auto">
+        <div class="flex gap-2 mb-3 flex-wrap">
+          <button class="btn-ghost text-xs preview-tab active" data-w="1" onclick="previewWeek(1)">Click To
+            View</button>
+          <a id="requestTtBtn" href="#" target="_blank" rel="noopener" class="btn-ghost text-xs"><i
+              class="fas fa-paper-plane mr-1"></i>Request New TT</a>
+        </div>
+        <div id="ttPreviewGrid">
+          <p class="text-center text-gray-500 text-sm py-8">Select a timetable to preview.</p>
+        </div>
+      </div><br>
+      <div class="w-full">
+        <div id="inlineAdsSlides"></div>
+      </div>
+    </div>
+    </div>
+
+    <!-- ── PREDICTION ── -->
+    <div class="page fade-up" id="page-prediction">
+      <div class="flex items-center gap-3 mb-2">
+        <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+        <h1 class="text-xl font-bold">Prediction Engine</h1>
+      </div>
+      <p class="text-xs text-gray-500 mb-5">
+        <b>Current Week</b> = your current attendance plus every remaining scheduled class this week (from today
+        onward).
+        <b>Next Week</b> = Current Week's result plus a full additional week from the Next Week timetable a running,
+        cumulative forecast.
+      </p>
+
+      <div class="grid md:grid-cols-2 gap-4 mb-6">
+        <div class="card p-4 overflow-x-auto">
+          <h3 class="font-semibold mb-3">Current Week Prediction</h3>
+          <table class="pred-table">
+            <thead>
+              <tr>
+                <th>Subject</th>
+                <th>+Cls</th>
+                <th>Present</th>
+                <th>Total</th>
+                <th>%</th>
+                <th>Bunks/Need</th>
+              </tr>
+            </thead>
+            <tbody id="predTable1">
+              <tr>
+                <td colspan="6" class="py-4 text-center text-gray-500">Add subjects & select a timetable first.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card p-4 overflow-x-auto">
+          <h3 class="font-semibold mb-3">Next Week Prediction</h3>
+          <table class="pred-table">
+            <thead>
+              <tr>
+                <th>Subject</th>
+                <th>+Cls</th>
+                <th>Present</th>
+                <th>Total</th>
+                <th>%</th>
+                <th>Bunks/Need</th>
+              </tr>
+            </thead>
+            <tbody id="predTable2">
+              <tr>
+                <td colspan="6" class="py-4 text-center text-gray-500">Add subjects & select a timetable first.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <h2 class="font-semibold">Subject-wise Prediction Cards</h2>
+        <button class="btn-ghost text-xs" onclick="addAllPredCardsToCalendar()"><i
+            class="fas fa-calendar-plus mr-1"></i>Add to Calendar</button>
+      </div>
+      <div class="mb-4">
+        <select id="predCardsWeekSelect" class="w-full rounded-lg px-3 py-2">
+          <option value="1">Week 1</option>
+          <option value="2">Week 2</option>
         </select>
       </div>
+      <div id="predCards" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
     </div>
-    <!-- Preview -->
-    <div class="card p-4 overflow-x-auto">
-      <div class="flex gap-2 mb-3 flex-wrap">
-        <button class="btn-ghost text-xs preview-tab active" data-w="1" onclick="previewWeek(1)">Click To View</button>
-        <a id="requestTtBtn" href="#" target="_blank" rel="noopener" class="btn-ghost text-xs"><i
-            class="fas fa-paper-plane mr-1"></i>Request New TT</a>
+
+    <!-- ── CALCULATOR (standalone, freeform) ── -->
+    <div class="page fade-up" id="page-calculator">
+      <div class="flex items-center gap-3 mb-2">
+        <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+        <h1 class="text-xl font-bold">Quick Calculator</h1>
       </div>
-      <div id="ttPreviewGrid"><p class="text-center text-gray-500 text-sm py-8">Select a timetable to preview.</p></div>
-    </div><br>
-    <div class="w-full"><div id="inlineAdsSlides"></div></div>
-    </div>
-  </div>
-
-  <!-- ── PREDICTION ── -->
-  <div class="page fade-up" id="page-prediction">
-    <div class="flex items-center gap-3 mb-2">
-      <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
-      <h1 class="text-xl font-bold">Prediction Engine</h1>
-    </div>
-    <p class="text-xs text-gray-500 mb-5">
-      <b>Current Week</b> = your current attendance plus every remaining scheduled class this week (from today onward).
-      <b>Next Week</b> = Current Week's result plus a full additional week from the Next Week timetable a running, cumulative forecast.
-    </p>
-
-    <div class="grid md:grid-cols-2 gap-4 mb-6">
-      <div class="card p-4 overflow-x-auto">
-        <h3 class="font-semibold mb-3">Current Week Prediction</h3>
-        <table class="pred-table">
-          <thead><tr><th>Subject</th><th>+Cls</th><th>Present</th><th>Total</th><th>%</th><th>Bunks/Need</th></tr></thead>
-         <tbody id="predTable1"><tr><td colspan="6" class="py-4 text-center text-gray-500">Add subjects & select a timetable first.</td>
-          </tr>
-        </tbody>
-        </table>
-      </div>
-      <div class="card p-4 overflow-x-auto">
-        <h3 class="font-semibold mb-3">Next Week Prediction</h3>
-        <table class="pred-table">
-          <thead><tr><th>Subject</th><th>+Cls</th><th>Present</th><th>Total</th><th>%</th><th>Bunks/Need</th></tr></thead>
-          <tbody id="predTable2"><tr><td colspan="6" class="py-4 text-center text-gray-500">Add subjects & select a timetable first.</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
-      <h2 class="font-semibold">Subject-wise Prediction Cards</h2>
-      <button class="btn-ghost text-xs" onclick="addAllPredCardsToCalendar()"><i class="fas fa-calendar-plus mr-1"></i>Add to Calendar</button>
-    </div>
-    <div class="mb-4">
-      <select id="predCardsWeekSelect" onchange="renderPredCards()"
-        class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2">
-        <option value="1">Week 1</option>
-        <option value="2">Week 2</option>
-      </select>
-    </div>
-    <div id="predCards" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
-  </div>
-
-  <!-- ── CALCULATOR (standalone, freeform) ── -->
-  <div class="page fade-up" id="page-calculator">
-    <div class="flex items-center gap-3 mb-2">
-      <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
-      <h1 class="text-xl font-bold">Quick Calculator</h1>
-    </div>
-    <p class="text-xs text-gray-500 mb-5">Note - Increasing Attended classses also increases Total classes</p>
-    <h2 class="font-semibold mb-3 mt-8">Manual Calculator</h2>
-    <div class="card p-5">
-      <div class="flex flex-col lg:flex-row gap-5">
-        <div class="w-full lg:w-36 flex-shrink-0 flex flex-col gap-3">
-          <div class="card1" style="min-height:100px;padding:16px">
-            <div class="card-label-container" style="font-size:13px">Total Classes</div>
-            <input type="number" id="qcTotal" class="number-input" style="font-size:40px" placeholder="0" min="0"
-              oninput="renderQuickCalc()" />
-          </div>
-          <div class="card1" style="min-height:100px;padding:16px">
-            <div class="card-label-container" style="font-size:13px">Attended Classes</div>
-            <input type="number" id="qcAttended" class="number-input" style="font-size:40px" placeholder="0" min="0"
-              oninput="renderQuickCalc()" />
-          </div>
-          <button class="btn-ghost text-xs" onclick="resetQuickCalc()"><i class="fas fa-undo mr-1"></i>Reset</button>
-        </div>
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center justify-center gap-4">
-          
-            <div class="w-40 h-40 md:w-52 md:h-52 flex-shrink-0">
-              <canvas id="qcChart"></canvas>
+      <p class="text-xs text-gray-500 mb-5">Note - Increasing Attended classses also increases Total classes</p>
+      <h2 class="font-semibold mb-3 mt-8">Manual Calculator</h2>
+      <div class="card p-5">
+        <div class="flex flex-col lg:flex-row gap-5">
+          <div class="w-full lg:w-36 flex-shrink-0 flex flex-col gap-3">
+            <div class="card1" style="min-height:100px;padding:16px">
+              <div class="card-label-container" style="font-size:13px">Total Classes</div>
+              <input type="number" id="qcTotal" class="number-input" style="font-size:40px" placeholder="0" min="0"
+                oninput="renderQuickCalc()" />
             </div>
-        <div class="flex flex-col min-w-0">
-          <div class="mb-6">
-            <span id="qcPercent" class="text-3xl md:text-5xl font-bold">--%</span>
-            <p id="qcStatus" class="text-sm text-gray-400 mt-2">Enter values</p>
+            <div class="card1" style="min-height:100px;padding:16px">
+              <div class="card-label-container" style="font-size:13px">Attended Classes</div>
+              <input type="number" id="qcAttended" class="number-input" style="font-size:40px" placeholder="0" min="0"
+                oninput="renderQuickCalc()" />
+            </div>
+            <button class="btn-ghost text-xs" onclick="resetQuickCalc()"><i class="fas fa-undo mr-1"></i>Reset</button>
           </div>
-        <div class="space-y-3 text-sm">
-          <div><span id="qcBunkLegend"></span> Bunks:&nbsp; <span id="qcBunk"></span></div>
-          <div><span id="qcNeedLegend"></span> Need:&nbsp;<span id="qcNeed"></span></div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-center gap-4">
+
+              <div class="w-40 h-40 md:w-52 md:h-52 flex-shrink-0">
+                <canvas id="qcChart"></canvas>
+              </div>
+              <div class="flex flex-col min-w-0">
+                <div class="mb-6">
+                  <span id="qcPercent" class="text-3xl md:text-5xl font-bold">--%</span>
+                  <p id="qcStatus" class="text-sm text-gray-400 mt-2">Enter values</p>
+                </div>
+                <div class="space-y-3 text-sm">
+                  <div><span id="qcBunkLegend"></span> Bunks:&nbsp; <span id="qcBunk"></span></div>
+                  <div><span id="qcNeedLegend"></span> Need:&nbsp;<span id="qcNeed"></span></div>
+                </div>
               </div>
             </div>
-            </div>
-        </div>
-      </div>
-    </div><br>
-
-    <h2 class="font-semibold mb-3">Subject Calculator <span class="text-xs text-gray-500 font-normal">(linked to a saved subject)</span></h2>
-    <div class="card p-5 mb-6">
-      <div class="flex gap-5 flex-wrap md:flex-nowrap">
-        <div class="w-full md:w-40 flex flex-col gap-3">
-          <select id="calcSubject">
-            <option value="">Select Subject</option>
-          </select>
-<div class="card1" style="min-height:100px;padding:16px">
-  <div class="card-label-container" style="font-size:13px">Total Classes</div>
-  <input type="number" id="calcTotalInput" class="number-input" style="font-size:40px" placeholder="0" readonly />
-</div>
-
-<div class="card1" style="min-height:100px;padding:16px">
-    <div class="card-label-container" style="font-size:13px">Attended Classes</div>
-  
-    <div class="flex items-center justify-between gap-3">
-      <input type="number" id="calcAttendedInput" class="number-input" style="font-size:40px; width:120px;" placeholder="0"
-        readonly />
-      <div class="ctrl-box">
-        <button class="ctrl-btn minus" onclick="changeFutureAttend(-1)">-</button>
-        <button class="ctrl-btn plus" onclick="changeFutureAttend(1)">+</button>
-      </div>
-      </div>
-      </div>
-
-          <button class="btn-ghost text-xs" onclick="resetCalc()"><i class="fas fa-undo mr-1"></i>Reset</button>
-          </div>
-
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center justify-center gap-4">
-          
-            <div class="w-40 h-40 md:w-52 md:h-52 flex-shrink-0">
-              <canvas id="calcChart"></canvas>
-            </div>
-          <div class="flex flex-col min-w-0">
-            <div class="mb-6">
-              <span id="calcPercent" class="text-5xl font-bold">--%</span>
-              <p id="calcStatus" class="text-sm text-gray-400 mt-2">Select a subject</p>
-            </div>
-            <div class="space-y-3 text-sm">
-              <div><span id="calcBunkLegend"></span> Bunks:&nbsp; <span id="calcBunk"></span></div>
-              <div><span id="calcNeedLegend"></span> Need:&nbsp;<span id="calcNeed"></span></div>
-            </div>
-          </div>
           </div>
         </div>
-      </div>
-    </div>
-    
-<h2 class="font-semibold mb-3 mt-8">CGPA Calculator</h2>
-<div class="card p-5 mb-6">
-  <div class="flex flex-col lg:flex-row gap-5">
-    <div class="w-full lg:w-40 flex flex-col gap-3">
-      <div class="card1" style="min-height:100px;padding:16px">
-        <div class="card-label-container" style="font-size:13px">Current CGPA</div>
-        <input type="number" id="cgpaCurrent" class="number-input" style="font-size:40px" placeholder="0.0" min="0"
-          max="10" step="0.01" oninput="if(this.value>10)this.value=10; renderCgpaCalc()">
-      </div>
-      <div class="card1" style="min-height:100px;padding:16px">
-        <div class="card-label-container" style="font-size:13px">Sem Completed</div>
-        <input type="number" id="semCompleted" class="number-input" style="font-size:40px" placeholder="1" min="1" max="7" step="1" oninput="renderCgpaCalc()" onblur=" if(this.value==='') this.value=''; else if(+this.value<1) this.value=1; else if(+this.value>7) this.value=7; renderCgpaCalc(); " />
+      </div><br>
+
+      <h2 class="font-semibold mb-3">Subject Calculator <span class="text-xs text-gray-500 font-normal">(linked to a
+          saved subject)</span></h2>
+      <div class="card p-5 mb-6">
+        <div class="flex gap-5 flex-wrap md:flex-nowrap">
+          <div class="w-full md:w-40 flex flex-col gap-3">
+            <select id="calcSubject">
+              <option value="">Select Subject</option>
+            </select>
+            <div class="card1" style="min-height:100px;padding:16px">
+              <div class="card-label-container" style="font-size:13px">Total Classes</div>
+              <input type="number" id="calcTotalInput" class="number-input" style="font-size:40px" placeholder="0"
+                readonly />
+            </div>
+
+            <div class="card1" style="min-height:100px;padding:16px">
+              <div class="card-label-container" style="font-size:13px">Attended Classes</div>
+
+              <div class="flex items-center justify-between gap-3">
+                <input type="number" id="calcAttendedInput" class="number-input" style="font-size:40px; width:120px;"
+                  placeholder="0" readonly />
+                <div class="ctrl-box">
+                  <button class="ctrl-btn minus" onclick="changeFutureAttend(-1)">-</button>
+                  <button class="ctrl-btn plus" onclick="changeFutureAttend(1)">+</button>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn-ghost text-xs" onclick="resetCalc()"><i class="fas fa-undo mr-1"></i>Reset</button>
+          </div>
+
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-center gap-4">
+
+              <div class="w-40 h-40 md:w-52 md:h-52 flex-shrink-0">
+                <canvas id="calcChart"></canvas>
+              </div>
+              <div class="flex flex-col min-w-0">
+                <div class="mb-6">
+                  <span id="calcPercent" class="text-5xl font-bold">--%</span>
+                  <p id="calcStatus" class="text-sm text-gray-400 mt-2">Select a subject</p>
+                </div>
+                <div class="space-y-3 text-sm">
+                  <div><span id="calcBunkLegend"></span> Bunks:&nbsp; <span id="calcBunk"></span></div>
+                  <div><span id="calcNeedLegend"></span> Need:&nbsp;<span id="calcNeed"></span></div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="card1" style="min-height:100px;padding:16px">
-        <div class="card-label-container" style="font-size:13px">Target CGPA</div>
-        <input type="number" id="cgpaTarget" class="number-input" style="font-size:40px" placeholder="0.0" min="0"
-          max="10" step="0.01" oninput="if(this.value>10)this.value=10; renderCgpaCalc()" />
       </div>
-      <button class="btn-ghost text-xs" onclick="resetCgpaCalc()"><i class="fas fa-undo mr-1"></i>Reset</button>
-      </div>
-      <div class="flex-1 min-w-0">
-      <div id="neededCgpaCard" class="card1" style="min-height:140px;padding:16px">
-        <div class="card-label-container" style="font-size:13px">
-          Needed Average SGPA
+
+      <h2 class="font-semibold mb-3 mt-8">CGPA Calculator</h2>
+      <div class="card p-5 mb-6">
+        <div class="flex flex-col lg:flex-row gap-5">
+          <div class="w-full lg:w-40 flex flex-col gap-3">
+            <div class="card1" style="min-height:100px;padding:16px">
+              <div class="card-label-container" style="font-size:13px">Current CGPA</div>
+              <input type="number" id="cgpaCurrent" class="number-input" style="font-size:40px" placeholder="0.0"
+                min="0" max="10" step="0.01" oninput="if(this.value>10)this.value=10; renderCgpaCalc()">
+            </div>
+            <div class="card1" style="min-height:100px;padding:16px">
+              <div class="card-label-container" style="font-size:13px">Sem Completed</div>
+              <input type="number" id="semCompleted" class="number-input" style="font-size:40px" placeholder="1" min="1"
+                max="7" step="1" oninput="renderCgpaCalc()"
+                onblur=" if(this.value==='') this.value=''; else if(+this.value<1) this.value=1; else if(+this.value>7) this.value=7; renderCgpaCalc(); " />
+            </div>
+            <div class="card1" style="min-height:100px;padding:16px">
+              <div class="card-label-container" style="font-size:13px">Target CGPA</div>
+              <input type="number" id="cgpaTarget" class="number-input" style="font-size:40px" placeholder="0.0" min="0"
+                max="10" step="0.01" oninput="if(this.value>10)this.value=10; renderCgpaCalc()" />
+            </div>
+            <button class="btn-ghost text-xs" onclick="resetCgpaCalc()"><i class="fas fa-undo mr-1"></i>Reset</button>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div id="neededCgpaCard" class="card1" style="min-height:140px;padding:16px">
+              <div class="card-label-container" style="font-size:13px">
+                Needed Average SGPA
+              </div>
+
+              <div id="cgpaDelta" class="text-4xl font-bold text-center mt-3">
+                --
+              </div>
+              <p id="cgpaStatus" class="text-sm text-gray-400 text-center mt-2">
+                Enter values
+              </p>
+            </div>
+          </div>
         </div>
-      
-        <div id="cgpaDelta" class="text-4xl font-bold text-center mt-3">
-          --
+      </div>
+    </div>
+    </div>
+
+    <!-- ── ANALYTICS ── -->
+    <div class="page fade-up" id="page-analytics">
+      <div class="flex items-center gap-3 mb-6">
+        <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+        <h1 class="text-xl font-bold">Analytics</h1>
+      </div>
+
+      <div class="card p-5 mb-6">
+        <h3 class="font-semibold mb-4">Attendance Breakdown <span
+            class="text-xs text-gray-500 font-normal">(subject-wise)</span></h3>
+        <div class="h-64 md:h-80"><canvas id="attendanceChart"></canvas></div>
+      </div>
+
+      <div class="card p-5 mb-6">
+        <div class="flex items-center justify-between mb-4">
+
+          <div class="flex items-center gap-2">
+            <h3 class="font-semibold">Daily Attendance Analysis</h3>
+
+            <button class="help-btn" onclick="openHelpModal('helpDailyModal')" title="How to get daily Excel">i</button>
+          </div>
+
+          <button class="btn-ghost text-xs flex items-center gap-2"
+            onclick="document.getElementById('dailyFileInput').click()">
+            <i class="fas fa-file-excel"></i>
+            <span id="dailyFileChosenLabel">Upload</span>
+          </button>
+
         </div>
-      <p id="cgpaStatus" class="text-sm text-gray-400 text-center mt-2">
-        Enter values
-      </p>
+
+        <input type="file" id="dailyFileInput" class="hidden" accept=".xlsx,.xls">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-3 mb-4">
+
+          <div id="dailyDropdown" class="relative w-full">
+
+            <button id="dailyDropdownBtn" type="button"
+              class="w-full rounded-xl border border-white/20 bg-transparent px-4 py-2 text-left"
+              onclick="toggleDailyDropdown()">
+
+              <span id="dailyDropdownText">Select</span>
+            </button>
+
+            <div id="dailyDropdownList"
+              class="hidden absolute z-50 mt-2 w-full rounded-xl bg-[#1b2233] border border-white/10 shadow-lg max-h-48 overflow-y-auto">
+            </div>
+
+          </div>
+        </div>
+        <div class="h-64 md:h-80"><canvas id="dailyChart"></canvas></div>
       </div>
-      </div>
-    </div>
-  </div>
-</div>
-  </div>
-
-  <!-- ── ANALYTICS ── -->
-  <div class="page fade-up" id="page-analytics">
-    <div class="flex items-center gap-3 mb-6">
-      <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
-      <h1 class="text-xl font-bold">Analytics</h1>
     </div>
 
-    <div class="card p-5 mb-6">
-      <h3 class="font-semibold mb-4">Attendance Breakdown <span class="text-xs text-gray-500 font-normal">(subject-wise)</span></h3>
-      <div class="h-64 md:h-80"><canvas id="attendanceChart"></canvas></div>
-    </div>
+    <!-- ── CAMPUS HUB ── -->
+    <div class="page fade-up" id="page-campus">
 
-    <div class="card p-5 mb-6">
-      <h3 class="font-semibold mb-4">Daily Attendance Analysis <span
-          class="text-xs text-gray-500 font-normal">(subject-wise)</span>&nbsp;&nbsp;&nbsp;<button class="help-btn"
-          onclick="openHelpModal('helpDailyModal')" title="How to get daily Excel">i</button></h3>
+      <div class="flex items-center justify-between mb-6">
 
-      <input type="file" id="dailyFileInput" class="hidden" accept=".xlsx,.xls">
-      <div class="flex flex-col md:flex-row gap-3 mb-4 items-center">
-        <button class="btn-ghost text-xs flex items-center gap-2 self-end justify-center" onclick="document.getElementById('dailyFileInput').click()">
-          <i class="fas fa-file-excel"></i><span id="dailyFileChosenLabel">Upload Daily Report</span>
-        </button>
+        <div class="flex items-center gap-3">
+          <button class="md:hidden btn-ghost p-2" onclick="openSidebar()">
+            <i class="fas fa-bars"></i>
+          </button>
+
+          <h1 class="text-xl font-bold">Campus Hub</h1>
+        </div>
+
+        <a href="https://forms.gle/bW8EDvqwXAWguEKW6" target="_blank" id="publishBtn" class="btn-primary text-xs">
+          <i class="fas fa-bullhorn mr-1"></i>
+          Publish Event/Club</a>
+
       </div>
 
-      <div class="h-64 md:h-80"><canvas id="dailyChart"></canvas></div>
-    </div>
-  </div>
+      <div class="card p-5 mb-5">
+        <div class="flex gap-3">
+          <div id="schoolDropdown" class="custom-dropdown flex-1">
 
-  <!-- ── ABOUT US ── -->
-  <div class="page fade-up legal-page" id="page-about">
-    <div class="flex items-center gap-3 mb-6">
-      <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
-      <h1 class="text-xl font-bold">About Us</h1>
-    </div>
-    <div class="card p-6 max-w-2xl">
-      <p><b class="text-gray-200">Tracy</b> is a free attendance tracking and prediction tool built for college
-        students. We help you monitor subject-wise attendance, predict future percentages using your timetable, and
-        calculate safe bunks before you skip class.</p>
-      <h2>Our Mission</h2>
-      <p>To give students a simple, privacy-first way to stay on top of attendance requirements without relying on complex
-        spreadsheets.</p>
-      <h2>What We Offer</h2>
-      <ul>
-        <li>Excel-based attendance import from your college ERP</li>
-        <li>Subject-wise calculators and prediction engine</li>
-        <li>Timetable-based forecasting for current and next week</li>
-        <li>CGPA planning tools</li>
-      </ul>
-      <h2>Data Privacy</h2>
-      <p>All your attendance data is stored locally in your browser. We do not upload your personal attendance records to
-        any server.</p>
-    </div>
-  </div>
-  
-  <!-- ── TERMS ── -->
-  <div class="page fade-up legal-page" id="page-terms">
-    <div class="flex items-center gap-3 mb-6">
-      <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
-      <h1 class="text-xl font-bold">Terms & Conditions</h1>
-    </div>
-    <div class="card p-6 max-w-2xl">
-      <p>Last updated: June 2025</p>
-      <h2>1. Acceptance of Terms</h2>
-      <p>By accessing and using Tracy, you agree to be bound by these Terms and Conditions. If you do not agree, please
-        do not use this service.</p>
-      <h2>2. Use of Service</h2>
-      <p>Tracy is provided for educational and informational purposes only. Attendance calculations and predictions are
-        estimates — always verify with your official college records.</p>
-      <h2>3. User Responsibilities</h2>
-      <ul>
-        <li>You are responsible for the accuracy of data you import.</li>
-        <li>You must not use this service for any unlawful purpose.</li>
-        <li>You must not attempt to disrupt or damage the service.</li>
-      </ul>
-      <h2>4. Intellectual Property</h2>
-      <p>All content, design, and code of Tracy are owned by the site operator. You may not copy or redistribute
-        without permission.</p>
-      <h2>5. Limitation of Liability</h2>
-      <p>Tracy is provided "as is" without warranties. We are not liable for any academic consequences arising from use
-        of this tool.</p>
-      <h2>6. Changes</h2>
-      <p>We reserve the right to modify these terms at any time. Continued use constitutes acceptance of updated terms.
-      </p>
-    </div>
-  </div>
-  
-  <!-- ── PRIVACY ── -->
-  <div class="page fade-up legal-page" id="page-privacy">
-    <div class="flex items-center gap-3 mb-6">
-      <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
-      <h1 class="text-xl font-bold">Privacy Policy</h1>
-    </div>
-    <div class="card p-6 max-w-2xl">
-      <p>Last updated: June 2025</p>
-      <h2>Information We Collect</h2>
-      <p><b class="text-gray-300">Attendance data you import</b> is stored entirely in your browser's local storage. We do
-        not collect, transmit, or store your attendance records on our servers.</p>
-      <h2>Cookies & Local Storage</h2>
-      <p>We use browser local storage to save your preferences and attendance data on your device. No tracking cookies are
-        used for attendance data.</p>
-      <h2>Third-Party Services</h2>
-      <p>We may use third-party services including Google AdSense for advertising. These services may use cookies per
-        their own privacy policies. See Google's privacy policy for details on AdSense data collection.</p>
-      <h2>Google Forms</h2>
-      <p>If you submit ads or timetable requests via Google Forms, that data is handled by Google per their privacy
-        policy.</p>
-      <h2>Your Rights</h2>
-      <p>You can clear all local data at any time using "Full Reset" in Manage Data on the Dashboard.</p>
-      <h2>Contact</h2>
-      <p>For privacy concerns, use the Contact Us page.</p>
-    </div>
-  </div>
-  
-  <!-- ── DISCLAIMER ── -->
-  <div class="page fade-up legal-page" id="page-disclaimer">
-    <div class="flex items-center gap-3 mb-6">
-      <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
-      <h1 class="text-xl font-bold">Disclaimer</h1>
-    </div>
-    <div class="card p-6 max-w-2xl">
-      <p>The information provided by Tracy is for general informational purposes only. All attendance percentages,
-        predictions, bunk calculations, and CGPA estimates are approximations based on user-provided data.</p>
-      <h2>No Academic Guarantee</h2>
-      <p>We make no guarantees about the accuracy of calculations. Official attendance records maintained by your
-        institution are the sole authoritative source.</p>
-      <h2>Not Affiliated</h2>
-      <p>Tracy is not affiliated with, endorsed by, or connected to any college, university, or educational institution
-        unless explicitly stated.</p>
-      <h2>Advertising</h2>
-      <p>This site may display advertisements through Google AdSense. Ad content is served by Google and does not
-        constitute endorsement by Tracy.</p>
-    </div>
-  </div>
-  
-  <!-- ── CONTACT ── -->
-  <div class="page fade-up legal-page" id="page-contact">
-    <div class="flex items-center gap-3 mb-6">
-      <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
-      <h1 class="text-xl font-bold">Contact Us</h1>
-    </div>
-    <div class="card p-6 max-w-2xl">
-      <p>We'd love to hear from you. For questions, feedback, timetable updates, or ad submissions:</p>
-      <h2>Email</h2>
-      <p>youreallythinkiwatchthis@gmail.com</p>
-      <h2>Report Issues</h2>
-      <p>If you find incorrect timetable data, use the <b class="text-gray-300">Request New TT</b> button on the Timetable
-        page to submit an updated schedule.</p>
-      <h2>Submit Ads</h2>
-      <p>College clubs and organizations can submit promotional posters via our Google Form.</p>
-      <h2>Response Time</h2>
-      <p>We aim to respond within 2–3 business days.</p>
-    </div>
-  </div>
+            <button type="button" class="dropdown-btn"
+              onclick="event.preventDefault();toggleDropdown('schoolDropdown')">
+              <span id="schoolDropdownText">All Schools</span>
 
-</main>
+              <i class="fas fa-chevron-down"></i>
 
-<!-- Mobile bottom nav -->
-<nav class="mobile-nav">
-  <div class="mobile-nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')"><i class="fas fa-home"></i><span>Home</span></div>
-  <div class="mobile-nav-item" data-page="calculator" onclick="navigateTo('calculator')"><i class="fas fa-calculator"></i><span>Calc</span></div>
-  <div class="mobile-nav-item" data-page="timetable" onclick="navigateTo('timetable')"><i class="fas fa-calendar-alt"></i><span>TT</span></div>
-  <div class="mobile-nav-item" data-page="prediction" onclick="navigateTo('prediction')"><i class="fas fa-chart-line"></i><span>Predict</span></div>
-  <div class="mobile-nav-item" data-page="analytics" onclick="navigateTo('analytics')"><i class="fas fa-chart-pie"></i><span>Analysis</span></div>
-</nav>
+            </button>
 
-<script src="main.js"></script>
+            <div id="schoolDropdownMenu" class="dropdown-menu"></div>
+
+          </div>
+          <div id="yearDropdown" class="custom-dropdown w-36">
+
+            <button type="button" class="dropdown-btn" onclick="event.preventDefault();toggleDropdown('yearDropdown')">
+              <span id="yearDropdownText">All Years</span>
+
+              <i class="fas fa-chevron-down"></i>
+
+            </button>
+
+            <div id="yearDropdownMenu" class="dropdown-menu"></div>
+
+          </div>
+        </div>
+      </div>
+
+      <h2 class="font-semibold mb-3">
+        Featured Clubs
+      </h2>
+
+      <div id="clubGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      </div>
+    </div>
+
+    <!-- ── ABOUT US ── -->
+    <div class="page fade-up legal-page" id="page-about">
+      <div class="flex items-center gap-3 mb-6">
+        <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+        <h1 class="text-xl font-bold">About Us</h1>
+      </div>
+      <div class="card p-6 max-w-2xl">
+        <p><b class="text-gray-200">Tracy</b> is a free attendance tracking and prediction tool built for college
+          students. We help you monitor subject-wise attendance, predict future percentages using your timetable, and
+          calculate safe bunks before you skip class.</p>
+        <h2>Our Mission</h2>
+        <p>To give students a simple, privacy-first way to stay on top of attendance requirements without relying on
+          complex
+          spreadsheets.</p>
+        <h2>What We Offer</h2>
+        <ul>
+          <li>Excel-based attendance import from your college ERP</li>
+          <li>Subject-wise calculators and prediction engine</li>
+          <li>Timetable-based forecasting for current and next week</li>
+          <li>CGPA planning tools</li>
+        </ul>
+        <h2>Data Privacy</h2>
+        <p>All your attendance data is stored locally in your browser. We do not upload your personal attendance
+          records
+          to
+          any server.</p>
+      </div>
+    </div>
+
+    <!-- ── TERMS ── -->
+    <div class="page fade-up legal-page" id="page-terms">
+      <div class="flex items-center gap-3 mb-6">
+        <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+        <h1 class="text-xl font-bold">Terms & Conditions</h1>
+      </div>
+      <div class="card p-6 max-w-2xl">
+        <p>Last updated: June 2025</p>
+        <h2>1. Acceptance of Terms</h2>
+        <p>By accessing and using Tracy, you agree to be bound by these Terms and Conditions. If you do not agree,
+          please
+          do not use this service.</p>
+        <h2>2. Use of Service</h2>
+        <p>Tracy is provided for educational and informational purposes only. Attendance calculations and predictions
+          are
+          estimates — always verify with your official college records.</p>
+        <h2>3. User Responsibilities</h2>
+        <ul>
+          <li>You are responsible for the accuracy of data you import.</li>
+          <li>You must not use this service for any unlawful purpose.</li>
+          <li>You must not attempt to disrupt or damage the service.</li>
+        </ul>
+        <h2>4. Intellectual Property</h2>
+        <p>All content, design, and code of Tracy are owned by the site operator. You may not copy or redistribute
+          without permission.</p>
+        <h2>5. Limitation of Liability</h2>
+        <p>Tracy is provided "as is" without warranties. We are not liable for any academic consequences arising from
+          use
+          of this tool.</p>
+        <h2>6. Changes</h2>
+        <p>We reserve the right to modify these terms at any time. Continued use constitutes acceptance of updated
+          terms.
+        </p>
+      </div>
+    </div>
+
+    <!-- ── PRIVACY ── -->
+    <div class="page fade-up legal-page" id="page-privacy">
+      <div class="flex items-center gap-3 mb-6">
+        <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+        <h1 class="text-xl font-bold">Privacy Policy</h1>
+      </div>
+      <div class="card p-6 max-w-2xl">
+        <p>Last updated: June 2025</p>
+        <h2>Information We Collect</h2>
+        <p><b class="text-gray-300">Attendance data you import</b> is stored entirely in your browser's local storage.
+          We do
+          not collect, transmit, or store your attendance records on our servers.</p>
+        <h2>Cookies & Local Storage</h2>
+        <p>We use browser local storage to save your preferences and attendance data on your device. No tracking
+          cookies
+          are
+          used for attendance data.</p>
+        <h2>Third-Party Services</h2>
+        <p>We may use third-party services including Google AdSense for advertising. These services may use cookies
+          per
+          their own privacy policies. See Google's privacy policy for details on AdSense data collection.</p>
+        <h2>Google Forms</h2>
+        <p>If you submit ads or timetable requests via Google Forms, that data is handled by Google per their privacy
+          policy.</p>
+        <h2>Your Rights</h2>
+        <p>You can clear all local data at any time using "Full Reset" in Manage Data on the Dashboard.</p>
+        <h2>Contact</h2>
+        <p>For privacy concerns, use the Contact Us page.</p>
+      </div>
+    </div>
+
+    <!-- ── DISCLAIMER ── -->
+    <div class="page fade-up legal-page" id="page-disclaimer">
+      <div class="flex items-center gap-3 mb-6">
+        <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+        <h1 class="text-xl font-bold">Disclaimer</h1>
+      </div>
+      <div class="card p-6 max-w-2xl">
+        <p>The information provided by Tracy is for general informational purposes only. All attendance percentages,
+          predictions, bunk calculations, and CGPA estimates are approximations based on user-provided data.</p>
+        <h2>No Academic Guarantee</h2>
+        <p>We make no guarantees about the accuracy of calculations. Official attendance records maintained by your
+          institution are the sole authoritative source.</p>
+        <h2>Not Affiliated</h2>
+        <p>Tracy is not affiliated with, endorsed by, or connected to any college, university, or educational
+          institution
+          unless explicitly stated.</p>
+        <h2>Advertising</h2>
+        <p>This site may display advertisements through Google AdSense. Ad content is served by Google and does not
+          constitute endorsement by Tracy.</p>
+      </div>
+    </div>
+
+    <!-- ── CONTACT ── -->
+    <div class="page fade-up legal-page" id="page-contact">
+      <div class="flex items-center gap-3 mb-6">
+        <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+        <h1 class="text-xl font-bold">Contact Us</h1>
+      </div>
+      <div class="card p-6 max-w-2xl">
+        <p>We'd love to hear from you. For questions, feedback, timetable updates, or ad submissions:</p>
+        <h2>Email</h2>
+        <p>youreallythinkiwatchthis@gmail.com</p>
+        <h2>Report Issues</h2>
+        <p>If you find incorrect timetable data, use the <b class="text-gray-300">Request New TT</b> button on the
+          Timetable
+          page to submit an updated schedule.</p>
+        <h2>Submit Ads</h2>
+        <p>College clubs and organizations can submit promotional posters via our Google Form.</p>
+        <h2>Response Time</h2>
+        <p>We aim to respond within 2–3 business days.</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Mobile bottom nav -->
+  <nav class="mobile-nav">
+    <div class="mobile-nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')"><i
+        class="fas fa-home"></i><span>Home</span></div>
+    <div class="mobile-nav-item" data-page="calculator" onclick="navigateTo('calculator')"><i
+        class="fas fa-calculator"></i><span>Calc</span></div>
+    <div class="mobile-nav-item" data-page="timetable" onclick="navigateTo('timetable')"><i
+        class="fas fa-calendar-alt"></i><span>TT</span></div>
+    <div class="mobile-nav-item" data-page="prediction" onclick="navigateTo('prediction')"><i
+        class="fas fa-chart-line"></i><span>Predict</span></div>
+    <div class="mobile-nav-item" data-page="analytics" onclick="navigateTo('analytics')"><i
+        class="fas fa-chart-pie"></i><span>Analysis</span></div>
+  </nav>
+
+  <script src="main.js"></script>
 </body>
+
 </html>
