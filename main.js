@@ -12,6 +12,7 @@ const STATE = {
   currentPage: "dashboard",
   dailySubjectMap: {},
   dailyOverallMap: {},
+  lastAttendanceReportDate: null,
 
   weekOverrides: {
     week1: {
@@ -394,7 +395,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!box) return;
 
     if (!box.contains(e.target)) {
-      document.getElementById("dailyDropdownList").classList.add("hidden");
+      document.getElementById("dailyDropdownList").classList.remove("show");
     }
   });
   const mainInput = document.getElementById("mainFileInput");
@@ -446,9 +447,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Init
-  // Init
   loadState();
+  checkAttendanceReportStatus();
 
   // Theme
   const saved = localStorage.getItem("theme");
@@ -478,17 +478,14 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function toggleDailyDropdown() {
-  document.getElementById("dailyDropdownList").classList.toggle("hidden");
+  document.getElementById("dailyDropdownList").classList.toggle("show");
 }
 
 function populateDailySubjectSelect() {
   const list = document.getElementById("dailyDropdownList");
   list.innerHTML = "";
 
-  const items = [
-    { value: "overall", text: "Overall" },
-    { value: "all", text: "All Subjects" },
-  ];
+  const items = [{ value: "all", text: "All Subjects" }];
 
   Object.keys(dailySubjectMap)
     .sort()
@@ -509,8 +506,7 @@ function populateDailySubjectSelect() {
     div.onclick = () => {
       document.getElementById("dailyDropdownText").textContent = item.text;
 
-      document.getElementById("dailyDropdownList").classList.add("hidden");
-
+      document.getElementById("dailyDropdownList").classList.remove("show");
       updateDailyChartView(item.value);
     };
 
@@ -544,40 +540,9 @@ function parseAttendanceExcel(file) {
     });
     if (Object.keys(profile).length) STATE.profile = profile;
 
-    // Check report freshness
-    let reportDate = null;
-
-    raw.forEach((row) => {
-      row.forEach((cell) => {
-        const text = String(cell || "").trim();
-
-        // Change this if your Excel uses a different label
-        if (text.includes("Date range")) {
-          const match = text.match(/to\s+(\d{2}-\d{2}-\d{4})/);
-
-          if (match) {
-            const [day, month, year] = match[1].split("-");
-
-            reportDate = new Date(year, month - 1, day);
-          }
-        }
-      });
-    });
-
-    if (reportDate) {
-      const today = new Date();
-
-      reportDate.setHours(0, 0, 0, 0);
-      today.setHours(0, 0, 0, 0);
-
-      const daysOld = Math.floor((today - reportDate) / (1000 * 60 * 60 * 24));
-
-      if (daysOld > 1) {
-        showToast(
-          "⚠️ Attendance report is over 1 day old. Upload the latest report for accurate predictions.",
-        );
-      }
-    }
+    // Save the actual upload date
+    STATE.lastAttendanceReportDate = new Date().toISOString();
+    saveState();
 
     // Extract subjects
     const subjects = [];
@@ -610,6 +575,17 @@ function parseAttendanceExcel(file) {
     console.table(subjects);
     STATE.subjects = subjects;
     saveState();
+
+    const box = document.getElementById("uploadZone");
+
+    if (box) {
+      box.classList.remove("border-yellow-500", "border-2");
+
+      if (box.dataset.originalHtml) {
+        box.innerHTML = box.dataset.originalHtml;
+      }
+    }
+    checkAttendanceReportStatus();
 
     const fnEl = document.getElementById("importedFileName");
     if (fnEl) {
@@ -1347,34 +1323,50 @@ let calcState = { attended: 0, total: 0, min_attended: 0, min_total: 0 };
 let calcChartInst = null;
 
 function populateCalcSubjects() {
-  const sel = document.getElementById("calcSubject");
-  if (!sel) return;
-  const prev = sel.value;
-  sel.innerHTML = '<option value="">Select Subject</option>';
-  STATE.subjects.forEach((s, i) => {
-    const opt = document.createElement("option");
-    opt.value = i;
-    opt.textContent = s.name;
-    sel.appendChild(opt);
-  });
-  if (prev && sel.querySelector(`option[value="${prev}"]`)) sel.value = prev;
-}
+  const menu = document.getElementById("calcSubjectMenu");
+  const text = document.getElementById("calcSubjectText");
 
-document.addEventListener("change", (e) => {
-  if (e.target.id === "calcSubject") {
-    const idx = e.target.value;
-    if (idx === "") return;
-    const s = STATE.subjects[parseInt(idx, 10)];
-    if (!s) return;
-    calcState = {
-      attended: (s.attended || 0) + (s.dutyLeave || 0),
-      total: s.total || 0,
-      min_attended: (s.attended || 0) + (s.dutyLeave || 0),
-      min_total: s.total || 0,
+  if (!menu || !text) return;
+
+  menu.innerHTML = "";
+
+  const placeholder = document.createElement("div");
+  placeholder.className = "dropdown-item";
+  placeholder.textContent = "Select Subject";
+
+  placeholder.onclick = () => {
+    text.textContent = "Select Subject";
+    text.dataset.value = "";
+    closeDropdown("calcSubjectDropdown");
+    resetCalc();
+  };
+
+  menu.appendChild(placeholder);
+
+  STATE.subjects.forEach((s, i) => {
+    const item = document.createElement("div");
+    item.className = "dropdown-item";
+    item.textContent = s.name;
+
+    item.onclick = () => {
+      text.textContent = s.name;
+      text.dataset.value = i;
+
+      closeDropdown("calcSubjectDropdown");
+
+      calcState = {
+        attended: (s.attended || 0) + (s.dutyLeave || 0),
+        total: s.total || 0,
+        min_attended: (s.attended || 0) + (s.dutyLeave || 0),
+        min_total: s.total || 0,
+      };
+
+      renderCalc();
     };
-    renderCalc();
-  }
-});
+
+    menu.appendChild(item);
+  });
+}
 
 function updateSubjectCalc() {
   calcState.total =
@@ -1494,7 +1486,13 @@ function renderCalcChart(a, t) {
 
 function resetCalc() {
   calcState = { attended: 0, total: 0, min_attended: 0, min_total: 0 };
-  document.getElementById("calcSubject").value = "";
+
+  const text = document.getElementById("calcSubjectText");
+  if (text) {
+    text.textContent = "Select Subject";
+    text.dataset.value = "";
+  }
+
   renderCalc();
 }
 
@@ -1866,7 +1864,12 @@ function processDailyRows(rows, tt) {
 
       const numMatch = kLow.match(/\d+/);
       const hourIdx = numMatch ? parseInt(numMatch[0], 10) - 1 : -1;
-      const subj = hourIdx >= 0 ? (ttHours[hourIdx] || "").trim() : "";
+      const ttSubj = hourIdx >= 0 ? (ttHours[hourIdx] || "").trim() : "";
+
+      const subj =
+        STATE.subjects.find((s) =>
+          s.name.toLowerCase().includes(ttSubj.toLowerCase()),
+        )?.name || ttSubj;
       if (!subj || subj.toLowerCase().includes("holiday")) return;
       overallAgg[dateLabel] = overallAgg[dateLabel] || {
         p: 0,
@@ -1973,17 +1976,8 @@ function sortDateLabels(labels) {
   });
 }
 
-function updateDailyChartView(value) {
-  const canvas = document.getElementById("dailyChart");
-
-  if (canvas) {
-    canvas.classList.remove("chart-slide-in");
-    void canvas.offsetWidth; // restart animation
-    canvas.classList.add("chart-slide-in");
-  }
-  if (value === "overall") {
-    renderDailyOverallChart();
-  } else if (value === "all") {
+function updateDailyChartView(value = "all") {
+  if (value === "all") {
     renderSubjectDailyChart(dailySubjectMap);
   } else {
     renderSubjectDailyChart({
@@ -2037,7 +2031,15 @@ function renderSubjectDailyChart(subjectMap) {
     data: labels.map((d) =>
       subjectMap[s][d] != null ? subjectMap[s][d].toFixed(1) : null,
     ),
-    borderColor: colors[i % colors.length],
+    segment: {
+      borderColor: (ctx) => {
+        const y = ctx.p1.parsed.y;
+
+        if (y < 60) return "#ef4444";
+        if (y < 75) return "#f59e0b";
+        return "#22c55e";
+      },
+    },
     tension: 0.4,
     borderWidth: 2,
     pointRadius: 0,
@@ -2048,6 +2050,28 @@ function renderSubjectDailyChart(subjectMap) {
     type: "line",
     data: { labels, datasets },
     options: {
+      animation: {
+        x: {
+          type: "number",
+          easing: "easeOutQuart",
+          duration: 1200,
+          from: NaN,
+          delay(ctx) {
+            return ctx.dataIndex * 70;
+          },
+        },
+        y: {
+          type: "number",
+          easing: "easeOutQuart",
+          duration: 1200,
+          from(ctx) {
+            if (ctx.index === 0) return ctx.chart.scales.y.getPixelForValue(0);
+            return ctx.chart
+              .getDatasetMeta(ctx.datasetIndex)
+              .data[ctx.index - 1]?.getProps(["y"], true).y;
+          },
+        },
+      },
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
@@ -2099,7 +2123,12 @@ function setTarget(t) {
   STATE.target = t;
   saveState();
   updateTargetUI();
-  refreshAll();
+  renderDashboard();
+  renderAttendancePage();
+  renderPredictionPage();
+  renderAnalyticsPage();
+  renderCalc();
+  renderQuickCalc();
 }
 
 function updateTargetUI() {
@@ -2131,14 +2160,23 @@ function resetAttendanceCounts() {
   showToast("Attendance counts reset.");
 }
 
-function resetTimetables() {
-  STATE.timetables = [];
-  STATE.week1TimetableId = null;
-  STATE.week2TimetableId = null;
+function resetDailyAnalysis() {
+  dailySubjectMap = {};
+  dailyOverallMap = {};
+
+  STATE.dailySubjectMap = {};
+  STATE.dailyOverallMap = {};
+
   saveState();
-  renderTimetablePage();
-  renderPredictionPage();
-  showToast("Timetables cleared.");
+  if (dailyChartInst) {
+    dailyChartInst.destroy();
+    dailyChartInst = null;
+  }
+  const text = document.getElementById("dailyDropdownText");
+  if (text) text.textContent = "All Subjects";
+  const list = document.getElementById("dailyDropdownList");
+  if (list) list.innerHTML = "";
+  showToast("Daily Attendance Analysis cleared.");
 }
 
 function fullReset() {
@@ -2159,6 +2197,8 @@ function closeManageData() {
 let _confirmCallback = null;
 
 function confirmAction(msg, cb) {
+  closeManageData(); // Hide Manage Data first
+
   _confirmCallback = cb;
   document.getElementById("confirmMsg").textContent = msg;
   document.getElementById("confirmModal").classList.add("open");
@@ -2182,6 +2222,43 @@ function showToast(msg) {
   el.classList.add("show");
   if (_toastTimer) clearTimeout(_toastTimer);
   _toastTimer = setTimeout(() => el.classList.remove("show"), 3000);
+}
+
+function checkAttendanceReportStatus() {
+  const box = document.getElementById("uploadZone");
+  if (!box || !STATE.lastAttendanceReportDate) return;
+
+  const reportDate = new Date(STATE.lastAttendanceReportDate);
+  const today = new Date();
+
+  reportDate.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+
+  const daysOld = Math.floor((today - reportDate) / (1000 * 60 * 60 * 24));
+
+  const oldMsg = document.getElementById("attendanceUpdateMsg");
+  if (oldMsg) oldMsg.remove();
+  box.classList.remove("border-yellow-500", "border-2");
+
+  if (daysOld > 1) {
+    box.classList.remove("border-indigo-500");
+    box.classList.add("border-2", "border-yellow-500");
+    box.innerHTML = `
+    <div class="text-center">
+        <div class="text-4xl mb-3">⚠️</div>
+
+        <p class="text-lg font-semibold text-orange-400">
+            Update Attendance Excel
+        </p>
+
+        <p class="text-sm text-gray-500 mt-2">
+            Your current attendance report is outdated.
+            <br>
+            Upload the latest Excel to continue.
+        </p>
+    </div>
+`;
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -2646,6 +2723,22 @@ function getSubjectPredInfo(subjectId) {
   return { subject: s, statusText, tt: w1 };
 }
 
+function getCurrentHourIndex() {
+  const now = new Date();
+  const mins = now.getHours() * 60 + now.getMinutes();
+
+  for (let i = 0; i < HOUR_SCHEDULE.length; i++) {
+    const [h, m] = HOUR_SCHEDULE[i].end.split(":").map(Number);
+    const endMins = h * 60 + m;
+
+    if (mins <= endMins) {
+      return i;
+    }
+  }
+
+  return -1; // all classes finished
+}
+
 function buildCalendarEventsForSubject(subjectId) {
   const info = getSubjectPredInfo(subjectId);
   if (!info || !info.tt) return [];
@@ -2658,14 +2751,25 @@ function buildCalendarEventsForSubject(subjectId) {
   const sKey = clean(info.subject.name);
 
   const todayIdx = getTodayOrderIdx();
+  const currentHour = getCurrentHourIndex();
+
+  const searchFromDay =
+    currentHour === -1 ? (todayIdx === 6 ? 1 : todayIdx + 1) : todayIdx;
 
   const nextRows = info.tt.rows
-    .filter((r) => weekdayOrderIndex(r.day) >= todayIdx)
+    .filter((r) => weekdayOrderIndex(r.day) >= searchFromDay)
     .sort((a, b) => weekdayOrderIndex(a.day) - weekdayOrderIndex(b.day))
-    .slice(0, 2);
+    .slice(0, 1);
 
   nextRows.forEach((row) => {
     row.hours.forEach((cell, hIdx) => {
+      if (
+        weekdayOrderIndex(row.day) === todayIdx &&
+        currentHour !== -1 &&
+        hIdx < currentHour
+      ) {
+        return; // Skip classes that have already ended today
+      }
       const text = String(cell || "").trim();
       if (!text || text.toLowerCase().includes("holiday")) return;
 
@@ -2862,7 +2966,7 @@ function renderCampusPosts(posts) {
      post.priority
        ? "bg-black text-yellow-300 hover:bg-gray-900"
        : "bg-blue-600 text-white hover:bg-blue-700"
-   } text-white py-2 rounded-xl font-semibold hover:bg-blue-700 transition">
+   } py-2 rounded-xl font-semibold transition">
     Register
 </a>
                         `
