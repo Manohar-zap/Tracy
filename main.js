@@ -106,8 +106,6 @@ function navigateTo(page) {
   renderCurrentPage();
   if (page === "campus") {
     loadCampusPosts();
-    buildSchoolDropdown();
-    buildYearDropdown();
   }
   if (["about", "terms", "privacy", "disclaimer", "contact"].includes(page)) {
     closeSidebar();
@@ -475,6 +473,17 @@ document.addEventListener("DOMContentLoaded", () => {
   loadBuiltInTimetables();
   initAdsSystem();
   initSiteConfig();
+  loadCampusPosts();
+  buildSchoolDropdown();
+  buildYearDropdown();
+
+  const btn = document.getElementById("genZBtn");
+
+  if (btn) {
+    btn.classList.toggle("bg-indigo-600", genZMode);
+    btn.classList.toggle("text-white", genZMode);
+    btn.classList.toggle("bg-white/5", !genZMode);
+  }
 });
 
 function toggleDailyDropdown() {
@@ -485,21 +494,28 @@ function populateDailySubjectSelect() {
   const list = document.getElementById("dailyDropdownList");
   list.innerHTML = "";
 
-  const items = [{ value: "all", text: "All Subjects" }];
+  const items = [];
 
   Object.keys(dailySubjectMap)
     .sort()
-    .forEach((s) =>
+    .forEach((s) => {
+      const code = s.match(/\(([^)]+)\)/)?.[1] || "";
+      const name = s.replace(/\s*\([^)]+\)\s*/, "");
+
+      const displayText =
+        name.length > 40 ? `${name}\n(${code})` : `${name} (${code})`;
+
       items.push({
         value: s,
-        text: s,
-      }),
-    );
+        text: displayText,
+      });
+    });
 
   items.forEach((item) => {
     const div = document.createElement("div");
 
-    div.className = "px-4 py-2 hover:bg-indigo-600 cursor-pointer";
+    div.className =
+      "px-4 py-2 hover:bg-indigo-600 cursor-pointer whitespace-pre-line";
 
     div.textContent = item.text;
 
@@ -603,6 +619,7 @@ function parseAttendanceExcel(file) {
 let ttFileChosen = null;
 let previewWeekNum = 1;
 let dailyOverallMap = {};
+let genZMode = localStorage.getItem("genZMode") === "true";
 
 function buildTimetableRows(sheet) {
   const raw = XLSX.utils.sheet_to_json(sheet, {
@@ -1052,7 +1069,17 @@ function renderPredTable(tableId, weekNum) {
       <td class="py-2">${newA}</td>
       <td class="py-2">${newT}</td>
       <td class="py-2 font-semibold ${cls}">${pct.toFixed(1)}%</td>
-      <td class="py-2 text-xs ${bunk > 0 ? "text-green-400" : "text-gray-500"}">${bunk > 0 ? bunk + " safe" : need > 0 ? "+" + need + " req" : "0"}</td>
+      <td class="py-2 text-xs ${bunk > 0 ? "text-green-400" : "text-gray-500"}">${
+        bunk > 0
+          ? genZMode
+            ? `${bunk} Free`
+            : `${bunk} safe`
+          : need > 0
+            ? genZMode
+              ? `Lock In ${need}`
+              : `+${need} req`
+            : "0"
+      }</td>
     </tr>`;
     })
     .join("");
@@ -1155,8 +1182,15 @@ function renderPredCards() {
         <p class="text-xs mt-2 ${
           need > 0 ? "text-yellow-400" : "text-green-400"
         }">
-        ${need > 0 ? `+${need} needed for ${STATE.target}%` : `${bunk} safe bunks`}
-        </p>
+        ${
+          need > 0
+            ? genZMode
+              ? `Lock In (${need})`
+              : `+${need} needed for ${STATE.target}%`
+            : genZMode
+              ? `${bunk} Free Passes`
+              : `${bunk} safe bunks`
+        }
       </div>
     `;
     })
@@ -1208,6 +1242,21 @@ function calcNeedAndBunk(s, target) {
   };
 }
 
+function getStatusText(type) {
+  if (!genZMode) {
+    return {
+      safe: "Safe ✓",
+      warning: "Warning",
+      risk: "At Risk",
+    }[type];
+  }
+
+  return {
+    safe: "Locked In",
+    warning: "Clutch Time",
+    risk: "Cooked",
+  }[type];
+}
 // ─────────────────────────────────────────────
 // 9. DASHBOARD
 // ─────────────────────────────────────────────
@@ -1230,7 +1279,7 @@ function renderDashboard() {
   const statusEl = document.getElementById("dashStatus");
   if (totalClasses) {
     const ok = overall >= STATE.target;
-    statusEl.textContent = ok ? "Safe ✓" : "At Risk";
+    statusEl.textContent = ok ? getStatusText("safe") : getStatusText("risk");
     statusEl.className =
       "text-2xl font-bold " + (ok ? "text-green-400" : "text-red-400");
   } else {
@@ -1266,7 +1315,15 @@ function renderDashboard() {
        <p class="text-xs text-gray-500">${(s.attended || 0) + (s.dutyLeave || 0)}/${s.total}</p>
       </div>
       <div class="text-right text-xs flex-shrink-0">
-        ${need > 0 ? `<span class="text-yellow-400">Need +${need}</span>` : `<span class="text-green-400">${bunk} bunks safe</span>`}
+        ${
+          need > 0
+            ? `<span class="text-yellow-400">${
+                genZMode ? `Lock In ${need}` : `Need +${need}`
+              }</span>`
+            : `<span class="text-green-400">${
+                genZMode ? `${bunk} Free Passes` : `${bunk} bunks safe`
+              }</span>`
+        }
       </div>
     </div>`;
     })
@@ -1345,8 +1402,13 @@ function populateCalcSubjects() {
 
   STATE.subjects.forEach((s, i) => {
     const item = document.createElement("div");
-    item.className = "dropdown-item";
-    item.textContent = s.name;
+    item.className = "dropdown-item whitespace-pre-line";
+
+    const code = s.name.match(/\(([^)]+)\)/)?.[1] || "";
+    const name = s.name.replace(/\s*\([^)]+\)\s*/, "");
+
+    item.textContent =
+      name.length > 40 ? `${name}\n(${code})` : `${name} (${code})`;
 
     item.onclick = () => {
       text.textContent = s.name;
@@ -1424,13 +1486,14 @@ function renderCalc() {
   if (pct >= STATE.target) {
     pctEl.className = "text-3xl font-bold text-green-400";
     const calcStatus = document.getElementById("calcStatus");
-    if (calcStatus) calcStatus.textContent = "Safe ✓";
+    if (calcStatus) calcStatus.textContent = getStatusText("safe");
   } else if (pct >= STATE.target - 10) {
     pctEl.className = "text-3xl font-bold text-yellow-400";
-    document.getElementById("calcStatus").textContent = "Warning ⚠";
+    document.getElementById("calcStatus").textContent =
+      getStatusText("warning");
   } else {
     pctEl.className = "text-3xl font-bold text-red-400";
-    document.getElementById("calcStatus").textContent = "At Risk ✗";
+    document.getElementById("calcStatus").textContent = getStatusText("risk");
   }
 
   const { need, bunk } = calcNeedAndBunk(
@@ -1542,13 +1605,13 @@ function renderQuickCalc() {
 
   if (pct >= quickCalcTarget) {
     pctEl.className = "text-3xl font-bold text-green-400";
-    statusEl.textContent = "Safe ✓";
+    statusEl.textContent = getStatusText("safe");
   } else if (pct >= quickCalcTarget - 10) {
     pctEl.className = "text-3xl font-bold text-yellow-400";
-    statusEl.textContent = "Warning ⚠";
+    statusEl.textContent = getStatusText("warning");
   } else {
     pctEl.className = "text-3xl font-bold text-red-400";
-    statusEl.textContent = "At Risk ✗";
+    statusEl.textContent = getStatusText("risk");
   }
 
   const { need, bunk } = calcNeedAndBunk({ attended, total }, quickCalcTarget);
@@ -1923,7 +1986,7 @@ function processDailyRows(rows, tt) {
   populateDailySubjectSelect();
 
   console.log(dailySubjectMap);
-  updateDailyChartView();
+  document.getElementById("dailyDropdownText").textContent = "Select Subject";
   showToast("Daily report processed ✓");
 }
 
@@ -1976,14 +2039,18 @@ function sortDateLabels(labels) {
   });
 }
 
-function updateDailyChartView(value = "all") {
-  if (value === "all") {
-    renderSubjectDailyChart(dailySubjectMap);
-  } else {
-    renderSubjectDailyChart({
-      [value]: dailySubjectMap[value],
-    });
+function updateDailyChartView(value) {
+  if (!value || !dailySubjectMap[value]) {
+    if (dailyChartInst) {
+      dailyChartInst.destroy();
+      dailyChartInst = null;
+    }
+    return;
   }
+
+  renderSubjectDailyChart({
+    [value]: dailySubjectMap[value],
+  });
 }
 
 function renderSubjectDailyChart(subjectMap) {
@@ -2240,7 +2307,7 @@ function checkAttendanceReportStatus() {
   if (oldMsg) oldMsg.remove();
   box.classList.remove("border-yellow-500", "border-2");
 
-  if (daysOld > 1) {
+  if (daysOld >= 1) {
     box.classList.remove("border-indigo-500");
     box.classList.add("border-2", "border-yellow-500");
     box.innerHTML = `
@@ -2351,25 +2418,13 @@ function closeHelpModal(id) {
 // ─────────────────────────────────────────────
 let siteConfig = {};
 
-async function initSiteConfig() {
-  try {
-    const res = await fetch("ads/config.json");
-    if (res.ok) {
-      siteConfig = await res.json();
-      const ttBtn = document.getElementById("requestTtBtn");
-      const formUrl = siteConfig.googleForms?.requestTimetable;
-      if (ttBtn && formUrl && !formUrl.includes("PASTE_YOUR")) {
-        ttBtn.href = formUrl;
-      } else if (ttBtn) {
-        ttBtn.href = "#";
-        ttBtn.onclick = (e) => {
-          e.preventDefault();
-          showToast("Set requestTimetable URL in ads/config.json");
-        };
-      }
-    }
-  } catch (e) {
-    console.warn("Could not load site config:", e);
+function initSiteConfig() {
+  const ttBtn = document.getElementById("requestTtBtn");
+
+  if (ttBtn) {
+    ttBtn.href =
+      "https://docs.google.com/forms/d/e/1FAIpQLSfTu29FE7oib7PFiIdb14P-MZY5dV8rfTrsBjww3Lu-RAmS6A/viewform?usp=dialog";
+    ttBtn.target = "_blank";
   }
 }
 
@@ -2621,7 +2676,7 @@ function renderCgpaCalc() {
 
     if (statusEl) statusEl.textContent = "";
   } else {
-    deltaEl.textContent = "IMPOSSIBLE";
+    deltaEl.textContent = genZMode ? "It's Over 💀" : "Not Achievable";
     deltaEl.className = "text-3xl font-bold text-red-400";
     if (statusEl) statusEl.textContent = "";
   }
@@ -2834,10 +2889,7 @@ function downloadIcs(events, filename) {
   a.click();
   URL.revokeObjectURL(a.href);
   showToast(`Added ${events.length} event(s) to calendar file ✓`);
-  window.open(
-    "https://talentpastryadvisedly.com/sen5s4u6?key=e38c1b4b9ee0c1e645327bfba533c629",
-    "_blank",
-  );
+  window.open("https://omg10.com/4/11449662", "_blank");
 }
 
 function addSubjectToCalendar(subjectId) {
@@ -2913,75 +2965,123 @@ function renderCampusPosts(posts) {
   }
 
   posts.forEach((post) => {
-    new Image().src =
-      CAMPUS_API + "?action=view&title=" + encodeURIComponent(post.title);
     const card = document.createElement("div");
-    card.className = `overflow-hidden rounded-2xl shadow-lg ${
+
+    card.className = `club-card overflow-hidden rounded-2xl shadow-lg ${
       post.priority
         ? "bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-700 text-black border border-yellow-200"
         : "card"
     }`;
-    console.log(post.link);
+    new Image().src =
+      CAMPUS_API + "?action=view&title=" + encodeURIComponent(post.title);
     card.innerHTML = `
-            <img src="${post.poster}" alt="${post.title}"
-    class="w-full aspect-[3/4] object-cover">
+<div class="club-card-inner">
 
-            <div class="p-4">
+    <!-- FRONT -->
+    <div class="club-card-front flex flex-col">
+       <img
+    src="${post.poster}"
+    alt="${post.title}"
+    class="w-full h-96 object-cover object-top"
+/>
 
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-xs font-semibold px-2 py-1 rounded-full ${
-                      post.status === "Open"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                    }">
-                        ${post.status === "Open" ? "Open" : "Registration Ended"}
-                    </span>
-                </div>
+<div class="p-4 flex flex-col flex-1">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-semibold px-2 py-1 rounded-full ${
+                  post.status === "Open"
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
+                }">
+                    ${post.status === "Open" ? "Open" : "Registration Ended"}
+                </span>
 
-               <h3 class="text-lg font-bold mb-2 ${post.priority ? "text-black" : ""}">
-    ${post.title}
-</h3>
+                <button
+                    class="flip-btn"
+                    onclick="this.closest('.club-card').classList.add('flipped')">
+                    <i class="fas fa-rotate"></i>
+                </button>
+            </div>
 
-                <p
-  class="text-sm ${post.priority ? "text-black/80" : "text-gray-600"} truncate"
-  title="${post.school}">
-    🎓 ${post.school}
-</p>
+            <h3 class="text-lg font-bold mb-2 ${
+              post.priority ? "text-black" : ""
+            }">
+                ${post.title}
+            </h3>
 
-                <p class="text-sm ${post.priority ? "text-black/80" : "text-gray-600"}">
-                    👨‍🎓 ${post.year}
-                </p>
+            <p class="text-sm ${
+              post.priority ? "text-black/80" : "text-gray-600"
+            } truncate"
+               title="${post.school}">
+                🎓 ${post.school}
+            </p>
 
-                <p class="text-sm text-gray-600 mb-4">
-                    📅 Ends: ${post.endDate}
-                </p>
+            <p class="text-sm ${
+              post.priority ? "text-black/80" : "text-gray-600"
+            }">
+                👨‍🎓 ${post.year}
+            </p>
 
+            <p class="text-sm text-gray-600 mb-4">
+                📅 Ends: ${post.endDate}
+            </p>
+
+            <div class="mt-auto">
                 ${
                   post.status === "Open"
                     ? `
-                        <a href="${post.link}"
-   target="_blank"
-   onclick="trackAdClick('${post.title}')"
-   class="block w-full text-center ${
-     post.priority
-       ? "bg-black text-yellow-300 hover:bg-gray-900"
-       : "bg-blue-600 text-white hover:bg-blue-700"
-   } py-2 rounded-xl font-semibold transition">
-    Register
-</a>
-                        `
+                    <a href="${post.link}"
+                       target="_blank"
+                       onclick="trackAdClick('${post.title}')"
+                       class="block w-full text-center ${
+                         post.priority
+                           ? "bg-black text-yellow-300 hover:bg-gray-900"
+                           : "bg-blue-600 text-white hover:bg-blue-700"
+                       } py-2 rounded-xl font-semibold transition">
+                        Register
+                    </a>
+                    `
                     : `
-                        <button
-                            disabled
-                            class="block w-full bg-gray-300 text-gray-600 py-2 rounded-xl cursor-not-allowed font-semibold">
-                            Registration Closed
-                        </button>
-                        `
+                    <button
+                        disabled
+                        class="block w-full bg-gray-300 text-gray-600 py-2 rounded-xl cursor-not-allowed font-semibold">
+                        Registration Closed
+                    </button>
+                    `
                 }
-
             </div>
-        `;
+        </div>
+    </div>
 
+    <!-- BACK -->
+    <div class="club-card-back ${
+      post.priority
+        ? "bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-700 text-black"
+        : ""
+    }">
+        <div class="p-4 flex justify-between items-center border-b border-gray-200/20 shrink-0 sticky top-0 z-10">
+            <h3 class="font-bold text-lg truncate pr-2 ${
+              post.priority ? "text-black" : ""
+            }">${post.title}</h3>
+
+            <button
+                class="flip-btn shrink-0"
+                onclick="this.closest('.club-card').classList.remove('flipped')">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+        </div>
+    <div class="club-card-back-content">
+        <div class="campus-caption">
+            ${
+              post.description
+                ? post.description.replace(/\n/g, "<br>")
+                : "<span class='text-gray-400'>No additional information available.</span>"
+            }
+        </div>
+    </div>
+
+</div>
+</div>
+`;
     grid.appendChild(card);
   });
 }
@@ -2989,6 +3089,10 @@ function renderCampusPosts(posts) {
 let campusPosts = [];
 
 async function loadCampusPosts() {
+  if (campusPosts.length) {
+    filterCampusPosts();
+    return;
+  }
   try {
     const response = await fetch(CAMPUS_API);
 
@@ -3042,4 +3146,34 @@ function filterCampusPosts() {
   });
 
   renderCampusPosts(filtered);
+}
+
+function toggleGenZMode() {
+  genZMode = !genZMode;
+
+  localStorage.setItem("genZMode", genZMode);
+
+  const btn = document.getElementById("genZBtn");
+
+  if (btn) {
+    btn.classList.toggle("bg-indigo-600", genZMode);
+    btn.classList.toggle("text-white", genZMode);
+    btn.classList.toggle("bg-white/5", !genZMode);
+  }
+
+  showToast(genZMode ? "Gen Z Mode Enabled" : "Gen Z Mode Disabled");
+
+  const currentPage = STATE.currentPage;
+
+  renderDashboard();
+  renderAttendancePage();
+  renderTimetablePage();
+  renderPredictionPage();
+  renderAnalyticsPage();
+  populateCalcSubjects();
+  renderCalc();
+  renderQuickCalc();
+  renderCgpaCalc();
+
+  navigateTo(currentPage);
 }
