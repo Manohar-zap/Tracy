@@ -1,4 +1,4 @@
-const CACHE = "tracy-v3";
+const CACHE = "tracy-v4";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

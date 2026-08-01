@@ -41,12 +41,65 @@ const DAY_ORDER = [
   "saturday",
 ];
 const TIMETABLE_FILES = [
-  "4CSD01.xlsx",
-  "2CSD01.xlsx",
-  "4CSD02.xlsx",
-  "2CSD02.xlsx",
-  "4CSD03.xlsx",
-  "2CSD03.xlsx",
+  "1MTAIE01",
+  "1MTDSC01",
+  "3ADS01",
+  "3ADS02",
+  "3ADS03",
+  "3CAI01",
+  "3CAI02",
+  "3CAI03",
+  "3CAI04",
+  "3CAI05",
+  "3CAI06",
+  "3CAI07",
+  "3CBC01",
+  "3CBD01",
+  "3CCS01",
+  "3CCS02",
+  "3CCS03",
+  "3CCS04",
+  "3CDV01",
+  "3CDV02",
+  "3CIT01",
+  "3CIT02",
+  "3CSD01",
+  "3CSD02",
+  "3CSD03",
+  "3CSD04",
+  "3RAI01",
+  "5CAI01",
+  "5CAI02",
+  "5CAI03",
+  "5CAI04",
+  "5CBC01",
+  "5CBD01",
+  "5CCS01",
+  "5CCS02",
+  "5CCS03",
+  "5CDV01",
+  "5CIT01",
+  "5CIT02",
+  "5CIT03",
+  "5CSD01",
+  "5CSD02",
+  "5CSD03",
+  "5CSD04",
+  "7CAI01",
+  "7CAI02",
+  "7CAI03",
+  "7CBC01",
+  "7CBD01",
+  "7CCS01",
+  "7CCS02",
+  "7CCS03",
+  "7CDV01",
+  "7CIT01",
+  "7CIT02",
+  "7CIT03",
+  "7CSD01",
+  "7CSD02",
+  "7CSD03",
 ];
 
 // ─────────────────────────────────────────────
@@ -499,11 +552,7 @@ function populateDailySubjectSelect() {
   Object.keys(dailySubjectMap)
     .sort()
     .forEach((s) => {
-      const code = s.match(/\(([^)]+)\)/)?.[1] || "";
-      const name = s.replace(/\s*\([^)]+\)\s*/, "");
-
-      const displayText =
-        name.length > 40 ? `${name}\n(${code})` : `${name} (${code})`;
+      const displayText = s.replace(/\s*\([^)]+\)\s*$/, "");
 
       items.push({
         value: s,
@@ -520,7 +569,8 @@ function populateDailySubjectSelect() {
     div.textContent = item.text;
 
     div.onclick = () => {
-      document.getElementById("dailyDropdownText").textContent = item.text;
+      document.getElementById("dailyDropdownText").textContent =
+        item.value.replace(/\s*\([^)]+\)\s*$/, "");
 
       document.getElementById("dailyDropdownList").classList.remove("show");
       updateDailyChartView(item.value);
@@ -592,15 +642,7 @@ function parseAttendanceExcel(file) {
     STATE.subjects = subjects;
     saveState();
 
-    const box = document.getElementById("uploadZone");
-
-    if (box) {
-      box.classList.remove("border-yellow-500", "border-2");
-
-      if (box.dataset.originalHtml) {
-        box.innerHTML = box.dataset.originalHtml;
-      }
-    }
+    refreshAll();
     checkAttendanceReportStatus();
 
     const fnEl = document.getElementById("importedFileName");
@@ -652,7 +694,7 @@ async function loadBuiltInTimetables() {
 
   for (const fileName of TIMETABLE_FILES) {
     try {
-      const response = await fetch(`timetable/${fileName}`);
+      const response = await fetch(`timetable/${fileName}.xlsx`);
 
       if (!response.ok) continue;
 
@@ -1404,14 +1446,10 @@ function populateCalcSubjects() {
     const item = document.createElement("div");
     item.className = "dropdown-item whitespace-pre-line";
 
-    const code = s.name.match(/\(([^)]+)\)/)?.[1] || "";
-    const name = s.name.replace(/\s*\([^)]+\)\s*/, "");
-
-    item.textContent =
-      name.length > 40 ? `${name}\n(${code})` : `${name} (${code})`;
+    item.textContent = s.name.replace(/\s*\([^)]+\)\s*$/, "");
 
     item.onclick = () => {
-      text.textContent = s.name;
+      text.textContent = s.name.replace(/\s*\([^)]+\)\s*$/, "");
       text.dataset.value = i;
 
       closeDropdown("calcSubjectDropdown");
@@ -2310,21 +2348,37 @@ function checkAttendanceReportStatus() {
   if (daysOld >= 1) {
     box.classList.remove("border-indigo-500");
     box.classList.add("border-2", "border-yellow-500");
-    box.innerHTML = `
+    box.innerHTML = genZMode
+      ? `
+    <div class="text-center">
+        <div class="text-4xl mb-3">🚨</div>
+
+        <p class="text-lg font-semibold text-orange-400">
+            Bro... your attendance report is ancient 💀
+        </p>
+
+        <p class="text-sm text-gray-500 mt-2">
+            Upload the latest Excel.
+            <br>
+            These stats ain't it anymore.
+        </p>
+    </div>
+  `
+      : `
     <div class="text-center">
         <div class="text-4xl mb-3">⚠️</div>
 
         <p class="text-lg font-semibold text-orange-400">
-            Update Attendance Excel
+            Attendance Report Outdated
         </p>
 
         <p class="text-sm text-gray-500 mt-2">
-            Your current attendance report is outdated.
+            Your attendance report is no longer up to date.
             <br>
-            Upload the latest Excel to continue.
+            Please upload the latest Excel report.
         </p>
     </div>
-`;
+  `;
   }
 }
 
@@ -2948,6 +3002,20 @@ if ("serviceWorker" in navigator) {
   });
 }
 
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") {
+    localStorage.setItem("lastHiddenTime", Date.now());
+  }
+
+  if (document.visibilityState === "visible") {
+    const lastHidden = Number(localStorage.getItem("lastHiddenTime") || 0);
+
+    if (Date.now() - lastHidden > 5 * 60 * 1000) {
+      navigateTo("dashboard"); // your home page
+    }
+  }
+});
+
 const CAMPUS_API =
   "https://script.google.com/macros/s/AKfycbzJN3ifkutdyS5LfCOpS3iKClUPa2n3y9QV8Rlc5myvxTv6X6IwS_mykedcEr3hq6Ud/exec";
 
@@ -3163,17 +3231,11 @@ function toggleGenZMode() {
 
   showToast(genZMode ? "Gen Z Mode Enabled" : "Gen Z Mode Disabled");
 
-  const currentPage = STATE.currentPage;
+  checkAttendanceReportStatus();
+  updateTargetUI();
+  renderSidebarProfile();
 
-  renderDashboard();
-  renderAttendancePage();
-  renderTimetablePage();
-  renderPredictionPage();
-  renderAnalyticsPage();
-  populateCalcSubjects();
-  renderCalc();
-  renderQuickCalc();
-  renderCgpaCalc();
-
-  navigateTo(currentPage);
+  refreshAll(); // Refresh current page
+  renderCgpaCalc(); // Recalculate CGPA card
+  updateCGPAComments(); // Refresh comments
 }
