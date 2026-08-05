@@ -916,6 +916,8 @@
     .pred-table td {
       padding: 7px 8px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      text-align: center;
+      vertical-align: middle;
     }
 
     .section-label {
@@ -1475,6 +1477,53 @@
     .club-card-back {
       pointer-events: auto;
     }
+
+    .guide-highlight {
+      position: relative;
+      z-index: 9999;
+      border-radius: 16px;
+      box-shadow:
+        0 0 0 4px #6366f1,
+        0 0 40px rgba(99, 102, 241, .6);
+      animation: guidePulse 1.5s infinite;
+    }
+
+    @keyframes guidePulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.02);
+      }
+
+    }
+
+    .guide-bottom {
+      align-items: flex-end !important;
+      justify-content: center !important;
+      padding-bottom: 32px;
+    }
+
+    .guide-bottom .guide-card {
+      margin-bottom: 0;
+      animation: slideUp .25s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(24px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    
   </style>
 </head>
 
@@ -1507,8 +1556,6 @@
         <li>Click <b class="text-gray-300">Export</b>.</li>
         <li>Download the <b class="text-gray-300">.xlsx</b> file and drop it in Tracy.</li>
       </ol>
-      <p class="text-xs text-gray-500">Tracy reads the <b class="text-gray-400">Course Name</b>, <b
-          class="text-gray-400">Total</b>, and <b class="text-gray-400">attended</b> columns automatically.</p>
       <div class="flex justify-end mt-5">
         <button class="btn-ghost" onclick="closeHelpModal('helpAttendanceModal')">Got it</button>
       </div>
@@ -1631,6 +1678,10 @@
     <div class="mt-6 pt-4 border-t border-white/5">
       <div class="section-label">Info & Legal</div>
       <div class="space-y-0.5">
+        <div class="legal-link" onclick="startGuide()">
+          <i class="fas fa-book-open w-4 inline-block"></i>
+          Guide
+        </div>
         <div class="legal-link" onclick="navigateTo('about')"><i class="fas fa-info-circle w-4 inline-block"></i> About
           Us
         </div>
@@ -1676,7 +1727,12 @@
 
       <div class="mb-6">
         <input type="file" id="mainFileInput" class="hidden" accept=".xlsx,.xls">
-        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('mainFileInput').click()">
+        <div class="upload-zone relative" id="uploadZone" onclick="document.getElementById('mainFileInput').click()">
+
+          <button type="button" class="help-btn absolute top-3 right-3"
+            onclick="event.stopPropagation(); openHelpModal('helpAttendanceModal')" title="How to get attendance Excel">
+            i
+          </button>
           <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-indigo-500/10 flex items-center justify-center">
             <i class="fas fa-file-excel text-indigo-400 text-xl"></i>
           </div>
@@ -1734,12 +1790,31 @@
 
     <!-- ── TIMETABLE (folder-based read) ── -->
     <div class="page fade-up" id="page-timetable">
-      <div class="page-header flex items-center gap-3">
-        <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
-        <h1 class="text-xl font-bold">Timetables</h1>
+
+      <div class="page-header">
+        <div class="flex items-center justify-between">
+
+          <div class="flex items-center gap-3">
+            <button class="md:hidden btn-ghost p-2" onclick="openSidebar()">
+              <i class="fas fa-bars"></i>
+            </button>
+
+            <h1 class="text-xl font-bold">Timetables</h1>
+          </div>
+
+          <a id="requestTtBtn" href="#" target="_blank" rel="noopener" class="btn-primary text-xs">
+            <i class="fas fa-paper-plane mr-1"></i>
+            Request New
+          </a>
+
+        </div>
       </div>
-      <p class="text-xs text-gray-500 mb-5">If you find that your class timetable is outdated or incorrect, you can
-        request an update.</p>
+
+      <p class="text-xs text-gray-500 mb-5">
+        If you find that your class timetable is outdated or incorrect,
+        you can request an update.
+      </p>
+
       <!-- Selection -->
       <div class="card p-5 mb-5">
         <h3 class="font-semibold mb-3 text-sm">Select Class</h3>
@@ -1747,37 +1822,37 @@
         <div id="ttDropdown" class="custom-dropdown">
 
           <div class="relative">
-
             <input id="ttSearchInput" type="text" placeholder="Search Class" class="dropdown-btn pr-10"
               onclick="toggleDropdown('ttDropdown')" oninput="filterTimetableDropdown()" autocomplete="off">
 
             <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-
           </div>
 
           <div id="ttDropdownMenu" class="dropdown-menu"></div>
 
         </div>
       </div>
+
       <!-- Preview -->
       <div class="card p-4 overflow-x-auto">
-        <div class="flex gap-2 mb-3 flex-wrap">
-          <a id="requestTtBtn" href="#" target="_blank" rel="noopener" class="btn-ghost text-xs"><i
-              class="fas fa-paper-plane mr-1"></i>Request New TT</a>
-        </div>
         <div id="ttPreviewGrid">
-          <p class="text-center text-gray-500 text-sm py-8">Select a timetable to preview.</p>
+          <p class="text-center text-gray-500 text-sm py-8">
+            Select a timetable to preview.
+          </p>
         </div>
-      </div><br>
+      </div>
+
+      <br>
+
       <div class="w-full">
         <div id="inlineAdsSlides"></div>
       </div>
-    </div>
+
     </div>
 
     <!-- ── PREDICTION ── -->
     <div class="page fade-up" id="page-prediction">
-      <div class="page-header flex items-center gap-3">
+      <div id="prediction" class="page-header flex items-center gap-3">
         <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
         <h1 class="text-xl font-bold">Prediction Engine</h1>
       </div>
@@ -1798,7 +1873,7 @@
                 <th>+Cls</th>
                 <th>Present</th>
                 <th>Total</th>
-                <th>%</th>
+                <th>Overall</th>
                 <th>Bunks/Need</th>
               </tr>
             </thead>
@@ -1818,7 +1893,7 @@
                 <th>+Cls</th>
                 <th>Present</th>
                 <th>Total</th>
-                <th>%</th>
+                <th>Overall</th>
                 <th>Bunks/Need</th>
               </tr>
             </thead>
@@ -1833,7 +1908,7 @@
 
       <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
         <h2 class="font-semibold">Subject-wise Prediction Cards</h2>
-        <button class="btn-ghost text-xs" onclick="addAllPredCardsToCalendar()"><i
+        <button id="addCalendarBtn" class="btn-ghost text-xs" onclick="addAllPredCardsToCalendar()"><i
             class="fas fa-calendar-plus mr-1"></i>Add to Calendar</button>
       </div>
       <div class="mb-4">
@@ -1849,7 +1924,9 @@
     <div class="page fade-up" id="page-calculator">
       <div class="page-header flex items-center gap-3">
         <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
-        <h1 class="text-xl font-bold">Quick Calculator</h1>
+        <h1 id="quickCalcHeading" class="text-xl font-bold">
+          Quick Calculator
+        </h1>
       </div>
       <p class="text-xs text-gray-500 mb-5">Note - Increasing Attended classses also increases Total classes</p>
       <h2 class="font-semibold mb-3 mt-8">Manual Calculator</h2>
@@ -2232,6 +2309,28 @@
         <p>College clubs and organizations can submit promotional posters via our Google Form.</p>
         <h2>Response Time</h2>
         <p>We aim to respond within 2–3 business days.</p>
+      </div>
+    </div>
+    <div id="guideModal" class="modal-backdrop">
+      <div class="modal" style="max-width:520px">
+
+        <div class="flex items-center justify-between mb-3">
+          <h3 id="guideTitle" class="text-lg font-semibold"></h3>
+          <span id="guideStep" class="text-xs text-gray-500"></span>
+        </div>
+
+        <div class="text-sm text-gray-300 leading-7">
+          <p id="guideText"></p>
+        </div>
+
+        <div class="flex justify-between mt-6">
+          <button class="btn-ghost" onclick="skipGuide()">Skip</button>
+
+          <button id="guideNextBtn" class="btn-primary" onclick="nextGuide()">
+            Next
+          </button>
+        </div>
+
       </div>
     </div>
 

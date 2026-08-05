@@ -132,6 +132,28 @@ function loadState() {
 // 3. NAVIGATION
 // ─────────────────────────────────────────────
 function navigateTo(page) {
+  if (
+    !guideMode &&
+    (page === "prediction" || page === "analytics") &&
+    (!STATE.subjects || STATE.subjects.length === 0)
+  ) {
+    document.getElementById("confirmTitle").innerHTML =
+      '<i class="fas fa-file-excel text-yellow-400 mr-2"></i>Upload Required';
+
+    document.getElementById("confirmMsg").innerHTML =
+      "Please upload your attendance report from the Dashboard before using this feature.";
+
+    document.getElementById("confirmOk").className = "btn-primary";
+    document.getElementById("confirmOk").textContent = "Go to Dashboard";
+
+    document.getElementById("confirmOk").onclick = () => {
+      closeConfirm();
+      navigateTo("dashboard");
+    };
+
+    document.getElementById("confirmModal").classList.add("open");
+    return;
+  }
   document
     .querySelectorAll(".page")
     .forEach((p) => p.classList.remove("active"));
@@ -537,6 +559,9 @@ document.addEventListener("DOMContentLoaded", () => {
     btn.classList.toggle("text-white", genZMode);
     btn.classList.toggle("bg-white/5", !genZMode);
   }
+  if (!localStorage.getItem("guideSeen")) {
+    setTimeout(startGuide, 800);
+  }
 });
 
 function toggleDailyDropdown() {
@@ -803,7 +828,15 @@ function setActiveTimetable(id) {
   STATE.week2TimetableId = id || null;
 
   saveState();
+
+  renderTimetablePreview();
   renderPredictionPage();
+
+  // Refresh prediction week selector state
+  const week = document.getElementById("predCardsWeekSelect");
+  if (week) {
+    week.dispatchEvent(new Event("change"));
+  }
 }
 
 function setWeekTimetable(weekNum, id) {
@@ -983,21 +1016,29 @@ function countSubjectInRows(rows, subjectName, minOrderIdx, overrides) {
       if (!text) return;
       if (text.toLowerCase().includes("holiday")) return;
 
-      let tKey = clean(text);
-
-      if (SUBJECT_ALIASES[tKey]) {
-        tKey = SUBJECT_ALIASES[tKey];
-      }
-
       const blocked = suspended.some(
         (subj) => clean(subj) === clean(subjectName),
       );
 
       if (blocked) return;
 
-      if (sKey.includes(tKey) || tKey.includes(sKey)) {
-        count++;
-      }
+      // Split cells containing multiple subjects
+      const subjectsInCell = text
+        .split(/\n|\/|,|&|\+/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      subjectsInCell.forEach((sub) => {
+        let tKey = clean(sub);
+
+        if (SUBJECT_ALIASES[tKey]) {
+          tKey = SUBJECT_ALIASES[tKey];
+        }
+
+        if (sKey.includes(tKey) || tKey.includes(sKey)) {
+          count++;
+        }
+      });
     });
   });
 
@@ -1017,7 +1058,36 @@ function countSubjectInRows(rows, subjectName, minOrderIdx, overrides) {
   return count;
 }
 
+function showWrongTimetableModal() {
+  confirmAction(
+    "None of your attendance subjects match the selected timetable.\n\nPlease select the correct section timetable.",
+    () => {
+      navigateTo("timetable");
+    },
+  );
+}
+
 function renderPredictionPage() {
+  const tt = getTimetableById(STATE.week1TimetableId);
+
+  if (tt && STATE.subjects.length) {
+    let matches = 0;
+
+    STATE.subjects.forEach((s) => {
+      matches += countSubjectInRows(
+        tt.rows,
+        s.name,
+        undefined,
+        STATE.weekOverrides.week1,
+      );
+    });
+
+    if (matches === 0) {
+      showWrongTimetableModal();
+      return;
+    }
+  }
+
   renderPredTable("predTable1", 1);
   renderPredTable("predTable2", 2);
   renderPredCards();
@@ -1701,17 +1771,17 @@ function renderQcChart(a, t) {
   });
   const colors = qcChartInst.data.datasets[0].backgroundColor;
 
-  document.getElementById("attendedLegend").innerHTML =
-    `<span class="legend-dot" style="background:${colors[0]}"></span>`;
-
-  document.getElementById("bunkLegend").innerHTML =
-    `<span class="legend-dot" style="background:${colors[1]}"></span>`;
-
-  document.getElementById("needLegend").innerHTML =
-    `<span class="legend-dot" style="background:${colors[2]}"></span>`;
-
-  document.getElementById("absentLegend").innerHTML =
-    `<span class="legend-dot" style="background:${colors[3]}"></span>`;
+  [
+    ["attendedLegend", colors[0]],
+    ["bunkLegend", colors[1]],
+    ["needLegend", colors[2]],
+    ["absentLegend", colors[3]],
+  ].forEach(([id, color]) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.innerHTML = `<span class="legend-dot" style="background:${color}"></span>`;
+    }
+  });
 }
 
 function resetQuickCalc() {
@@ -2348,13 +2418,13 @@ function checkAttendanceReportStatus() {
   if (daysOld >= 1) {
     box.classList.remove("border-indigo-500");
     box.classList.add("border-2", "border-yellow-500");
-    box.innerHTML = genZMode
+    document.getElementById("uploadZoneContent").innerHTML = genZMode
       ? `
     <div class="text-center">
         <div class="text-4xl mb-3">🚨</div>
 
         <p class="text-lg font-semibold text-orange-400">
-            Bro... your attendance report is ancient 💀
+            Don't blame Tracy when you're feeding it ancient data 💀
         </p>
 
         <p class="text-sm text-gray-500 mt-2">
@@ -2441,6 +2511,7 @@ function renderCurrentPage() {
 
     case "calculator":
       populateCalcSubjects();
+      renderCalc(); // <-- add this
       renderQuickCalc();
       renderCgpaCalc();
       break;
@@ -3238,4 +3309,124 @@ function toggleGenZMode() {
   refreshAll(); // Refresh current page
   renderCgpaCalc(); // Recalculate CGPA card
   updateCGPAComments(); // Refresh comments
+}
+
+const GUIDE_STEPS = [
+  {
+    page: "dashboard",
+    target: "#uploadZone",
+    title: "📄 Upload Attendance",
+    text: "Upload your attendance report here.",
+  },
+  {
+    page: "dashboard",
+    target: ".help-btn",
+    title: "ⓘ Help",
+    text: "Don't know how to get the Excel?\nTap here anytime.",
+  },
+  {
+    page: "calculator",
+    target: "#quickCalcHeading",
+    title: "🧮 Quick Calculator",
+    text: "Quickly calculate attendance by entering your attended and total classes manually. No Excel upload is required.",
+  },
+  {
+    page: "timetable",
+    target: "#ttDropdown",
+    title: "📅 Timetable",
+    text: "Select your class timetable.\nWrong timetable = wrong predictions.",
+  },
+  {
+    page: "prediction",
+    target: null,
+    title: "📈 Prediction Engine",
+    text: "This page shows both Current Week and Next Week predictions together. Tracy uses your uploaded attendance and selected timetable to estimate your future attendance and tells you how many classes you can safely bunk or need to attend.",
+  },
+  {
+    page: "prediction",
+    target: "#addCalendarBtn",
+    title: "📆 Add to Calendar",
+    text: "Export predicted classes.",
+  },
+  {
+    page: "analytics",
+    target: "#dailyUploadZone",
+    title: "📊 Daily Analysis",
+    text: "Upload Daily Attendance Excel.",
+  },
+];
+
+let guideMode = false;
+let guideIndex = 0;
+
+function startGuide() {
+  guideMode = true;
+  guideIndex = 0;
+  showGuideStep();
+}
+
+let tries = 0;
+
+function showGuideStep() {
+  const s = GUIDE_STEPS[guideIndex];
+  const modal = document.getElementById("guideModal");
+
+  modal.classList.toggle("guide-bottom", s.target === "#addCalendarBtn");
+  navigateTo(s.page);
+
+  setTimeout(() => {
+    const target = document.querySelector(s.target);
+
+    document
+      .querySelectorAll(".guide-highlight")
+      .forEach((e) => e.classList.remove("guide-highlight"));
+
+    if (target) {
+      target.classList.add("guide-highlight");
+
+      target.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+
+    document.getElementById("guideTitle").textContent = s.title;
+    document.getElementById("guideText").innerText = s.text;
+    document.getElementById("guideStep").textContent =
+      `${guideIndex + 1}/${GUIDE_STEPS.length}`;
+
+    document.getElementById("guideNextBtn").textContent =
+      guideIndex === GUIDE_STEPS.length - 1 ? "Finish" : "Next";
+
+    document.getElementById("guideModal").classList.add("open");
+  }, 150);
+}
+
+function nextGuide() {
+  guideIndex++;
+
+  if (guideIndex >= GUIDE_STEPS.length) {
+    localStorage.setItem("guideSeen", "true");
+
+    document.getElementById("guideModal").classList.remove("open");
+
+    document
+      .querySelectorAll(".guide-highlight")
+      .forEach((e) => e.classList.remove("guide-highlight"));
+
+    guideMode = false;
+    return;
+  }
+
+  showGuideStep();
+}
+
+function skipGuide() {
+  localStorage.setItem("guideSeen", "true");
+
+  document.getElementById("guideModal").classList.remove("open");
+  document
+    .querySelectorAll(".guide-highlight")
+    .forEach((e) => e.classList.remove("guide-highlight"));
+  guideMode = false;
 }
