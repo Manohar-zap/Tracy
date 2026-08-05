@@ -12,8 +12,10 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8172462535631846"
     crossorigin="anonymous"></script>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#6366f1">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Tracy">
 
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-MDEYB85ZN0"></script>
@@ -1480,7 +1482,8 @@
 
     .guide-highlight {
       position: relative;
-      z-index: 9999;
+      z-index: 10001;
+      isolation: isolate;
       border-radius: 16px;
       box-shadow:
         0 0 0 4px #6366f1,
@@ -1523,7 +1526,26 @@
         opacity: 1;
       }
     }
-    
+
+    body.guide-active * {
+      pointer-events: none;
+    }
+
+    #guideModal,
+    #guideModal * {
+      pointer-events: auto;
+    }
+
+    body.guide-active .page,
+    body.guide-active .sidebar,
+    body.guide-active .mobile-nav {
+      pointer-events: none;
+    }
+
+    #guideModal,
+    #guideModal * {
+      pointer-events: auto;
+    }
   </style>
 </head>
 
@@ -1716,7 +1738,7 @@
           </div>
           <div class="flex gap-2">
             <button id="installBtn" class="btn-primary text-xs hidden">
-              <i class="fas fa-download mr-1"></i>Install
+              <i class="fas fa-download mr-1"></i>
             </button>
             <button class="btn-ghost text-xs" onclick="openManageData()">
               <i class="fas fa-database mr-1"></i>Manage Data
