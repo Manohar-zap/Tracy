@@ -1,0 +1,2823 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="manifest.json">
+  <title>Tracy – Attendance Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8172462535631846"
+    crossorigin="anonymous"></script>
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Tracy">
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-MDEYB85ZN0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'G-MDEYB85ZN0');
+  </script>
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --bg: #0a0a0b;
+      --text: #f1f5f9;
+      --sidebar: rgba(15, 15, 20, 0.95);
+      --card-bg: rgba(255, 255, 255, 0.04);
+      --card-border: rgba(255, 255, 255, 0.09);
+    }
+
+    body.light-theme {
+      --bg: #f8fafc;
+      --text: #0f172a;
+      --sidebar: #ffffff;
+      --card-bg: #ffffff;
+      --card-border: #e2e8f0;
+    }
+
+    body.light-theme .card,
+    body.light-theme .sub-card,
+    body.light-theme .card1 {
+      background: #ffffff;
+      border-color: #e2e8f0;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    body.light-theme .sidebar {
+      background: #ffffff;
+      border-right: 1px solid #e2e8f0;
+      box-shadow: 1px 0 10px rgba(0, 0, 0, 0.03);
+    }
+
+    body.light-theme .mobile-nav {
+      background: #ffffff;
+      border-top: 1px solid #e2e8f0;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04);
+    }
+
+    body.light-theme .mobile-nav-item {
+      color: #64748b;
+    }
+
+    body.light-theme .mobile-nav-item.active {
+      color: #4f46e5;
+    }
+
+    body.light-theme .nav-link {
+      color: #475569;
+    }
+
+    body.light-theme .nav-link:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+
+    body.light-theme .nav-link.active {
+      background: #e0e7ff;
+      color: #4338ca;
+    }
+
+    body.light-theme .page-header {
+      background: rgba(248, 250, 252, 0.85);
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    /* Muted and secondary text colors in light mode */
+    body.light-theme .text-gray-500,
+    body.light-theme .text-gray-400,
+    body.light-theme .text-slate-400,
+    body.light-theme .text-slate-500 {
+      color: #64748b !important;
+    }
+
+    body.light-theme .text-gray-300,
+    body.light-theme .text-gray-200,
+    body.light-theme .text-slate-300,
+    body.light-theme .text-slate-200 {
+      color: #334155 !important;
+    }
+
+    body.light-theme .text-white,
+    body.light-theme .text-slate-100 {
+      color: #0f172a !important;
+    }
+
+    body.light-theme .text-indigo-400 {
+      color: #4f46e5 !important;
+    }
+
+    body.light-theme .text-purple-400 {
+      color: #7c3aed !important;
+    }
+
+    body.light-theme .text-green-400,
+    body.light-theme .pct-safe {
+      color: #16a34a !important;
+    }
+
+    body.light-theme .text-yellow-400,
+    body.light-theme .pct-warn {
+      color: #d97706 !important;
+    }
+
+    body.light-theme .text-red-400,
+    body.light-theme .pct-danger {
+      color: #dc2626 !important;
+    }
+
+    /* Hardcoded dark backgrounds & borders in light mode */
+    body.light-theme .bg-white\/5,
+    body.light-theme .bg-white\/10,
+    body.light-theme .bg-slate-800,
+    body.light-theme .bg-slate-900,
+    body.light-theme .bg-\[\#13131a\],
+    body.light-theme .bg-\[\#1b2233\],
+    body.light-theme .bg-\[\#0a0a0b\],
+    body.light-theme .bg-\[\#0f0f14\] {
+      background-color: #ffffff !important;
+    }
+
+    body.light-theme .border-white\/5,
+    body.light-theme .border-white\/10,
+    body.light-theme .border-white\/20,
+    body.light-theme .border-slate-800,
+    body.light-theme .border-slate-700 {
+      border-color: #e2e8f0 !important;
+    }
+
+    body.light-theme .upload-zone {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+
+    body.light-theme .upload-zone:hover {
+      background: #eef2ff;
+      border-color: #6366f1;
+    }
+
+    /* CGPA cards */
+    body.light-theme .cgpa-green {
+      background: linear-gradient(135deg, #ecfdf5, #d1fae5) !important;
+      color: #065f46 !important;
+    }
+
+    body.light-theme .cgpa-yellow {
+      background: linear-gradient(135deg, #fffbeb, #fef3c7) !important;
+      color: #92400e !important;
+    }
+
+    body.light-theme .cgpa-red {
+      background: linear-gradient(135deg, #fef2f2, #fee2e2) !important;
+      color: #991b1b !important;
+    }
+
+    /* Buttons & Controls */
+    body.light-theme .btn-ghost {
+      background: #f1f5f9;
+      color: #334155;
+    }
+
+    body.light-theme .btn-ghost:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+
+    body.light-theme .btn-ghost.active {
+      background: #e0e7ff;
+      color: #4338ca;
+    }
+
+    body.light-theme .btn-primary {
+      background: #4f46e5;
+      color: #ffffff;
+    }
+
+    body.light-theme .btn-primary:hover {
+      background: #4338ca;
+    }
+
+    body.light-theme .btn-danger {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    body.light-theme .btn-danger:hover {
+      background: #fca5a5;
+    }
+
+    body.light-theme .btn-success {
+      background: #d1fae5;
+      color: #059669;
+    }
+
+    body.light-theme .btn-success:hover {
+      background: #6ee7b7;
+    }
+
+    body.light-theme .badge-safe {
+      background: #d1fae5;
+      color: #059669;
+    }
+
+    body.light-theme .badge-warn {
+      background: #fef3c7;
+      color: #d97706;
+    }
+
+    body.light-theme .badge-danger {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    body.light-theme .help-btn {
+      background: #e0e7ff;
+      color: #4338ca;
+      border-color: #c7d2fe;
+    }
+
+    body.light-theme .help-btn:hover {
+      background: #c7d2fe;
+    }
+
+    body.light-theme .ctrl-btn {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+
+    body.light-theme .ctrl-btn.minus {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    body.light-theme .ctrl-btn.plus {
+      background: #d1fae5;
+      color: #16a34a;
+    }
+
+    body.light-theme .progress-track {
+      background: #e2e8f0;
+    }
+
+    body.light-theme input:not(.number-input)[type="text"],
+    body.light-theme input:not(.number-input)[type="number"] {
+      background: #ffffff;
+      color: #0f172a;
+      border: 1px solid #cbd5e1;
+    }
+
+    body.light-theme .dropdown-btn {
+      background: #ffffff;
+      color: #0f172a;
+      border: 1px solid #cbd5e1;
+    }
+
+    body.light-theme #dailyDropdownBtn {
+      background: #ffffff;
+      color: #0f172a;
+      border-color: #cbd5e1;
+    }
+
+    body.light-theme #dailyDropdownList {
+      background: #ffffff !important;
+      border-color: #cbd5e1 !important;
+      color: #0f172a !important;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, .12);
+    }
+
+    body.light-theme #dailyDropdownList>div {
+      color: #0f172a !important;
+    }
+
+    body.light-theme #dailyDropdownList>div:hover {
+      background: #eef2ff !important;
+      color: #312e81 !important;
+    }
+
+    body.light-theme .number-input {
+      color: #0f172a !important;
+    }
+
+    /* Tables */
+    body.light-theme .tt-table th,
+    body.light-theme .pred-table th {
+      background: #f1f5f9;
+      color: #334155;
+      border-color: #e2e8f0;
+    }
+
+    body.light-theme .tt-table td,
+    body.light-theme .pred-table td {
+      border-color: #e2e8f0;
+      color: #0f172a;
+    }
+
+    body.light-theme .tt-table tr:hover,
+    body.light-theme .pred-table tr:hover {
+      background: #f8fafc;
+    }
+
+    /* Modals & Toasts */
+    body.light-theme .modal-backdrop {
+      background: rgba(15, 23, 42, 0.4);
+    }
+
+    body.light-theme .modal {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      color: #0f172a;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    }
+
+    body.light-theme .modal h3,
+    body.light-theme .modal h2,
+    body.light-theme .modal b {
+      color: #0f172a;
+    }
+
+    body.light-theme .modal p,
+    body.light-theme .modal li,
+    body.light-theme .modal span {
+      color: #475569;
+    }
+
+    body.light-theme .excel-sample {
+      background: #f8fafc;
+    }
+
+    body.light-theme .excel-sample th {
+      background: rgba(99, 102, 241, .12);
+      color: #4338ca;
+    }
+
+    body.light-theme .excel-sample td {
+      color: #0f172a;
+    }
+
+    body.light-theme #toast {
+      background: #0f172a;
+      color: #f8fafc;
+      border: 1px solid #334155;
+    }
+
+    body.light-theme ::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.15);
+    }
+
+    body.light-theme .golden-card .btn-primary,
+    body.light-theme .golden-card a.btn-primary {
+      background: #4f46e5;
+      color: #ffffff !important;
+      border: none;
+    }
+
+    body.light-theme .golden-card .btn-primary:hover,
+    body.light-theme .golden-card a.btn-primary:hover {
+      background: #4338ca;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .sidebar {
+      width: 240px;
+      height: 100vh;
+      position: fixed;
+      left: 0;
+      top: 0;
+      background: var(--sidebar);
+      padding: 20px 14px;
+      overflow-y: auto;
+      z-index: 30;
+      transition: transform 0.3s ease;
+    }
+
+    .main-content {
+      margin-left: 240px;
+      padding: 24px;
+      min-height: 100vh;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        margin-left: 0;
+        padding: 16px 14px 100px;
+      }
+    }
+
+    #inlineAdsSlides img {
+      width: 100%;
+      border-radius: 12px;
+      display: block;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+
+    .card:hover {
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .card1::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-repeat: no-repeat;
+      background-position: right 16px bottom 18px;
+      background-size: 180px auto;
+      opacity: .15;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .nav-link:hover {
+      background: var(--card-bg);
+      color: var(--text);
+    }
+
+    .nav-link.active {
+      background: rgba(99, 102, 241, 0.18);
+      color: #a5b4fc;
+    }
+
+    .nav-link i {
+      width: 18px;
+      text-align: center;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .progress-track {
+      background: rgba(255, 255, 255, 0.07);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 100px;
+      transition: width 0.6s ease;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+      border: none;
+    }
+
+    .badge-safe {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+    }
+
+    .badge-warn {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+    }
+
+    .badge-danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+    }
+
+    .tt-table {
+      border-collapse: collapse;
+    }
+
+    .tt-table td,
+    .tt-table th {
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      padding: 8px 10px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .tt-table th {
+      color: var(--text);
+      background: var(--card-bg);
+      font-weight: 600;
+    }
+
+    .sub-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px;
+      transition: transform 0.2s;
+    }
+
+    .sub-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .pct-safe {
+      color: #22c55e;
+    }
+
+    .pct-warn {
+      color: #f59e0b;
+    }
+
+    .pct-danger {
+      color: #ef4444;
+    }
+
+    .ctrl-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: transparent;
+      padding: 6px 10px;
+      border-radius: 10px;
+    }
+
+    .ctrl-box span {
+      min-width: 32px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .ctrl-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.15s;
+      background: rgba(255, 255, 255, 0.07);
+      color: #f1f5f9;
+      padding: 0;
+    }
+
+    .ctrl-btn.minus {
+      background: rgba(239, 68, 68, 0.18);
+      color: #f87171;
+    }
+
+    .ctrl-btn.minus:hover {
+      background: rgba(239, 68, 68, 0.35);
+    }
+
+    .ctrl-btn.plus {
+      background: rgba(34, 197, 94, 0.18);
+      color: #4ade80;
+    }
+
+    .ctrl-btn.plus:hover {
+      background: rgba(34, 197, 94, 0.35);
+    }
+
+    .cgpa-green {
+      background: linear-gradient(135deg, #113327, #0f2b22);
+    }
+
+    .cgpa-green::after {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 220'%3E%3Cpath d='M20 180 C90 170 130 145 180 130 S300 95 360 70 S430 40 470 20' fill='none' stroke='%2334d399' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E");
+    }
+
+    .cgpa-yellow {
+      background: linear-gradient(135deg, #3a2d08, #2a2106);
+    }
+
+    .cgpa-yellow::after {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 220'%3E%3Cpath d='M20 175 C90 175 150 155 220 130 S340 105 410 80 S450 60 470 45' fill='none' stroke='%23fbbf24' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E");
+    }
+
+    .cgpa-red {
+      background: linear-gradient(135deg, #3a1010, #2b0d0d);
+    }
+
+    .cgpa-red::after {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 220'%3E%3Cpath d='M20 185 C100 182 170 165 250 135 S360 90 430 60 S455 45 470 65' fill='none' stroke='%23ef4444' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E");
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-ghost {
+      background: var(--card-bg);
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-ghost:hover {
+      background: var(--sidebar);
+    }
+
+    .btn-ghost.active {
+      background: rgba(99, 102, 241, 0.25);
+      color: #a5b4fc;
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-success {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-success:hover {
+      background: rgba(16, 185, 129, 0.3);
+    }
+
+    .upload-zone {
+      border: 2px dashed var(--card-border);
+      background: var(--card-bg);
+      border-radius: 14px;
+      padding: 28px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .upload-zone:hover,
+    .upload-zone.drag-over {
+      border-color: var(--primary);
+      background: rgba(99, 102, 241, 0.07);
+    }
+
+    select {
+      background: var(--card-bg);
+      color: var(--text);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 8px 16px;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      color-scheme: dark;
+    }
+
+    body.light-theme select {
+      color-scheme: light;
+    }
+
+    select:focus {
+      border-color: var(--primary);
+    }
+
+    select option {
+      background: #1e293b;
+      color: #f1f5f9;
+    }
+
+    body.light-theme select option {
+      background: #ffffff;
+      color: #0f172a;
+    }
+
+    input:not(.number-input)[type="text"],
+    input:not(.number-input)[type="number"] {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 8px 16px;
+      font-size: 13px;
+      outline: none;
+    }
+
+    input:not(.number-input)[type="text"]:focus,
+    input:not(.number-input)[type="number"]:focus {
+      border-color: var(--primary);
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px;
+      width: 90%;
+      max-width: 460px;
+      max-height: 85vh;
+      overflow-y: auto;
+      color: var(--text);
+    }
+
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: rgba(20, 20, 24, 0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: var(--text);
+      padding: 12px 18px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .45);
+      font-size: 13px;
+      font-weight: 500;
+      z-index: 200;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: transform .3s, opacity .3s;
+      max-width: 320px;
+    }
+
+    #toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    #mobileOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 20;
+    }
+
+    #mobileOverlay.open {
+      display: block;
+    }
+
+    .mobile-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--sidebar);
+      border-top: 1px solid var(--card-border);
+      padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+      z-index: 40;
+      transform: translateY(0);
+      transition: transform 0.45s ease;
+    }
+
+    @media (max-width: 768px) {
+      body:has(.sidebar.open) .mobile-nav {
+        transform: translateY(100%);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .mobile-nav {
+        display: flex;
+      }
+    }
+
+    .mobile-nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      color: #64748b;
+      padding: 6px 0;
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+
+    .mobile-nav-item.active {
+      color: #a5b4fc;
+    }
+
+    .mobile-nav-item i {
+      font-size: 18px;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .fade-up {
+      animation: fadeUp 0.35s ease;
+    }
+
+    .pred-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .pred-table th {
+      color: var(--text);
+      padding: 6px 8px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .pred-table td {
+      padding: 7px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+
+    .help-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(99, 102, 241, 0.15);
+      color: #a5b4fc;
+      font-size: 13px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+
+    .help-btn:hover {
+      background: rgba(99, 102, 241, 0.3);
+    }
+
+    .legal-link {
+      display: block;
+      padding: 6px 12px;
+      font-size: 13px;
+      color: var(--text);
+      cursor: pointer;
+      border-radius: 8px;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    .legal-link:hover {
+      color: #94a3b8;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .ads-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(6px);
+      z-index: 150;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ads-backdrop.open {
+      display: flex;
+    }
+
+    .ads-carousel {
+      width: 92%;
+      max-width: 520px;
+      position: relative;
+    }
+
+    .ads-slide {
+      display: none;
+      text-align: center;
+    }
+
+    .ads-slide.active {
+      display: block;
+      animation: fadeUp 0.3s ease;
+    }
+
+    .ads-slide img {
+      width: 100%;
+      max-height: 70vh;
+      object-fit: contain;
+      border-radius: 14px;
+    }
+
+    .ads-dots {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 14px;
+    }
+
+    .ads-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .ads-dot.active {
+      background: #6366f1;
+    }
+
+    .ads-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(0, 0, 0, 0.5);
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .ads-nav.prev {
+      left: -12px;
+    }
+
+    .ads-nav.next {
+      right: -12px;
+    }
+
+    .ads-close {
+      position: absolute;
+      top: -40px;
+      right: 0;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #fff;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: none;
+    }
+
+    .ads-close.visible {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ads-swipe-hint {
+      text-align: center;
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 10px;
+    }
+
+    .adsense-box {
+      width: 100%;
+      overflow: hidden;
+      margin: 24px 0;
+      border-radius: 12px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 8px;
+      text-align: center;
+    }
+
+    .excel-sample {
+      background: #1a1a2e;
+      border-radius: 10px;
+      overflow: hidden;
+      font-size: 11px;
+    }
+
+    .excel-sample table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .excel-sample th,
+    .excel-sample td {
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 6px 8px;
+      text-align: left;
+    }
+
+    .excel-sample th {
+      background: rgba(99, 102, 241, 0.2);
+      color: #a5b4fc;
+    }
+
+    .excel-sample .highlight {
+      background: rgba(34, 197, 94, 0.15);
+      color: #4ade80;
+    }
+
+    .legal-page h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 1.25rem 0 0.5rem;
+    }
+
+    .legal-page p,
+    .legal-page li {
+      font-size: 13px;
+      color: #94a3b8;
+      line-height: 1.7;
+    }
+
+    .legal-page ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+      margin: 0.5rem 0;
+    }
+
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 100px;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    .app-container {
+      width: 100%;
+      max-width: 480px;
+      padding: 24px;
+    }
+
+    .cards-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card1 {
+      position: relative;
+      overflow: hidden;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 24px;
+      min-height: 140px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    @media (max-width:768px) {
+      .card1 {
+        min-height: 80px !important;
+        padding: 12px !important;
+      }
+
+      .number-input {
+        font-size: 32px !important;
+      }
+    }
+
+    .card-label-container {
+      display: flex;
+      align-items: center;
+      color: var(--text);
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .number-input {
+      background: transparent !important;
+      border: none !important;
+      color: var(--text);
+      font-size: 56px;
+    }
+
+    .orange {
+      color: #f4511e;
+    }
+
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+
+    .legend-dot {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .page-header {
+      position: sticky;
+      top: 0;
+      z-index: 15;
+      padding: 16px 0;
+      margin: -16px 0 16px;
+      background: color-mix(in srgb, var(--bg) 88%, transparent);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .club-card,
+    .club-card-inner {
+      min-height: 540px;
+    }
+
+    @media (min-width:768px) {
+
+      .club-card,
+      .club-card-inner {
+        min-height: 620px;
+      }
+    }
+
+    .custom-dropdown {
+      position: relative;
+      width: 100%;
+      z-index: 10;
+    }
+
+    .custom-dropdown:has(.dropdown-menu.show) {
+      z-index: 1000;
+    }
+
+    .dropdown-btn {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      background: var(--card-bg);
+      color: var(--text);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: var(--sidebar);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      max-height: 220px;
+      overflow-y: auto;
+      display: none;
+      z-index: 100;
+    }
+
+    .dropdown-menu.show {
+      display: block;
+    }
+
+    .dropdown-item {
+      padding: 10px 14px;
+      cursor: pointer;
+    }
+
+    .dropdown-item:hover {
+      background: rgba(99, 102, 241, .18);
+    }
+
+    body.light-theme .dropdown-menu {
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      color: #111827;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, .12);
+    }
+
+    body.light-theme .dropdown-item {
+      color: #111827;
+    }
+
+    body.light-theme .dropdown-item:hover {
+      background: #eef2ff;
+      color: #312e81;
+    }
+
+    body.light-theme .dropdown-item.active {
+      background: #4f46e5;
+      color: #ffffff;
+    }
+
+    body.light-theme #ttSearchInput,
+    body.light-theme #dailySearchInput {
+      background: #ffffff;
+      color: #111827;
+      border: 1px solid #d1d5db;
+    }
+
+    body.light-theme #ttSearchInput::placeholder,
+    body.light-theme #dailySearchInput::placeholder {
+      color: #6b7280;
+    }
+
+    @keyframes chartSlideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .chart-slide-in {
+      animation: chartSlideIn 0.5s ease-out;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+    }
+
+    #genZSwitch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, .12);
+      transition: .25s;
+    }
+
+    #genZSwitch::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #fff;
+      transition: .25s;
+    }
+
+    #genZToggle:checked+#genZSwitch {
+      background: #6366f1;
+    }
+
+    #genZToggle:checked+#genZSwitch::after {
+      transform: translateX(20px);
+    }
+
+    #genZBtn {
+      cursor: pointer;
+      transition: .25s;
+      border-radius: 999px;
+      padding: 6px;
+    }
+
+    #genZBtn:hover {
+      transform: scale(1.1);
+    }
+
+    #genZBtn.bg-indigo-600 {
+      box-shadow: 0 0 18px rgba(99, 102, 241, .5);
+    }
+
+    /* Campus Hub Flip Card */
+    .club-card-inner {
+      position: relative;
+      width: 100%;
+      min-height: 620px;
+      transform-style: preserve-3d;
+      transition: transform .6s;
+    }
+
+    .club-card.flipped .club-card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .club-card-front,
+    .club-card-back {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: inherit;
+    }
+
+    .club-card-back {
+      transform: rotateY(180deg);
+      display: flex;
+      flex-direction: column;
+      background: var(--card-bg);
+    }
+
+    .club-card-back-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+      scrollbar-width: thin;
+    }
+
+    .club-card-back-content::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .club-card-back-content::-webkit-scrollbar-thumb {
+      border-radius: 10px;
+    }
+
+    .club-card {
+      perspective: 1000px;
+      position: relative;
+      min-height: 620px;
+      /* adjust if needed */
+    }
+
+    .club-card-back {
+      transform: rotateY(180deg);
+    }
+
+    .club-card-back-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .campus-caption {
+      white-space: pre-line;
+      line-height: 1.8;
+      font-size: 15px;
+      word-break: break-word;
+    }
+
+    .flip-btn {
+      position: relative;
+      z-index: 100;
+      touch-action: manipulation;
+    }
+
+    .club-card-front,
+    .club-card-back {
+      pointer-events: auto;
+    }
+
+    .guide-highlight {
+      position: relative;
+      z-index: 10001;
+      isolation: isolate;
+      border-radius: 16px;
+      box-shadow:
+        0 0 0 4px #6366f1,
+        0 0 40px rgba(99, 102, 241, .6);
+      animation: guidePulse 1.5s infinite;
+    }
+
+    @keyframes guidePulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.02);
+      }
+
+    }
+
+    .guide-bottom {
+      align-items: flex-end !important;
+      justify-content: center !important;
+      padding-bottom: 32px;
+    }
+
+    .guide-bottom .guide-card {
+      margin-bottom: 0;
+      animation: slideUp .25s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(24px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    /* Guide interaction lock */
+    body.guide-active .page,
+    body.guide-active .sidebar,
+    body.guide-active .mobile-nav,
+    body.guide-active #mobileOverlay {
+      pointer-events: none;
+    }
+
+    body.guide-active #guideModal,
+    body.guide-active #guideModal * {
+      pointer-events: auto;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="toast"></div>
+  <div id="mobileOverlay" onclick="closeSidebar()"></div>
+
+  <!-- Confirm Modal -->
+  <div id="confirmModal" class="modal-backdrop">
+    <div class="modal">
+      <h3 id="confirmTitle" class="text-base font-semibold mb-2">Confirm</h3>
+      <p id="confirmMsg" class="text-sm text-gray-400 mb-5">Are you sure?</p>
+      <div class="flex gap-3 justify-end">
+        <button class="btn-ghost" onclick="closeConfirm()">Cancel</button>
+        <button id="confirmOk" class="btn-danger">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Help: Attendance Excel -->
+  <div id="helpAttendanceModal" class="modal-backdrop">
+    <div class="modal" style="max-width:540px">
+      <h3 class="text-base font-semibold mb-3"><i class="fas fa-circle-info text-indigo-400 mr-2"></i>How to Get
+        Attendance Excel</h3>
+      <ol class="text-sm text-gray-400 space-y-2 mb-4 list-decimal list-inside">
+        <li>Open this <b class="text-gray-300"><u><a
+                href="https://presidencyuniversity.linways.com/ams/attendance/consolidated-attendance-report?redir=true">Link</u></a>
+          </b><span class="text-xs text-gray-500 font-normal">(make sure you are logged in)</span></li>
+        <li>Click <b class="text-gray-300">Export</b>.</li>
+        <li>Download the <b class="text-gray-300">.xlsx</b> file and drop it in Tracy.</li>
+      </ol>
+      <div class="flex justify-end mt-5">
+        <button class="btn-ghost" onclick="closeHelpModal('helpAttendanceModal')">Got it</button>
+      </div>
+    </div>
+  </div>
+  <!-- Help: Daily Report Excel -->
+  <div id="helpDailyModal" class="modal-backdrop">
+    <div class="modal" style="max-width:540px">
+      <h3 class="text-base font-semibold mb-3"><i class="fas fa-circle-info text-indigo-400 mr-2"></i>How to Get Daily
+        Attendance Excel</h3>
+      <ol class="text-sm text-gray-400 space-y-2 mb-4 list-decimal list-inside">
+        <li>Open this <b class="text-gray-300"><u><a
+                href="https://presidencyuniversity.linways.com/ams/attendance/daily-attendance?redir=true">Link</u></a>
+          </b><span class="text-xs text-gray-500 font-normal">(make sure you are logged in)</span></li>
+        <li>Click <b class="text-gray-300">Export</b>.</li>
+        <li>Download the <b class="text-gray-300">.xlsx</b> file and drop it in Tracy.</li>
+      </ol>
+      <div class="flex justify-end mt-5">
+        <button class="btn-ghost" onclick="closeHelpModal('helpDailyModal')">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- College Ads Popup -->
+  <div id="adsPopup" class="ads-backdrop">
+    <div class="ads-carousel">
+      <button id="adsCloseBtn" class="ads-close" onclick="closeAdsPopup()" title="Close"><i
+          class="fas fa-times"></i></button>
+      <div id="adsSlides"></div>
+      <button class="ads-nav prev" onclick="adsNav(-1)"><i class="fas fa-chevron-left"></i></button>
+      <button class="ads-nav next" onclick="adsNav(1)"><i class="fas fa-chevron-right"></i></button>
+      <div id="adsDots" class="ads-dots"></div>
+    </div>
+  </div>
+
+  <!-- Manage Data Modal (replaces old Settings danger zone) -->
+  <div id="manageDataModal" class="modal-backdrop">
+    <div class="modal">
+      <h3 class="text-base font-semibold mb-4">Manage Data</h3>
+      <div class="space-y-4">
+        <div class="flex justify-between items-center gap-3">
+          <div>
+            <p class="text-sm font-medium">Reset Attendance</p>
+            <p class="text-xs text-gray-400">Clears present/absent counts, keeps subjects</p>
+          </div>
+          <button class="btn-danger text-xs flex-shrink-0"
+            onclick="confirmAction('Reset attendance counts?', resetAttendanceCounts)">Reset</button>
+        </div>
+        <div class="flex justify-between items-center gap-3">
+          <div>
+            <p class="text-sm font-medium">Clear Daily Analysis</p>
+            <p class="text-xs text-gray-400">Removes uploaded daily attendance data</p>
+          </div>
+          <button class="btn-danger text-xs flex-shrink-0"
+            onclick="confirmAction('Delete uploaded daily attendance data?', resetDailyAnalysis)">Reset</button>
+        </div>
+        <div class="flex justify-between items-center gap-3 pt-3 border-t border-white/5">
+          <div>
+            <p class="text-sm font-medium text-red-400">Full Reset</p>
+            <p class="text-xs text-gray-400">Wipes everything — cannot be undone</p>
+          </div>
+          <button class="btn-danger text-xs flex-shrink-0"
+            onclick="confirmAction('This will delete ALL data. This cannot be undone.', fullReset)">Reset</button>
+        </div>
+      </div>
+      <div class="flex justify-end mt-5">
+        <button class="btn-ghost" onclick="closeManageData()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="flex items-center justify-between mb-7">
+
+      <div class="flex items-center gap-2">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center">
+          <i id="genZBtn" class="fas fa-bolt" ondblclick="toggleGenZMode()"></i>
+        </div>
+
+        <span class="text-lg font-bold">
+          T<span class="text-indigo-400">racy</span>
+        </span>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button id="installBtn"
+          class="hidden w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 transition flex items-center justify-center"
+          title="Install Tracy">
+          <i class="fas fa-download"></i>
+        </button>
+
+        <button id="themeToggle" onclick="toggleTheme()"
+          class="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 transition flex items-center justify-center">
+          <i id="themeIcon" class="fas fa-moon text-yellow-300"></i>
+        </button>
+      </div>
+    </div>
+
+    <nav class="space-y-1">
+      <div class="nav-link active" data-page="dashboard" onclick="navigateTo('dashboard')"><i
+          class="fas fa-home"></i><span>Dashboard</span></div>
+      <div class="nav-link" data-page="calculator" onclick="navigateTo('calculator')"><i
+          class="fas fa-calculator"></i><span>Calculator</span></div>
+      <div class="nav-link" data-page="timetable" onclick="navigateTo('timetable')"><i
+          class="fas fa-calendar-alt"></i><span>Timetable</span></div>
+      <div class="nav-link" data-page="prediction" onclick="navigateTo('prediction')"><i
+          class="fas fa-chart-line"></i><span>Prediction</span></div>
+      <div class="nav-link" data-page="analytics" onclick="navigateTo('analytics')"><i
+          class="fas fa-chart-pie"></i><span>Analytics</span></div>
+      <div class="nav-link" data-page="campus" onclick="navigateTo('campus')"> <i class="fas fa-users"></i> <span>Campus
+          Hub</span> </div>
+    </nav>
+
+    <div class="mt-auto pt-8">
+      <div class="section-label">Target Attendance</div>
+      <div class="flex gap-1 flex-wrap">
+        <button class="badge badge-safe target-btn" data-t="75" onclick="setTarget(75)">75%</button>
+        <button class="badge badge-warn target-btn" data-t="80" onclick="setTarget(80)">80%</button>
+        <button class="badge target-btn" style="background:rgba(99,102,241,0.15);color:#a5b4fc" data-t="85"
+          onclick="setTarget(85)">85%</button>
+        <button class="badge target-btn" style="background:rgba(239,68,68,0.15);color:#f87171" data-t="90"
+          onclick="setTarget(90)">90%</button>
+      </div>
+    </div>
+    <div class="mt-6 pt-4 border-t border-white/5">
+      <div class="section-label">Info & Legal</div>
+      <div class="space-y-0.5">
+        <div class="legal-link" onclick="startGuide()">
+          <i class="fas fa-book-open w-4 inline-block"></i>
+          Guide
+        </div>
+        <div class="legal-link" onclick="navigateTo('about')"><i class="fas fa-info-circle w-4 inline-block"></i> About
+          Us
+        </div>
+        <div class="legal-link" onclick="navigateTo('terms')"><i class="fas fa-file-contract w-4 inline-block"></i>
+          Terms &
+          Conditions</div>
+        <div class="legal-link" onclick="navigateTo('privacy')"><i class="fas fa-shield-alt w-4 inline-block"></i>
+          Privacy
+          Policy</div>
+        <div class="legal-link" onclick="navigateTo('disclaimer')"><i
+            class="fas fa-exclamation-triangle w-4 inline-block"></i> Disclaimer</div>
+        <div class="legal-link" onclick="navigateTo('contact')"><i class="fas fa-envelope w-4 inline-block"></i> Contact
+          Us
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content" id="mainContent">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="page active fade-up" id="page-dashboard">
+      <div class="page-header">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+            <div>
+              <h1 class="text-xl font-bold">Dashboard</h1>
+              <p id="currentDate" class="text-xs text-gray-400 mt-0.5"></p>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button class="btn-ghost text-xs" onclick="openManageData()">
+              <i class="fas fa-database mr-1"></i>Manage Data
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <input type="file" id="mainFileInput" class="hidden" accept=".xlsx,.xls">
+        <div class="upload-zone relative" id="uploadZone" onclick="document.getElementById('mainFileInput').click()">
+
+          <button type="button" class="help-btn absolute top-3 right-3"
+            onclick="event.stopPropagation(); openHelpModal('helpAttendanceModal')" title="How to get attendance Excel">
+            i
+          </button>
+          <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-indigo-500/10 flex items-center justify-center">
+            <i class="fas fa-file-excel text-indigo-400 text-xl"></i>
+          </div>
+          <p class="text-sm font-medium text-gray-300">Drop your attendance Excel here</p>
+          <p class="text-xs text-gray-500 mt-1">.xlsx / .xls supported</p>
+        </div>
+        <p id="importedFileName" class="text-xs text-gray-500 text-center mt-2 hidden"></p>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="card p-4">
+          <p class="text-xs text-gray-400 mb-1">Overall</p>
+          <p id="dashOverall" class="text-2xl font-bold">--%</p>
+          <div class="progress-track h-1.5 mt-2">
+            <div id="dashOverallBar" class="progress-fill bg-indigo-500" style="width:0%"></div>
+          </div>
+        </div>
+        <div class="card p-4">
+          <p class="text-xs text-gray-400 mb-1">Present</p>
+          <p id="dashPresent" class="text-2xl font-bold text-green-400">--</p>
+          <p class="text-xs text-gray-500 mt-1">Total classes attended</p>
+        </div>
+        <div class="card p-4">
+          <p class="text-xs text-gray-400 mb-1">Absent</p>
+          <p id="dashAbsent" class="text-2xl font-bold text-red-400">--</p>
+          <p class="text-xs text-gray-500 mt-1">Missed classes</p>
+        </div>
+        <div class="card p-4">
+          <p class="text-xs text-gray-400 mb-1">Status</p>
+          <p id="dashStatus" class="text-2xl font-bold">--</p>
+          <p class="text-xs text-gray-500 mt-1">vs <span id="dashTarget">75%</span> target</p>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="font-semibold">Subjects</h2>
+      </div>
+      <div id="dashSubjectList" class="space-y-2">
+        <div class="card p-8 text-center text-gray-500 text-sm">
+          <i class="fas fa-cloud-upload-alt text-2xl mb-2 block"></i>
+          Import an Excel report to view the data.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ATTENDANCE ── -->
+    <div class="page fade-up" id="page-attendance">
+      <div class="page-header flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+          <h1 class="text-xl font-bold">Attendance</h1>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TIMETABLE (folder-based read) ── -->
+    <div class="page fade-up" id="page-timetable">
+
+      <div class="page-header">
+        <div class="flex items-center justify-between">
+
+          <div class="flex items-center gap-3">
+            <button class="md:hidden btn-ghost p-2" onclick="openSidebar()">
+              <i class="fas fa-bars"></i>
+            </button>
+
+            <h1 class="text-xl font-bold">Timetables</h1>
+          </div>
+
+          <a id="requestTtBtn" href="#" target="_blank" rel="noopener" class="btn-primary text-xs">
+            <i class="fas fa-paper-plane mr-1"></i>
+            Request New
+          </a>
+
+        </div>
+      </div>
+
+      <p class="text-xs text-gray-500 mb-5">
+        If you find that your class timetable is outdated or incorrect,
+        you can request an update.
+      </p>
+
+      <!-- Selection -->
+      <div class="card p-5 mb-5">
+        <h3 class="font-semibold mb-3 text-sm">Select Class</h3>
+
+        <div id="ttDropdown" class="custom-dropdown">
+
+          <div class="relative">
+            <input id="ttSearchInput" type="text" placeholder="Search Class" class="dropdown-btn pr-10"
+              onclick="toggleDropdown('ttDropdown')" oninput="filterTimetableDropdown()" autocomplete="off">
+
+            <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+          </div>
+
+          <div id="ttDropdownMenu" class="dropdown-menu"></div>
+
+        </div>
+      </div>
+
+      <!-- Preview -->
+      <div class="card p-4 overflow-x-auto">
+        <div id="ttPreviewGrid">
+          <p class="text-center text-gray-500 text-sm py-8">
+            Select a timetable to preview.
+          </p>
+        </div>
+      </div>
+
+      <br>
+
+      <div class="w-full">
+        <div id="inlineAdsSlides"></div>
+      </div>
+
+    </div>
+
+    <!-- ── PREDICTION ── -->
+    <div class="page fade-up" id="page-prediction">
+      <div id="prediction" class="page-header flex items-center gap-3">
+        <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+        <h1 class="text-xl font-bold">Prediction Engine</h1>
+      </div>
+      <p class="text-xs text-gray-500 mb-5">
+        <b>Current Week</b> = your current attendance plus every remaining scheduled class this week (from today
+        onward).
+        <b>Next Week</b> = Current Week's result plus a full additional week from the Next Week timetable a running,
+        cumulative forecast.
+      </p>
+
+      <div class="grid md:grid-cols-2 gap-4 mb-6">
+        <div class="card p-4 overflow-x-auto">
+          <h3 class="font-semibold mb-3">Current Week Prediction</h3>
+          <table class="pred-table">
+            <thead>
+              <tr>
+                <th>Subject</th>
+                <th>+Cls</th>
+                <th>Present</th>
+                <th>Total</th>
+                <th>Overall</th>
+                <th>Bunks/Need</th>
+              </tr>
+            </thead>
+            <tbody id="predTable1">
+              <tr>
+                <td colspan="6" class="py-4 text-center text-gray-500">Add subjects & select a timetable first.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card p-4 overflow-x-auto">
+          <h3 class="font-semibold mb-3">Next Week Prediction</h3>
+          <table class="pred-table">
+            <thead>
+              <tr>
+                <th>Subject</th>
+                <th>+Cls</th>
+                <th>Present</th>
+                <th>Total</th>
+                <th>Overall</th>
+                <th>Bunks/Need</th>
+              </tr>
+            </thead>
+            <tbody id="predTable2">
+              <tr>
+                <td colspan="6" class="py-4 text-center text-gray-500">Add subjects & select a timetable first.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <h2 class="font-semibold">Subject-wise Prediction Cards</h2>
+        <button id="addCalendarBtn" class="btn-ghost text-xs" onclick="addAllPredCardsToCalendar()"><i
+            class="fas fa-calendar-plus mr-1"></i>Add to Calendar</button>
+      </div>
+      <div class="mb-4">
+        <select id="predCardsWeekSelect" class="w-full rounded-lg px-3 py-2">
+          <option value="1">Week 1</option>
+          <option value="2">Week 2</option>
+        </select>
+      </div>
+      <div id="predCards" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+    </div>
+
+    <!-- ── CALCULATOR (standalone, freeform) ── -->
+    <div class="page fade-up" id="page-calculator">
+      <div class="page-header flex items-center gap-3">
+        <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+        <h1 id="quickCalcHeading" class="text-xl font-bold">
+          Quick Calculator
+        </h1>
+      </div>
+      <p class="text-xs text-gray-500 mb-5">Note - Increasing Attended classses also increases Total classes</p>
+      <h2 class="font-semibold mb-3 mt-8">Manual Calculator</h2>
+      <div class="card p-5">
+        <div class="flex flex-col lg:flex-row gap-5">
+          <div class="w-full lg:w-36 flex-shrink-0 flex flex-col gap-3">
+            <div class="card1" style="min-height:100px;padding:16px">
+              <div class="card-label-container" style="font-size:13px">Total Classes</div>
+              <input type="number" id="qcTotal" class="number-input" style="font-size:40px" placeholder="0" min="0"
+                oninput="renderQuickCalc()" />
+            </div>
+            <div class="card1" style="min-height:100px;padding:16px">
+              <div class="card-label-container" style="font-size:13px">Attended Classes</div>
+              <input type="number" id="qcAttended" class="number-input" style="font-size:40px" placeholder="0" min="0"
+                oninput="renderQuickCalc()" />
+            </div>
+            <button class="btn-ghost text-xs" onclick="resetQuickCalc()"><i class="fas fa-undo mr-1"></i>Reset</button>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-center gap-4">
+
+              <div class="w-40 h-40 md:w-52 md:h-52 flex-shrink-0">
+                <canvas id="qcChart"></canvas>
+              </div>
+              <div class="flex flex-col min-w-0">
+                <div class="mb-6">
+                  <span id="qcPercent" class="text-3xl md:text-5xl font-bold">--%</span>
+                  <p id="qcStatus" class="text-sm text-gray-400 mt-2">Enter values</p>
+                </div>
+                <div class="space-y-3 text-sm">
+                  <div><span id="qcBunkLegend"></span> Bunks:&nbsp; <span id="qcBunk"></span></div>
+                  <div><span id="qcNeedLegend"></span> Need:&nbsp;<span id="qcNeed"></span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div><br>
+
+      <h2 class="font-semibold mb-3">Subject Calculator <span class="text-xs text-gray-500 font-normal">(linked to a
+          saved subject)</span></h2>
+      <div class="card p-5 mb-6">
+        <div class="flex gap-5 flex-wrap md:flex-nowrap">
+          <div class="w-full md:w-44 flex flex-col gap-3">
+            <div id="calcSubjectDropdown" class="custom-dropdown">
+              <button type="button" class="dropdown-btn" onclick="toggleDropdown('calcSubjectDropdown')">
+                <span id="calcSubjectText" data-value="">
+                  Select Subject
+                </span>
+              </button>
+
+              <div id="calcSubjectMenu" class="dropdown-menu">
+              </div>
+            </div>
+            <div class="card1" style="min-height:100px;padding:16px">
+              <div class="card-label-container" style="font-size:13px">Total Classes</div>
+              <input type="number" id="calcTotalInput" class="number-input" style="font-size:40px" placeholder="0"
+                readonly />
+            </div>
+
+            <div class="card1" style="min-height:100px;padding:16px">
+              <div class="card-label-container" style="font-size:13px">Attended Classes</div>
+
+              <div class="flex items-center justify-between gap-3">
+                <input type="number" id="calcAttendedInput" class="number-input" style="font-size:40px; width:120px;"
+                  placeholder="0" readonly />
+                <div class="ctrl-box">
+                  <button class="ctrl-btn minus" onclick="changeFutureAttend(-1)">-</button>
+                  <button class="ctrl-btn plus" onclick="changeFutureAttend(1)">+</button>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn-ghost text-xs" onclick="resetCalc()"><i class="fas fa-undo mr-1"></i>Reset</button>
+          </div>
+
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-center gap-4">
+
+              <div class="w-40 h-40 md:w-52 md:h-52 flex-shrink-0">
+                <canvas id="calcChart"></canvas>
+              </div>
+              <div class="flex flex-col min-w-0">
+                <div class="mb-6">
+                  <span id="calcPercent" class="text-3xl md:text-5xl font-bold">--%</span>
+                  <p id="calcStatus" class="text-sm text-gray-400 mt-2">Select a subject</p>
+                </div>
+                <div class="space-y-3 text-sm">
+                  <div><span id="calcBunkLegend"></span> Bunks:&nbsp; <span id="calcBunk"></span></div>
+                  <div><span id="calcNeedLegend"></span> Need:&nbsp;<span id="calcNeed"></span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h2 class="font-semibold mb-3 mt-8">CGPA Calculator</h2>
+      <div class="card p-5 mb-6">
+        <div class="flex flex-col lg:flex-row gap-5">
+          <div class="w-full lg:w-40 flex flex-col gap-3">
+            <div class="card1" style="min-height:100px;padding:16px">
+              <div class="card-label-container" style="font-size:13px">Current CGPA</div>
+              <input type="number" id="cgpaCurrent" class="number-input" style="font-size:40px" placeholder="0.0"
+                min="0" max="10" step="0.01" oninput="if(this.value>10)this.value=10; renderCgpaCalc()">
+            </div>
+            <div class="card1" style="min-height:100px;padding:16px">
+              <div class="card-label-container" style="font-size:13px">Sem Completed</div>
+              <input type="number" id="semCompleted" class="number-input" style="font-size:40px" placeholder="1" min="1"
+                max="7" step="1" oninput="renderCgpaCalc()"
+                onblur=" if(this.value==='') this.value=''; else if(+this.value<1) this.value=1; else if(+this.value>7) this.value=7; renderCgpaCalc(); " />
+            </div>
+            <div class="card1" style="min-height:100px;padding:16px">
+              <div class="card-label-container" style="font-size:13px">Target CGPA</div>
+              <input type="number" id="cgpaTarget" class="number-input" style="font-size:40px" placeholder="0.0" min="0"
+                max="10" step="0.01" oninput="if(this.value>10)this.value=10; renderCgpaCalc()" />
+            </div>
+            <button class="btn-ghost text-xs" onclick="resetCgpaCalc()"><i class="fas fa-undo mr-1"></i>Reset</button>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div id="neededCgpaCard" class="card1" style="min-height:140px;padding:16px">
+              <div class="card-label-container" style="font-size:13px">
+                Needed Average SGPA
+              </div>
+
+              <div id="cgpaDelta" class="text-4xl font-bold text-center mt-3">
+                --
+              </div>
+              <p id="cgpaStatus" class="text-sm text-gray-400 text-center mt-2">
+                Enter values
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <!-- ── ANALYTICS ── -->
+    <div class="page fade-up" id="page-analytics">
+      <div class="page-header flex items-center gap-3">
+        <button class="md:hidden btn-ghost p-2" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+        <h1 class="text-xl font-bold">Analytics</h1>
+      </div>
+
+      <div class="card p-5 mb-6">
+        <h3 class="font-semibold mb-4">Attendance Breakdown <span
+            class="text-xs text-gray-500 font-normal">(subject-wise)</span></h3>
+        <div class="h-64 md:h-80"><canvas id="attendanceChart"></canvas></div>
+      </div>
+
+      <div class="card p-5 mb-6">
+        <div class="flex items-center justify-between mb-4">
+
+          <div class="flex items-center gap-2">
+            <h3 class="font-semibold">Daily Attendance Analysis</h3>
+
+            <button class="help-btn" onclick="openHelpModal('helpDailyModal')" title="How to get daily Excel">i</button>
+          </div>
+
+          <button class="btn-ghost text-xs flex items-center gap-2"
+            onclick="document.getElementById('dailyFileInput').click()">
+            <i class="fas fa-file-excel"></i>
+            <span id="dailyFileChosenLabel">Upload</span>
+          </button>
+
+        </div>
+
+        <input type="file" id="dailyFileInput" class="hidden" accept=".xlsx,.xls">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-3 mb-4">
+
+          <div id="dailyDropdown" class="custom-dropdown">
+
+            <button type="button" class="dropdown-btn" onclick="toggleDailyDropdown()">
+              <span id="dailyDropdownText">Select Subject</span>
+              <i class="fas fa-chevron-down"></i>
+            </button>
+
+            <div id="dailyDropdownList" class="dropdown-menu">
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+      <div class="h-64 md:h-80"><canvas id="dailyChart"></canvas></div>
+    </div>
+    </div>
+
+    <!-- ── CAMPUS HUB ── -->
+    <div class="page fade-up" id="page-campus">
+
+      <div class="page-header">
+        <div class="flex items-center justify-between mb-4">
+
+          <div class="flex items-center gap-3">
+            <button class="md:hidden btn-ghost p-2" onclick="openSidebar()">
+              <i class="fas fa-bars"></i>
+            </button>
+
+            <h1 class="text-xl font-bold">Campus Hub</h1>
+          </div>
+
+          <a href="https://forms.gle/bW8EDvqwXAWguEKW6" target="_blank" id="publishBtn" class="btn-primary text-xs">
+            <i class="fas fa-bullhorn mr-1"></i>
+            Publish Event/Club</a>
+
+        </div>
+
+        <div class="flex gap-3">
+          <div id="schoolDropdown" class="custom-dropdown flex-1">
+
+            <button type="button" class="dropdown-btn school-dropdown-btn"
+              onclick="event.preventDefault(); toggleDropdown('schoolDropdown')">
+              <span id="schoolDropdownText">All Schools</span>
+
+              <i class="fas fa-chevron-down"></i>
+
+            </button>
+
+            <div id="schoolDropdownMenu" class="dropdown-menu"></div>
+
+          </div>
+          <div id="yearDropdown" class="custom-dropdown w-32">
+            <button type="button" class="dropdown-btn year-dropdown-btn"
+              onclick="event.preventDefault(); toggleDropdown('yearDropdown')">
+              <span id="yearDropdownText">All Years</span>
+
+              <i class="fas fa-chevron-down"></i>
+
+            </button>
+
+            <div id="yearDropdownMenu" class="dropdown-menu"></div>
+
+          </div>
+        </div>
+      </div>
+
+      <h2 class="font-semibold mb-3 mt-4">
+        Featured Clubs
+      </h2>
+
+      <div id="clubGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      </div>
+    </div>
+
+    <!-- ── ABOUT US ── -->
+    <div class="page fade-up legal-page" id="page-about">
+      <div class="page-header flex items-center gap-3">
+        <button class="md:hidden btn-ghost p-2" onclick="openSidebar()">
+          <i class="fas fa-bars"></i>
+        </button>
+        <h1 class="text-xl font-bold">About Tracy</h1>
+      </div>
+
+      <div class="card p-6 max-w-2xl">
+        <p>
+          <b class="text-gray-200">Tracy</b> is a student-focused web application
+          designed to help users understand and manage academic attendance information.
+          It provides attendance calculations, subject-wise analysis, timetable-based
+          predictions, and academic planning tools.
+        </p>
+
+        <h2>What Tracy Does</h2>
+        <ul>
+          <li>Processes attendance reports imported by the user.</li>
+          <li>Calculates subject-wise and overall attendance percentages.</li>
+          <li>Provides attendance and timetable-based predictions.</li>
+          <li>Provides manual attendance and CGPA calculation tools.</li>
+          <li>Provides timetable information and selected campus-related information.</li>
+        </ul>
+
+        <h2>Local-First Design</h2>
+        <p>
+          Attendance information imported into Tracy is processed in your browser
+          and stored locally on your device for the application's functionality.
+          Tracy does not require you to create an account to use its core
+          attendance features.
+        </p>
+
+        <h2>Independent Service</h2>
+        <p>
+          Tracy is an independent student utility and is not affiliated with,
+          endorsed by, or officially associated with any university or educational
+          institution unless explicitly stated on the relevant page.
+        </p>
+
+        <h2>Accuracy</h2>
+        <p>
+          Tracy is intended as a convenience and planning tool. Always verify
+          attendance, timetable, academic, and institutional information against
+          the official records or notices provided by your institution.
+        </p>
+      </div>
+    </div>
+
+    <!-- ── TERMS ── -->
+    <div class="page fade-up legal-page" id="page-terms">
+      <div class="page-header flex items-center gap-3">
+        <button class="md:hidden btn-ghost p-2" onclick="openSidebar()">
+          <i class="fas fa-bars"></i>
+        </button>
+        <h1 class="text-xl font-bold">Terms &amp; Conditions</h1>
+      </div>
+
+      <div class="card p-6 max-w-2xl">
+        <p><b>Last updated:</b> August 13, 2026</p>
+
+        <h2>1. Acceptance of These Terms</h2>
+        <p>
+          By accessing or using Tracy, you agree to these Terms &amp; Conditions.
+          If you do not agree with these terms, please do not use the service.
+        </p>
+
+        <h2>2. Nature of the Service</h2>
+        <p>
+          Tracy is provided as a student utility for attendance tracking,
+          calculation, timetable-based forecasting, academic planning, and
+          related informational purposes.
+        </p>
+
+        <h2>3. Accuracy of Information</h2>
+        <p>
+          Calculations, predictions, timetables, campus information, and other
+          content displayed by Tracy may contain inaccuracies, omissions,
+          delays, or outdated information.
+        </p>
+
+        <p>
+          You are responsible for verifying important information with the
+          official records, timetable, notices, or systems provided by your
+          educational institution.
+        </p>
+
+        <h2>4. User-Provided Data</h2>
+        <p>
+          You are responsible for ensuring that files and information you import
+          into Tracy are accurate and that you have the right to use them.
+        </p>
+
+        <h2>5. Acceptable Use</h2>
+        <p>You agree not to:</p>
+        <ul>
+          <li>Use Tracy for unlawful purposes.</li>
+          <li>Attempt to interfere with or disrupt the service.</li>
+          <li>Attempt to gain unauthorised access to systems or resources.</li>
+          <li>Abuse, scrape, overload, or intentionally damage the service.</li>
+          <li>Use the service to distribute malicious or harmful content.</li>
+        </ul>
+
+        <h2>6. Third-Party Services and Links</h2>
+        <p>
+          Tracy may use or link to third-party services, including analytics,
+          advertising, forms, content delivery services, and external
+          institutional websites. Those services are governed by their own
+          terms and privacy policies.
+        </p>
+
+        <h2>7. Intellectual Property</h2>
+        <p>
+          Unless otherwise stated, the Tracy interface, original code, design,
+          branding, and original content are protected by applicable
+          intellectual-property laws. You may not reproduce or redistribute
+          substantial portions of the service without permission.
+        </p>
+
+        <h2>8. Availability</h2>
+        <p>
+          Tracy is provided on an availability basis. Features may be modified,
+          temporarily unavailable, discontinued, or updated without prior notice.
+        </p>
+
+        <h2>9. No Academic Guarantee</h2>
+        <p>
+          Tracy does not guarantee attendance compliance, academic results,
+          eligibility, examination eligibility, or any other institutional
+          outcome.
+        </p>
+
+        <h2>10. Limitation of Liability</h2>
+        <p>
+          To the extent permitted by applicable law, Tracy is not responsible
+          for losses, academic consequences, missed classes, incorrect
+          calculations, timetable errors, service interruptions, or decisions
+          made solely on the basis of information displayed by the service.
+        </p>
+
+        <h2>11. Changes to These Terms</h2>
+        <p>
+          These Terms &amp; Conditions may be updated from time to time.
+          The updated version will be published on this page with a revised
+          "Last updated" date. Continued use of Tracy after an update constitutes
+          acceptance of the updated terms to the extent permitted by applicable law.
+        </p>
+      </div>
+    </div>
+
+    <!-- ── PRIVACY ── -->
+    <div class="page fade-up legal-page" id="page-privacy">
+      <div class="page-header flex items-center gap-3">
+        <button class="md:hidden btn-ghost p-2" onclick="openSidebar()">
+          <i class="fas fa-bars"></i>
+        </button>
+        <h1 class="text-xl font-bold">Privacy Policy</h1>
+      </div>
+
+      <div class="card p-6 max-w-2xl">
+        <p><b>Last updated:</b> August 13, 2026</p>
+
+        <h2>1. Overview</h2>
+        <p>
+          This Privacy Policy explains how Tracy handles information when you
+          use the service. Tracy is designed so that the core attendance
+          functionality can operate without requiring you to create an account.
+        </p>
+
+        <h2>2. Attendance Data You Import</h2>
+        <p>
+          When you import an attendance Excel file, Tracy processes the file
+          in your browser using client-side JavaScript. The attendance records
+          are stored locally on your device for application functionality.
+        </p>
+
+        <p>
+          Tracy does not require you to upload your attendance Excel file to a
+          Tracy-operated server.
+        </p>
+
+        <h2>3. Browser Storage</h2>
+        <p>
+          Tracy uses browser storage, including local storage, to retain
+          application information such as attendance data, preferences,
+          selected settings, timetable selections, and other application state.
+        </p>
+
+        <p>
+          This information remains on your device unless you clear it,
+          uninstall or reset the relevant browser/app data, or the application
+          changes how it stores information.
+        </p>
+
+        <h2>4. Clearing Your Local Data</h2>
+        <p>
+          Tracy provides a Full Reset option through Manage Data. Using Full
+          Reset removes the locally stored Tracy application data from the
+          browser storage used by the application.
+        </p>
+
+        <h2>5. Analytics</h2>
+        <p>
+          Tracy uses Google Analytics to understand general usage of the service,
+          such as visitor activity, sessions, browser and device information,
+          and approximate geographic information.
+        </p>
+
+        <p>
+          Google Analytics may use identifiers and cookies, including the
+          <code>_ga</code> cookie, depending on the configuration and applicable
+          consent settings.
+        </p>
+
+        <h2>6. Advertising</h2>
+        <p>
+          Tracy may display advertisements through Google AdSense and related
+          Google advertising technologies.
+        </p>
+
+        <p>
+          Advertising providers may use cookies or similar technologies and may
+          receive information associated with your visit, such as the page being
+          viewed, browser information, IP address, and advertising identifiers,
+          subject to their policies and applicable settings.
+        </p>
+
+        <h2>7. Consent and Privacy Controls</h2>
+        <p>
+          Where consent is required by applicable law or by the policies
+          governing third-party services, Tracy may request your permission
+          before enabling relevant analytics or advertising technologies.
+        </p>
+
+        <p>
+          You can also manage cookies and related storage through your browser
+          settings. Blocking certain technologies may affect some Tracy
+          features or third-party services.
+        </p>
+
+        <h2>8. Google Forms</h2>
+        <p>
+          Tracy may provide Google Forms for timetable requests, event
+          submissions, advertisements, feedback, or similar submissions.
+        </p>
+
+        <p>
+          Information submitted through a Google Form is transmitted directly
+          to Google and is subject to Google's applicable privacy practices.
+          Do not submit information that you do not want to share through
+          a third-party form.
+        </p>
+
+        <h2>9. External Websites</h2>
+        <p>
+          Tracy may provide links to external websites, including institutional
+          portals and other third-party services. Tracy does not control the
+          privacy practices, security, availability, or content of those
+          external websites.
+        </p>
+
+        <h2>10. Timetable and Public Content</h2>
+        <p>
+          Timetable files and campus information displayed by Tracy may be
+          obtained from publicly available or externally provided sources.
+          Such content should not be assumed to contain private user information.
+        </p>
+
+        <h2>11. Information We Do Not Intentionally Request</h2>
+        <p>
+          Tracy does not require users to provide passwords, payment card
+          information, government identification numbers, or other sensitive
+          personal information to use its core attendance features.
+        </p>
+
+        <h2>12. Security</h2>
+        <p>
+          Tracy uses reasonable technical measures appropriate to a
+          client-side web application. However, no website, browser, device,
+          network, or electronic storage system can be guaranteed to be
+          completely secure.
+        </p>
+
+        <h2>13. Data Retention</h2>
+        <p>
+          Attendance and application information stored locally remains on your
+          device until you remove it, use the application's reset functionality,
+          clear browser storage, or otherwise remove the application's data.
+        </p>
+
+        <h2>14. Children's Privacy</h2>
+        <p>
+          Tracy is intended for general student use and is not specifically
+          directed at children. Users should not submit unnecessary personal
+          information belonging to children through Tracy or its third-party
+          forms.
+        </p>
+
+        <h2>15. Privacy Requests</h2>
+        <p>
+          For privacy-related questions or requests concerning information
+          submitted through Tracy, contact us using the email address provided
+          on the Contact Us page.
+        </p>
+
+        <h2>16. Changes to This Policy</h2>
+        <p>
+          This Privacy Policy may be updated when Tracy's features, third-party
+          services, or applicable requirements change. The latest version will
+          always be published on this page together with its "Last updated" date.
+        </p>
+
+        <h2>17. Third-Party Privacy Policies</h2>
+        <p>
+          Google services used by Tracy operate under Google's own privacy
+          policies and terms. Users should review those policies for details
+          about information processed by Google.
+        </p>
+      </div>
+    </div>
+
+    <!-- ── DISCLAIMER ── -->
+    <div class="page fade-up legal-page" id="page-disclaimer">
+      <div class="page-header flex items-center gap-3">
+        <button class="md:hidden btn-ghost p-2" onclick="openSidebar()">
+          <i class="fas fa-bars"></i>
+        </button>
+        <h1 class="text-xl font-bold">Disclaimer</h1>
+      </div>
+
+      <div class="card p-6 max-w-2xl">
+        <p>
+          Tracy is provided as a general-purpose student utility. The information,
+          calculations, predictions, timetables, and other content displayed by
+          Tracy are provided for informational and planning purposes only.
+        </p>
+
+        <h2>Attendance Calculations</h2>
+        <p>
+          Attendance percentages, bunk calculations, required-attendance
+          calculations, and related results are mathematical estimates based
+          on the information available to the application and/or information
+          entered or imported by the user.
+        </p>
+
+        <h2>Predictions</h2>
+        <p>
+          Timetable-based predictions are forecasts and may not reflect actual
+          classes, substitutions, cancellations, holidays, attendance rules,
+          timetable changes, or institutional decisions.
+        </p>
+
+        <h2>CGPA Calculations</h2>
+        <p>
+          CGPA and SGPA planning results are estimates based on the values
+          entered by the user and the calculation method implemented by Tracy.
+          They should not be treated as official academic results.
+        </p>
+
+        <h2>Official Records</h2>
+        <p>
+          The attendance, timetable, academic, examination, and administrative
+          records maintained by the relevant educational institution are the
+          authoritative source.
+        </p>
+
+        <h2>No Academic Guarantee</h2>
+        <p>
+          Tracy does not guarantee attendance eligibility, examination
+          eligibility, academic performance, grades, promotion, or any other
+          academic outcome.
+        </p>
+
+        <h2>Third-Party Content</h2>
+        <p>
+          Tracy may display or link to information supplied by third parties.
+          Tracy does not guarantee the accuracy, completeness, availability,
+          or timeliness of third-party information.
+        </p>
+
+        <h2>External Services</h2>
+        <p>
+          Tracy may rely on third-party services for analytics, advertising,
+          forms, external links, and other functionality. Availability or
+          behavior of those services is outside Tracy's control.
+        </p>
+
+        <h2>Institutional Affiliation</h2>
+        <p>
+          Unless explicitly stated otherwise, Tracy is an independent service
+          and should not be interpreted as an official website, application,
+          representative, or communication channel of any university,
+          college, or educational institution.
+        </p>
+
+        <h2>Use at Your Own Judgment</h2>
+        <p>
+          Before making an academic or attendance-related decision, verify the
+          relevant information using the official source provided by your
+          institution.
+        </p>
+      </div>
+    </div>
+
+    <!-- ── CONTACT ── -->
+    <div class="page fade-up legal-page" id="page-contact">
+      <div class="page-header flex items-center gap-3">
+        <button class="md:hidden btn-ghost p-2" onclick="openSidebar()">
+          <i class="fas fa-bars"></i>
+        </button>
+        <h1 class="text-xl font-bold">Contact Us</h1>
+      </div>
+
+      <div class="card p-6 max-w-2xl">
+
+        <p>
+          Have a question, found a bug, noticed incorrect timetable information,
+          or have a privacy-related concern? You can contact Tracy using the
+          information below.
+        </p>
+
+        <h2>General Support</h2>
+        <p>
+          For general questions, feedback, feature suggestions, or help using
+          Tracy, contact:
+        </p>
+
+        <p>
+          <b class="text-gray-200">Email:</b>
+          <a href="mailto:youreallythinkiwatchthis@gmail.com" class="text-indigo-400 hover:underline">
+            youreallythinkiwatchthis@gmail.com
+          </a>
+        </p>
+
+        <h2>Technical Issues</h2>
+        <p>
+          If a feature is not working correctly, include the following
+          information in your email where possible:
+        </p>
+
+        <ul>
+          <li>The Tracy feature or page where the issue occurred.</li>
+          <li>A short description of what happened.</li>
+          <li>The expected result.</li>
+          <li>Your browser and device type, if relevant.</li>
+          <li>A screenshot or error message, if available.</li>
+        </ul>
+
+        <p>
+          Please do not send passwords, authentication credentials, payment
+          information, or other unnecessary sensitive information.
+        </p>
+
+        <h2>Timetable Corrections</h2>
+        <p>
+          If a timetable is missing, outdated, or incorrect, use the
+          <b class="text-gray-200">Request New</b> option on the Timetable page
+          whenever possible.
+        </p>
+
+        <p>
+          When reporting a timetable issue by email, include the class/section
+          and a clear description of the required correction.
+        </p>
+
+        <h2>Privacy Requests</h2>
+        <p>
+          For questions or concerns relating to privacy, local browser data,
+          analytics, advertising technologies, or information submitted through
+          Tracy's third-party forms, contact:
+        </p>
+
+        <p>
+          <a href="mailto:youreallythinkiwatchthis@gmail.com?subject=Tracy%20Privacy%20Request"
+            class="text-indigo-400 hover:underline">
+            youreallythinkiwatchthis@gmail.com
+          </a>
+        </p>
+
+        <p>
+          Please provide enough information for us to understand your request,
+          but do not include unnecessary personal or sensitive information.
+        </p>
+
+        <h2>Security Issues</h2>
+        <p>
+          If you believe you have discovered a security vulnerability in Tracy,
+          please report it privately by email rather than publicly sharing
+          details of the vulnerability.
+        </p>
+
+        <p>
+          <a href="mailto:youreallythinkiwatchthis@gmail.com?subject=Tracy%20Security%20Report"
+            class="text-indigo-400 hover:underline">
+            Report a security issue
+          </a>
+        </p>
+
+        <h2>Content &amp; Campus Information</h2>
+        <p>
+          If you notice incorrect campus information, event information,
+          advertisements, or other displayed content, contact Tracy with the
+          relevant details and, where possible, the source of the correction.
+        </p>
+
+        <h2>Advertising &amp; Promotions</h2>
+        <p>
+          College clubs, student organizations, and other eligible groups may
+          contact Tracy regarding promotional content or advertisements.
+          Where applicable, submissions may be reviewed before publication.
+        </p>
+
+        <p>
+          <a href="mailto:youreallythinkiwatchthis@gmail.com?subject=Tracy%20Advertising%20Submission"
+            class="text-indigo-400 hover:underline">
+            Contact us about advertising
+          </a>
+        </p>
+
+        <h2>Feature Requests &amp; Feedback</h2>
+        <p>
+          Suggestions for improving Tracy are welcome. Feature requests are
+          reviewed based on usefulness, feasibility, security, privacy, and
+          compatibility with the existing application.
+        </p>
+
+        <p>
+          <a href="mailto:youreallythinkiwatchthis@gmail.com?subject=Tracy%20Feedback"
+            class="text-indigo-400 hover:underline">
+            Send feedback
+          </a>
+        </p>
+
+        <h2>Official Contact Channel</h2>
+        <p>
+          The email address listed on this page is Tracy's public contact
+          channel for support, privacy, security, feedback, and other
+          service-related enquiries.
+        </p>
+
+        <h2>Response Time</h2>
+        <p>
+          We aim to respond to legitimate enquiries within
+          <b class="text-gray-200">2–3 business days</b>. Response times may be
+          longer during periods of high volume or maintenance.
+        </p>
+
+        <h2>Before Contacting Us</h2>
+        <p>
+          For attendance calculations and academic information, please first
+          verify the relevant information with your institution's official
+          records. Tracy cannot modify or correct official institutional
+          records.
+        </p>
+
+        <div class="mt-6 pt-4 border-t border-white/5">
+          <p class="text-xs text-gray-500">
+            <b class="text-gray-400">Tracy</b><br>
+            Student utility for attendance, timetable, analytics, and academic
+            planning.
+          </p>
+
+          <p class="text-xs text-gray-500 mt-2">
+            Public contact:
+            <a href="mailto:youreallythinkiwatchthis@gmail.com" class="text-indigo-400 hover:underline">
+              youreallythinkiwatchthis@gmail.com
+            </a>
+          </p>
+        </div>
+
+      </div>
+    </div>
+    <div id="guideModal" class="modal-backdrop">
+      <div class="modal" style="max-width:520px">
+
+        <div class="flex items-center justify-between mb-3">
+          <h3 id="guideTitle" class="text-lg font-semibold"></h3>
+          <span id="guideStep" class="text-xs text-gray-500"></span>
+        </div>
+
+        <div class="text-sm text-gray-300 leading-7">
+          <p id="guideText"></p>
+        </div>
+
+        <div class="flex justify-between mt-6">
+          <button class="btn-ghost" onclick="skipGuide()">Skip</button>
+
+          <button id="guideNextBtn" class="btn-primary" onclick="nextGuide()">
+            Next
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Mobile bottom nav -->
+  <nav class="mobile-nav">
+    <div class="mobile-nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')"><i
+        class="fas fa-home"></i><span>Home</span></div>
+    <div class="mobile-nav-item" data-page="calculator" onclick="navigateTo('calculator')"><i
+        class="fas fa-calculator"></i><span>Calc</span></div>
+    <div class="mobile-nav-item" data-page="timetable" onclick="navigateTo('timetable')"><i
+        class="fas fa-calendar-alt"></i><span>TT</span></div>
+    <div class="mobile-nav-item" data-page="prediction" onclick="navigateTo('prediction')"><i
+        class="fas fa-chart-line"></i><span>Predict</span></div>
+    <div class="mobile-nav-item" data-page="analytics" onclick="navigateTo('analytics')"><i
+        class="fas fa-chart-pie"></i><span>Analysis</span></div>
+  </nav>
+
+  <script src="main.js"></script>
+</body>
+
+</html>
