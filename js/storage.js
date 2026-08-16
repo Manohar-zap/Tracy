@@ -6,7 +6,7 @@ function saveState() {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(STATE));
   } catch (e) {
-    console.error("saveState error:", e);
+    logError("Save State", e);
   }
 }
 
@@ -19,7 +19,7 @@ function loadState() {
       if (saved[key] !== undefined) STATE[key] = saved[key];
     });
   } catch (e) {
-    console.error("loadState error:", e);
+    logError("Load State", e);
   }
 }
 

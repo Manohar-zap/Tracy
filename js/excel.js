@@ -42,79 +42,87 @@ function populateDailySubjectSelect() {
 }
 
 function parseAttendanceExcel(file) {
-  const reader = new FileReader();
-  reader.onload = (evt) => {
-    const data = new Uint8Array(evt.target.result);
-    const wb = XLSX.read(data, { type: "array" });
-    const sheet = wb.Sheets[wb.SheetNames[0]];
-    const raw = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+  try {
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const data = new Uint8Array(evt.target.result);
+        const wb = XLSX.read(data, { type: "array" });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const raw = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-    // Extract profile
-    const profile = {};
-    raw.forEach((row) => {
-      row.forEach((cell) => {
-        const text = String(cell || "");
-        if (text.includes("Student Name"))
-          profile.name = text.split(":")[1]?.trim();
-        if (text.includes("Roll No")) profile.roll = text.split(":")[1]?.trim();
-        if (text.includes("Registration"))
-          profile.reg = text.split(":")[1]?.trim();
-        if (text.includes("Batch")) profile.batch = text.split(":")[1]?.trim();
-        if (text.includes("Department"))
-          profile.dept = text.split(":")[1]?.trim();
-        if (text.includes("Term")) profile.term = text.split(":")[1]?.trim();
-      });
-    });
-    if (Object.keys(profile).length) STATE.profile = profile;
+        // Extract profile
+        const profile = {};
+        raw.forEach((row) => {
+          row.forEach((cell) => {
+            const text = String(cell || "");
+            if (text.includes("Student Name"))
+              profile.name = text.split(":")[1]?.trim();
+            if (text.includes("Roll No")) profile.roll = text.split(":")[1]?.trim();
+            if (text.includes("Registration"))
+              profile.reg = text.split(":")[1]?.trim();
+            if (text.includes("Batch")) profile.batch = text.split(":")[1]?.trim();
+            if (text.includes("Department"))
+              profile.dept = text.split(":")[1]?.trim();
+            if (text.includes("Term")) profile.term = text.split(":")[1]?.trim();
+          });
+        });
+        if (Object.keys(profile).length) STATE.profile = profile;
 
-    // Save the actual upload date
-    STATE.lastAttendanceReportDate = new Date().toISOString();
-    saveState();
+        // Save the actual upload date
+        STATE.lastAttendanceReportDate = new Date().toISOString();
+        saveState();
 
-    // Extract subjects
-    const subjects = [];
+        // Extract subjects
+        const subjects = [];
 
-    XLSX.utils.sheet_to_json(sheet).forEach((row) => {
-      const nameRaw = row["__EMPTY"];
-      if (!nameRaw || nameRaw === "Course Name" || nameRaw === "Total") return;
+        XLSX.utils.sheet_to_json(sheet).forEach((row) => {
+          const nameRaw = row["__EMPTY"];
+          if (!nameRaw || nameRaw === "Course Name" || nameRaw === "Total") return;
 
-      const total = Number(row["__EMPTY_1"]) || 0;
-      const attended = Number(row["__EMPTY_2"]) || 0;
-      const dutyLeave = Number(row["__EMPTY_3"]) || 0;
-      if (total === 0) return;
+          const total = Number(row["__EMPTY_1"]) || 0;
+          const attended = Number(row["__EMPTY_2"]) || 0;
+          const dutyLeave = Number(row["__EMPTY_3"]) || 0;
+          if (total === 0) return;
 
-      const existing = STATE.subjects.find(
-        (s) => s.name.toLowerCase() === nameRaw.toLowerCase(),
-      );
-      subjects.push({
-        id: existing?.id || genId(),
-        name: nameRaw,
-        attended,
-        dutyLeave,
-        total,
-      });
-    });
+          const existing = STATE.subjects.find(
+            (s) => s.name.toLowerCase() === nameRaw.toLowerCase(),
+          );
+          subjects.push({
+            id: existing?.id || genId(),
+            name: nameRaw,
+            attended,
+            dutyLeave,
+            total,
+          });
+        });
 
-    if (!subjects.length) {
-      showToast("No subjects found in file.");
-      return;
-    }
-    STATE.subjects = subjects;
-    saveState();
+        if (!subjects.length) {
+          showToast("No subjects found in file.");
+          return;
+        }
+        STATE.subjects = subjects;
+        saveState();
 
-    refreshAll();
-    checkAttendanceReportStatus();
+        refreshAll();
+        checkAttendanceReportStatus();
 
-    const fnEl = document.getElementById("importedFileName");
-    if (fnEl) {
-      fnEl.textContent = "✓ " + file.name;
-      fnEl.classList.remove("hidden");
-    }
+        const fnEl = document.getElementById("importedFileName");
+        if (fnEl) {
+          fnEl.textContent = "✓ " + file.name;
+          fnEl.classList.remove("hidden");
+        }
 
-    renderSidebarProfile();
-    refreshAll();
-    showToast("Imported " + subjects.length + " subjects ✓");
-  };
-  reader.readAsArrayBuffer(file);
+        refreshAll();
+        showToast("Imported " + subjects.length + " subjects ✓");
+      } catch (err) {
+        logError("Excel Processing", err);
+        showToast("Failed to process Excel file.");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  } catch (err) {
+    logError("Excel Import", err);
+  }
 }
 

@@ -1,3 +1,233 @@
+function renderUpcomingClasses() {
+  const el = document.getElementById("upcomingClassesList");
+  if (!el) return;
+
+  const tt = getTimetableById(STATE.week1TimetableId);
+
+  if (!tt) {
+    el.innerHTML = `
+      <p class="text-sm text-gray-500">
+        Select a timetable to see upcoming classes.
+      </p>
+    `;
+    return;
+  }
+
+  const overrides = STATE.weekOverrides?.week1 || {};
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  const upcoming = [];
+
+  const clean = (str) =>
+    String(str || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
+
+  const findSubject = (cell) => {
+    const cellKey = clean(cell);
+
+    return STATE.subjects.find((s) => {
+      const subjectKey = clean(s.name);
+      return (
+        subjectKey.includes(cellKey) ||
+        cellKey.includes(subjectKey)
+      );
+    });
+  };
+
+  for (let offset = 0; offset < 7 && upcoming.length < 3; offset++) {
+    const date = new Date(now);
+    date.setHours(0, 0, 0, 0);
+    date.setDate(now.getDate() + offset);
+
+    const dayIdx = date.getDay();
+
+    const row = tt.rows.find(
+      (r) => weekdayOrderIndex(r.day) === (dayIdx === 0 ? 7 : dayIdx),
+    );
+
+    if (!row) continue;
+
+    const dayKey = normalizeDayName(row.day);
+
+    if (overrides.suspendedDays?.includes(dayKey)) {
+      continue;
+    }
+
+    row.hours.forEach((cell, hIdx) => {
+      if (upcoming.length >= 3) return;
+
+      const text = String(cell || "").trim();
+
+      if (!text || text.toLowerCase().includes("holiday")) return;
+
+      const sched = HOUR_SCHEDULE[hIdx];
+      if (!sched) return;
+
+      const [sh, sm] = sched.start.split(":").map(Number);
+      const [eh, em] = sched.end.split(":").map(Number);
+
+      const startMinutes = sh * 60 + sm;
+      const endMinutes = eh * 60 + em;
+
+      if (
+        offset === 0 &&
+        currentMinutes >= endMinutes
+      ) {
+        return;
+      }
+
+      const subject = findSubject(text);
+
+      if (!subject) return;
+
+      const suspendedSubjects =
+        overrides.suspendedSubjects?.[dayKey] || [];
+
+      const isSuspended = suspendedSubjects.some(
+        (s) => clean(s) === clean(subject.name),
+      );
+
+      if (isSuspended) return;
+
+      const currentAttended =
+        (subject.attended || 0) + (subject.dutyLeave || 0);
+
+      const currentTotal = subject.total || 0;
+
+      const currentPct = currentTotal
+        ? (currentAttended / currentTotal) * 100
+        : 0;
+
+      const afterAttended = currentAttended + 1;
+      const afterTotal = currentTotal + 1;
+
+      const afterPct =
+        (afterAttended / afterTotal) * 100;
+
+      const { need, bunk } = calcNeedAndBunk(
+        {
+          attended: afterAttended,
+          total: afterTotal,
+        },
+        STATE.target,
+      );
+
+      const isNow =
+        offset === 0 &&
+        currentMinutes >= startMinutes &&
+        currentMinutes < endMinutes;
+
+      upcoming.push({
+        subject,
+        sched,
+        date,
+        currentPct,
+        afterPct,
+        need,
+        bunk,
+        isNow,
+      });
+    });
+  }
+
+  if (!upcoming.length) {
+    el.innerHTML = `
+      <div class="text-center py-3">
+        <p class="text-sm text-gray-400">No upcoming classes.</p>
+        <p class="text-xs text-gray-500 mt-1">
+          You're done for today ✓
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  el.innerHTML = upcoming
+    .map((item) => {
+      const dayLabel =
+        item.date.toDateString() === now.toDateString()
+          ? "Today"
+          : item.date.toLocaleDateString("en-US", {
+              weekday: "short",
+            });
+
+      const bunkText =
+        item.need > 0
+          ? genZMode
+            ? `Lock In ${item.need}`
+            : `+${item.need} needed`
+          : genZMode
+            ? `${item.bunk} Free Passes`
+            : `${item.bunk} safe bunks`;
+
+      const bunkClass =
+        item.need > 0
+          ? "text-yellow-400"
+          : "text-green-400";
+
+      return `
+        <div class="rounded-xl border border-white/5 bg-white/[0.02] p-3">
+          <div class="flex items-center justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                ${
+                  item.isNow
+                    ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-500/15 text-green-400">
+                        NOW
+                       </span>`
+                    : `<span class="text-xs text-indigo-400 font-medium">
+                        ${dayLabel}
+                       </span>`
+                }
+
+                <span class="text-xs text-gray-500">
+                  ${item.sched.label}
+                </span>
+              </div>
+
+              <p class="text-sm font-semibold truncate mt-1">
+                ${item.subject.name}
+              </p>
+            </div>
+
+            <div class="text-right shrink-0">
+              <p class="text-sm font-semibold">
+                ${item.sched.start}
+              </p>
+              <p class="text-[11px] text-gray-500">
+                ${item.sched.end}
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between mt-2 pt-2 border-t border-white/5">
+            <p class="text-xs text-gray-500">
+              ${item.currentPct.toFixed(1)}%
+              <span class="mx-1">→</span>
+              <span class="${
+                item.afterPct >= STATE.target
+                  ? "text-green-400"
+                  : item.afterPct >= STATE.target - 10
+                    ? "text-yellow-400"
+                    : "text-red-400"
+              }">
+                ${item.afterPct.toFixed(1)}%
+              </span>
+              <span class="ml-1">after attending</span>
+            </p>
+
+            <p class="text-xs font-medium ${bunkClass}">
+              ${bunkText}
+            </p>
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+}
+
 // 9. DASHBOARD
 // ─────────────────────────────────────────────
 function renderDashboard() {
@@ -26,6 +256,8 @@ function renderDashboard() {
     statusEl.textContent = "--";
     statusEl.className = "text-2xl font-bold";
   }
+
+  renderUpcomingClasses();
 
   const listEl = document.getElementById("dashSubjectList");
   if (!STATE.subjects.length) {
@@ -226,14 +458,6 @@ function updateTargetUI() {
   });
 }
 
-function renderSidebarProfile() {
-  const p = STATE.profile;
-  if (!p || !Object.keys(p).length) return;
-  setText("sideName", p.name || "Student");
-  setText("sideDept", p.dept || "Department");
-  setText("sideInitial", p.name ? p.name.charAt(0).toUpperCase() : "Z");
-}
-
 // ─────────────────────────────────────────────
 // 17. CONFIRM MODAL
 // ─────────────────────────────────────────────
@@ -282,7 +506,7 @@ function checkAttendanceReportStatus() {
 
   if (daysOld >= 1) {
     box.classList.remove("border-indigo-500");
-    box.classList.add("border-2", "border-yellow-500");
+    box.classList.add("border-2", "border-warning-flash");
     content.innerHTML = genZMode
       ? `
     <div class="text-center">
@@ -312,6 +536,21 @@ function checkAttendanceReportStatus() {
         </p>
     </div>
   `;
+  } else {
+    // Restore default state
+    box.classList.remove("border-2", "border-warning-flash");
+    box.classList.add("border-indigo-500");
+    content.innerHTML = `
+      <button type="button" class="help-btn absolute top-3 right-3" data-action="help"
+        data-target="helpAttendanceModal" title="How to get attendance Excel">
+        i
+      </button>
+      <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-indigo-500/10 flex items-center justify-center">
+        <i class="fas fa-file-excel text-indigo-400 text-xl"></i>
+      </div>
+      <p class="text-sm font-medium text-gray-300">Drop your attendance Excel here</p>
+      <p class="text-xs text-gray-500 mt-1">.xlsx / .xls supported</p>
+    `;
   }
 }
 
@@ -368,10 +607,7 @@ function toggleGenZMode() {
 
   checkAttendanceReportStatus();
   updateTargetUI();
-  renderSidebarProfile();
 
   refreshAll(); // Refresh current page
   renderCgpaCalc(); // Recalculate CGPA card
-  updateCGPAComments(); // Refresh comments
 }
-

@@ -1,4 +1,4 @@
-const CACHE = "tracy-v5.4";
+const CACHE = "tracy-v5.6";
 
 const ASSETS = [
   "./",

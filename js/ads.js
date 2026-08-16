@@ -9,24 +9,28 @@ let adsAutoSlide = null;
 let inlineAdsAutoSlide = null;
 
 async function initAdsSystem() {
-  const sheet = await fetchSheetAds();
-  adsList = sheet;
+  try {
+    const sheet = await fetchSheetAds();
+    adsList = sheet;
 
-  renderInlineAdSlider();
+    renderInlineAdSlider();
 
-  if (adsList.length > 1) {
-    clearInterval(inlineAdsAutoSlide);
+    if (adsList.length > 1) {
+      clearInterval(inlineAdsAutoSlide);
 
-    inlineAdsAutoSlide = setInterval(() => {
-      adsCurrentSlide = (adsCurrentSlide + 1) % adsList.length;
+      inlineAdsAutoSlide = setInterval(() => {
+        adsCurrentSlide = (adsCurrentSlide + 1) % adsList.length;
 
-      renderInlineAdSlider();
-    }, 3000);
+        renderInlineAdSlider();
+      }, 3000);
+    }
+
+    if (!adsList.length) return;
+
+    showAdsPopup();
+  } catch (err) {
+    logError("Ads System Initialization", err);
   }
-
-  if (!adsList.length) return;
-
-  showAdsPopup();
 }
 
 async function fetchSheetAds() {

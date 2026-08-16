@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://pagead2.googlesyndication.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' https://script.google.com https://www.google-analytics.com https://region1.google-analytics.com; frame-src 'self' https://googleads.g.doubleclick.net https://www.google.com;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://pagead2.googlesyndication.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://cdn.jsdelivr.net https://www.google-analytics.com https://region1.google-analytics.com; frame-src 'self' https://googleads.g.doubleclick.net https://www.google.com;">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="manifest" href="manifest.json">
   <title>Tracy – Attendance Dashboard</title>
@@ -18,6 +18,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Tracy">
+  <meta name="theme-color" content="#0a0a0b">
+  <meta name="mobile-web-app-capable" content="yes">
 
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-MDEYB85ZN0"></script>
@@ -164,18 +166,6 @@
       </div>
     </div>
 
-    <!-- Profile (Restored) -->
-    <div class="mb-6 px-2 flex items-center gap-3">
-      <div id="sideInitial"
-        class="w-10 h-10 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 font-bold text-lg">
-        Z
-      </div>
-      <div class="min-w-0">
-        <p id="sideName" class="text-sm font-semibold truncate text-gray-200">Student</p>
-        <p id="sideDept" class="text-xs text-gray-500 truncate">Department</p>
-      </div>
-    </div>
-
     <nav class="space-y-1">
       <div class="nav-link active" data-page="dashboard"><i
           class="fas fa-home"></i><span>Dashboard</span></div>
@@ -233,10 +223,9 @@
       <div class="page-header">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <button class="md:hidden btn-ghost p-2" data-action="open-sidebar"><i class="fas fa-bars"></i></button>
+            <button class="md:hidden bg-transparent p-2" data-action="open-sidebar"><i class="fas fa-bars-staggered text-xl"></i></button>
             <div>
               <h1 class="text-xl font-bold">Dashboard</h1>
-              <p id="currentDate" class="text-xs text-gray-400 mt-0.5"></p>
             </div>
           </div>
           <div class="flex gap-2">
@@ -264,6 +253,21 @@
           </div>
         </div>
         <p id="importedFileName" class="text-xs text-gray-500 text-center mt-2 hidden"></p>
+      </div>
+
+      <div id="upcomingClassesCard" class="card p-4 mb-6">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-semibold flex items-center gap-2">
+            <i class="fas fa-clock text-indigo-400"></i>
+            Upcoming Classes
+          </h2>
+        </div>
+
+        <div id="upcomingClassesList" class="space-y-2">
+          <p class="text-sm text-gray-500">
+            Select a timetable to see upcoming classes.
+          </p>
+        </div>
       </div>
 
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -306,7 +310,7 @@
     <div class="page fade-up" id="page-attendance">
       <div class="page-header flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <button class="md:hidden btn-ghost p-2" data-action="open-sidebar"><i class="fas fa-bars"></i></button>
+          <button class="md:hidden bg-transparent p-2" data-action="open-sidebar"><i class="fas fa-bars-staggered text-xl"></i></button>
           <h1 class="text-xl font-bold">Attendance</h1>
         </div>
       </div>
@@ -344,8 +348,8 @@
         <div class="flex items-center justify-between">
 
           <div class="flex items-center gap-3">
-            <button class="md:hidden btn-ghost p-2" data-action="open-sidebar">
-              <i class="fas fa-bars"></i>
+            <button class="md:hidden bg-transparent p-2" data-action="open-sidebar">
+              <i class="fas fa-bars-staggered text-xl"></i>
             </button>
 
             <h1 class="text-xl font-bold">Timetables</h1>
@@ -402,7 +406,7 @@
     <!-- ── PREDICTION ── -->
     <div class="page fade-up" id="page-prediction">
       <div id="prediction" class="page-header flex items-center gap-3">
-        <button class="md:hidden btn-ghost p-2" data-action="open-sidebar"><i class="fas fa-bars"></i></button>
+        <button class="md:hidden bg-transparent p-2" data-action="open-sidebar"><i class="fas fa-bars-staggered text-xl"></i></button>
         <h1 class="text-xl font-bold">Prediction Engine</h1>
       </div>
       <p class="text-xs text-gray-500 mb-5">
@@ -472,7 +476,7 @@
     <!-- ── CALCULATOR (standalone, freeform) ── -->
     <div class="page fade-up" id="page-calculator">
       <div class="page-header flex items-center gap-3">
-        <button class="md:hidden btn-ghost p-2" data-action="open-sidebar"><i class="fas fa-bars"></i></button>
+        <button class="md:hidden bg-transparent p-2" data-action="open-sidebar"><i class="fas fa-bars-staggered text-xl"></i></button>
         <h1 id="quickCalcHeading" class="text-xl font-bold">
           Quick Calculator
         </h1>
@@ -622,7 +626,7 @@
     <!-- ── ANALYTICS ── -->
     <div class="page fade-up" id="page-analytics">
       <div class="page-header flex items-center gap-3">
-        <button class="md:hidden btn-ghost p-2" data-action="open-sidebar"><i class="fas fa-bars"></i></button>
+        <button class="md:hidden bg-transparent p-2" data-action="open-sidebar"><i class="fas fa-bars-staggered text-xl"></i></button>
         <h1 class="text-xl font-bold">Analytics</h1>
       </div>
 
@@ -676,8 +680,8 @@
         <div class="flex items-center justify-between mb-4">
 
           <div class="flex items-center gap-3">
-            <button class="md:hidden btn-ghost p-2" data-action="open-sidebar">
-              <i class="fas fa-bars"></i>
+            <button class="md:hidden bg-transparent p-2" data-action="open-sidebar">
+              <i class="fas fa-bars-staggered text-xl"></i>
             </button>
 
             <h1 class="text-xl font-bold">Campus Hub</h1>
@@ -692,7 +696,7 @@
         <div class="flex gap-3">
           <div id="schoolDropdown" class="custom-dropdown flex-1">
 
-            <button type="button" class="dropdown-btn school-dropdown-btn">
+            <button type="button" class="dropdown-btn school-dropdown-btn" data-action="toggle-dropdown" data-target="schoolDropdown">
               <span id="schoolDropdownText">All Schools</span>
 
               <i class="fas fa-chevron-down"></i>
@@ -703,7 +707,7 @@
 
           </div>
           <div id="yearDropdown" class="custom-dropdown w-32">
-            <button type="button" class="dropdown-btn year-dropdown-btn">
+            <button type="button" class="dropdown-btn year-dropdown-btn" data-action="toggle-dropdown" data-target="yearDropdown">
               <span id="yearDropdownText">All Years</span>
 
               <i class="fas fa-chevron-down"></i>
@@ -716,19 +720,34 @@
         </div>
       </div>
 
-      <h2 class="font-semibold mb-3 mt-4">
-        Featured Clubs
-      </h2>
+      <!-- Campus Hub Tabs -->
+      <div id="campus-events" class="campus-tab-content">
+        <h2 class="font-semibold mb-3 mt-4">
+          Featured Clubs
+        </h2>
 
-      <div id="clubGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div id="clubGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        </div>
       </div>
+
+      <div id="campus-connect" class="campus-tab-content hidden">
+        <div class="flex flex-col items-center justify-center py-20 text-gray-500">
+          <div class="w-20 h-20 bg-indigo-500/10 rounded-full flex items-center justify-center mb-6">
+            <i class="fas fa-users-rays text-3xl text-indigo-400"></i>
+          </div>
+          <h3 class="text-lg font-bold text-gray-200">Campus Connect</h3>
+          <p class="text-sm mt-1">Networking feature is coming soon.</p>
+          <div class="mt-8 badge badge-warn">Developer Mode</div>
+        </div>
+      </div>
+
     </div>
 
     <!-- ── ABOUT US ── -->
     <div class="page fade-up legal-page" id="page-about">
       <div class="page-header flex items-center gap-3">
-        <button class="md:hidden btn-ghost p-2" data-action="open-sidebar">
-          <i class="fas fa-bars"></i>
+        <button class="md:hidden bg-transparent p-2" data-action="open-sidebar">
+          <i class="fas fa-bars-staggered text-xl"></i>
         </button>
         <h1 class="text-xl font-bold">About Tracy</h1>
       </div>
@@ -777,8 +796,8 @@
     <!-- ── TERMS ── -->
     <div class="page fade-up legal-page" id="page-terms">
       <div class="page-header flex items-center gap-3">
-        <button class="md:hidden btn-ghost p-2" data-action="open-sidebar">
-          <i class="fas fa-bars"></i>
+        <button class="md:hidden bg-transparent p-2" data-action="open-sidebar">
+          <i class="fas fa-bars-staggered text-xl"></i>
         </button>
         <h1 class="text-xl font-bold">Terms &amp; Conditions</h1>
       </div>
@@ -878,8 +897,8 @@
     <!-- ── PRIVACY ── -->
     <div class="page fade-up legal-page" id="page-privacy">
       <div class="page-header flex items-center gap-3">
-        <button class="md:hidden btn-ghost p-2" data-action="open-sidebar">
-          <i class="fas fa-bars"></i>
+        <button class="md:hidden bg-transparent p-2" data-action="open-sidebar">
+          <i class="fas fa-bars-staggered text-xl"></i>
         </button>
         <h1 class="text-xl font-bold">Privacy Policy</h1>
       </div>
@@ -1049,8 +1068,8 @@
     <!-- ── DISCLAIMER ── -->
     <div class="page fade-up legal-page" id="page-disclaimer">
       <div class="page-header flex items-center gap-3">
-        <button class="md:hidden btn-ghost p-2" data-action="open-sidebar">
-          <i class="fas fa-bars"></i>
+        <button class="md:hidden bg-transparent p-2" data-action="open-sidebar">
+          <i class="fas fa-bars-staggered text-xl"></i>
         </button>
         <h1 class="text-xl font-bold">Disclaimer</h1>
       </div>
@@ -1132,8 +1151,8 @@
     <!-- ── CONTACT ── -->
     <div class="page fade-up legal-page" id="page-contact">
       <div class="page-header flex items-center gap-3">
-        <button class="md:hidden btn-ghost p-2" data-action="open-sidebar">
-          <i class="fas fa-bars"></i>
+        <button class="md:hidden bg-transparent p-2" data-action="open-sidebar">
+          <i class="fas fa-bars-staggered text-xl"></i>
         </button>
         <h1 class="text-xl font-bold">Contact Us</h1>
       </div>
@@ -1335,6 +1354,18 @@
     <div class="mobile-nav-item" data-page="analytics"><i
         class="fas fa-chart-pie"></i><span>Analysis</span></div>
   </nav>
+
+  <!-- Campus Specific Bottom Nav -->
+  <div class="campus-bottom-nav">
+    <div class="campus-nav-item active" data-action="campus-tab" data-tab="events">
+      <i class="fas fa-calendar-alt"></i>
+      <span>Events</span>
+    </div>
+    <div class="campus-nav-item" data-action="campus-tab" data-tab="connect">
+      <i class="fas fa-link"></i>
+      <span>Connect</span>
+    </div>
+  </div>
   <script src="js/state.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/navigation.js"></script>

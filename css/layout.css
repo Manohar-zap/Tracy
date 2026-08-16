@@ -44,12 +44,15 @@
       display: block;
     }
 
-.mobile-nav {
+/* Bottom Nav Shared */
+.mobile-nav,
+.campus-bottom-nav {
       display: none;
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
+      width: 100%;
       background: var(--sidebar);
       border-top: 1px solid var(--card-border);
       padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
@@ -58,40 +61,59 @@
       transition: transform 0.45s ease;
     }
 
+.campus-bottom-nav {
+      z-index: 45; /* Higher than mobile-nav */
+    }
+
 @media (max-width: 768px) {
-      body:has(.sidebar.open) .mobile-nav {
+      /* Normal Nav - Only show when NOT on campus page */
+      body:not(.is-campus-page) .mobile-nav {
+        display: flex;
+      }
+
+      /* Campus Nav - Only show when ON campus page */
+      body.is-campus-page .campus-bottom-nav {
+        display: flex;
+      }
+
+      /* Hide both when sidebar is open */
+      body.sidebar-open .mobile-nav,
+      body.sidebar-open .campus-bottom-nav {
         transform: translateY(100%);
       }
     }
 
-@media (max-width: 768px) {
-      .mobile-nav {
-        display: flex;
-      }
-    }
-
-.mobile-nav-item {
+.mobile-nav-item,
+.campus-nav-item {
       flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       gap: 3px;
       font-size: 10px;
       color: #64748b;
       padding: 6px 0;
       cursor: pointer;
       transition: color 0.15s;
+      text-decoration: none;
+      background: transparent;
+      border: none;
+      outline: none;
+      min-width: 0;
     }
 
-.mobile-nav-item.active {
+.mobile-nav-item.active,
+.campus-nav-item.active {
       color: #a5b4fc;
     }
 
-.mobile-nav-item i {
+.mobile-nav-item i,
+.campus-nav-item i {
       font-size: 18px;
     }
 
-    .app-container {
+.app-container {
       width: 100%;
       max-width: 480px;
       padding: 24px;
