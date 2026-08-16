@@ -155,7 +155,7 @@ function showWrongTimetableModal() {
 function renderPredictionPage() {
   const tt = getTimetableById(STATE.week1TimetableId);
 
-  if (tt && STATE.subjects.length) {
+  if (!guideMode && tt && STATE.subjects.length) {
     let matches = 0;
 
     STATE.subjects.forEach((s) => {

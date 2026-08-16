@@ -20,17 +20,20 @@ body.light-theme .sidebar {
       box-shadow: 1px 0 10px rgba(0, 0, 0, 0.03);
     }
 
-body.light-theme .mobile-nav {
+body.light-theme .mobile-nav,
+    body.light-theme .campus-bottom-nav {
       background: #ffffff;
       border-top: 1px solid #e2e8f0;
       box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04);
     }
 
-body.light-theme .mobile-nav-item {
+body.light-theme .mobile-nav-item,
+    body.light-theme .campus-nav-item {
       color: #64748b;
     }
 
-body.light-theme .mobile-nav-item.active {
+body.light-theme .mobile-nav-item.active,
+    body.light-theme .campus-nav-item.active {
       color: #4f46e5;
     }
 

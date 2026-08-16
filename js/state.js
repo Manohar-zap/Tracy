@@ -103,6 +103,7 @@ const TIMETABLE_FILES = [
 // runtime flag — do not persist to localStorage
 let TIMETABLES_LOADED = false;
 let genZMode = localStorage.getItem("genZMode") === "true";
+let guideMode = false;
 const timetableLoadPromises = new Map();
 
 const UNIVERSITY_HOLIDAYS = [

@@ -52,11 +52,12 @@ async function loadBuiltInTimetables() {
   }
 
   renderTimetablePage();
+  refreshAll();
 }
 
 async function loadBuiltInTimetable(fileName) {
   if (!TIMETABLE_FILES.includes(fileName)) {
-    console.error("Unknown built-in timetable:", fileName);
+    logError("Built-in Timetable", `Unknown file: ${fileName}`);
     return null;
   }
 
@@ -112,10 +113,7 @@ async function loadBuiltInTimetable(fileName) {
 
       return timetable;
     } catch (err) {
-      console.error(
-        `Timetable failed to load: timetable/${fileName}.xlsx`,
-        err,
-      );
+      logError("Timetable Load", { file: fileName, error: err.message });
 
       showToast(`Unable to load ${fileName} timetable.`);
 
@@ -341,6 +339,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const installBtn = document.getElementById("installBtn");
 
   if (!installBtn || isStandalone) return;
+
+  // Show button on iOS immediately since it doesn't support beforeinstallprompt
+  if (isIOS) {
+    installBtn.classList.remove("hidden");
+  }
 
   installBtn.addEventListener("click", async () => {
     // iOS

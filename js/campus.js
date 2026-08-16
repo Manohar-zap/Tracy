@@ -167,14 +167,14 @@ async function loadCampusPosts() {
     const response = await fetch(CAMPUS_API);
 
     if (!response.ok) {
-      throw new Error("Failed to load events");
+      throw new Error(`HTTP Error: ${response.status}`);
     }
 
     campusPosts = await response.json();
 
     filterCampusPosts();
   } catch (error) {
-    console.error(error);
+    logError("Load Campus Posts", error);
 
     document.getElementById("clubGrid").innerHTML = `
             <div class="text-center text-red-500 py-8">

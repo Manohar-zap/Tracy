@@ -16,6 +16,7 @@ const GUIDE_STEPS = [
     target: "#quickCalcHeading",
     title: "🧮 Quick Calculator",
     text: "Calculate attendance manually without an Excel upload.",
+    pos: "center",
   },
   {
     page: "timetable",
@@ -34,6 +35,7 @@ const GUIDE_STEPS = [
     target: "#addCalendarBtn",
     title: "📆 Add to Calendar",
     text: "Add predicted classes to your calendar.",
+    pos: "bottom",
   },
   {
     page: "analytics",
@@ -43,7 +45,6 @@ const GUIDE_STEPS = [
   },
 ];
 
-let guideMode = false;
 let guideIndex = 0;
 
 function startGuide() {
@@ -61,11 +62,24 @@ function showGuideStep() {
   const s = GUIDE_STEPS[guideIndex];
   const modal = document.getElementById("guideModal");
 
-  modal.classList.toggle("guide-bottom", s.target === "#addCalendarBtn");
+  modal.classList.remove("guide-bottom", "guide-top", "open");
+
+  // Close any stray modals/overlays before moving to next step
+  if (typeof closeConfirm === 'function') closeConfirm();
+  if (typeof closeSidebar === 'function') closeSidebar();
+
   navigateTo(s.page);
 
-  setTimeout(() => {
+  let attempts = 0;
+  const findAndShow = () => {
     const target = s.target ? document.querySelector(s.target) : null;
+
+    // Increased attempts and check for element existence/visibility
+    if (s.target && (!target || target.offsetParent === null) && attempts < 15) {
+      attempts++;
+      setTimeout(findAndShow, 150);
+      return;
+    }
 
     document
       .querySelectorAll(".guide-highlight")
@@ -73,11 +87,34 @@ function showGuideStep() {
 
     if (target) {
       target.classList.add("guide-highlight");
-
       target.scrollIntoView({
         behavior: "smooth",
         block: "center",
       });
+
+      // Position modal away from target with a reliable delay
+      setTimeout(() => {
+        const rect = target.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+
+        if (s.pos === "center") {
+          // Keep it centered (remove both top/bottom)
+        } else if (s.pos === "bottom") {
+          modal.classList.add("guide-bottom");
+        } else if (s.pos === "top") {
+          modal.classList.add("guide-top");
+        } else {
+          // Auto logic
+          if (rect.top < viewportHeight / 2) {
+            modal.classList.add("guide-bottom");
+          } else {
+            modal.classList.add("guide-top");
+          }
+        }
+        modal.classList.add("open");
+      }, 400);
+    } else {
+      modal.classList.add("open");
     }
 
     document.getElementById("guideTitle").textContent = s.title;
@@ -87,9 +124,10 @@ function showGuideStep() {
 
     document.getElementById("guideNextBtn").textContent =
       guideIndex === GUIDE_STEPS.length - 1 ? "Finish" : "Next";
+  };
 
-    document.getElementById("guideModal").classList.add("open");
-  }, 150);
+  // Initial delay to let page transition start
+  setTimeout(findAndShow, 400);
 }
 
 function nextGuide() {

@@ -333,6 +333,12 @@
       padding-bottom: 32px;
     }
 
+.guide-top {
+      align-items: flex-start !important;
+      justify-content: center !important;
+      padding-top: 32px;
+    }
+
 /* Guide interaction lock */
     body.guide-active .page,
     body.guide-active .sidebar,
