@@ -62,10 +62,8 @@
       <h3 class="text-base font-semibold mb-3"><i class="fas fa-circle-info text-indigo-400 mr-2"></i>How to Get
         Attendance Excel</h3>
       <ol class="text-sm text-gray-400 space-y-2 mb-4 list-decimal list-inside">
-        <li>Open this <b class="text-gray-300"><u><a
-                href="https://presidencyuniversity.linways.com/ams/attendance/consolidated-attendance-report?redir=true">Link</u></a>
-          </b><span class="text-xs text-gray-500 font-normal">(make sure you are logged in)</span></li>
-        <li>Click <b class="text-gray-300">Export</b>.</li>
+        <li>Tap the <b class="text-indigo-400">Attendance Portal</b> link on the Dashboard.</li>
+        <li>On the Linways page, click <b class="text-gray-300">Export</b>.</li>
         <li>Download the <b class="text-gray-300">.xlsx</b> file and drop it in Tracy.</li>
       </ol>
       <div class="flex justify-end mt-5">
@@ -79,10 +77,8 @@
       <h3 class="text-base font-semibold mb-3"><i class="fas fa-circle-info text-indigo-400 mr-2"></i>How to Get Daily
         Attendance Excel</h3>
       <ol class="text-sm text-gray-400 space-y-2 mb-4 list-decimal list-inside">
-        <li>Open this <b class="text-gray-300"><u><a
-                href="https://presidencyuniversity.linways.com/ams/attendance/daily-attendance?redir=true">Link</u></a>
-          </b><span class="text-xs text-gray-500 font-normal">(make sure you are logged in)</span></li>
-        <li>Click <b class="text-gray-300">Export</b>.</li>
+        <li>Tap the <b class="text-indigo-400">Daily Attendance Portal.</b></li>
+        <li>On the Linways page, click <b class="text-gray-300">Export</b>.</li>
         <li>Download the <b class="text-gray-300">.xlsx</b> file and drop it in Tracy.</li>
       </ol>
       <div class="flex justify-end mt-5">
@@ -238,6 +234,21 @@
       </div>
 
       <div class="mb-6">
+        <a href="https://presidencyuniversity.linways.com/ams/attendance/consolidated-attendance-report?redir=true"
+          target="_blank"
+          class="block w-full mb-4 p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-between group hover:bg-indigo-500/20 transition-all">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center">
+              <i class="fas fa-external-link-alt text-indigo-400 text-sm"></i>
+            </div>
+            <div>
+              <p class="text-[10px] font-bold text-indigo-300 uppercase tracking-widest">Attendance Portal</p>
+              <p class="text-[11px] text-gray-400">Export your attendance report from Linways</p>
+            </div>
+          </div>
+          <i class="fas fa-chevron-right text-indigo-500/40 group-hover:text-indigo-400 transition-transform group-hover:translate-x-0.5 px-2"></i>
+        </a>
+
         <input type="file" id="mainFileInput" class="hidden" accept=".xlsx,.xls">
         <div class="upload-zone relative" id="uploadZone" data-action="trigger-input" data-target="mainFileInput">
 
@@ -280,19 +291,19 @@
           </div>
         </div>
         <div class="card p-4">
-          <p class="text-xs text-gray-400 mb-1">Present</p>
+          <p id="dashPresentLabel" class="text-xs text-gray-400 mb-1">Present</p>
           <p id="dashPresent" class="text-2xl font-bold text-green-400">--</p>
-          <p class="text-xs text-gray-500 mt-1">Total classes attended</p>
+          <p id="dashPresentSub" class="text-xs text-gray-500 mt-1">Total classes attended</p>
         </div>
         <div class="card p-4">
-          <p class="text-xs text-gray-400 mb-1">Absent</p>
+          <p id="dashAbsentLabel" class="text-xs text-gray-400 mb-1">Absent</p>
           <p id="dashAbsent" class="text-2xl font-bold text-red-400">--</p>
-          <p class="text-xs text-gray-500 mt-1">Missed classes</p>
+          <p id="dashAbsentSub" class="text-xs text-gray-500 mt-1">Missed classes</p>
         </div>
         <div class="card p-4">
           <p class="text-xs text-gray-400 mb-1">Status</p>
           <p id="dashStatus" class="text-2xl font-bold">--</p>
-          <p class="text-xs text-gray-500 mt-1">vs <span id="dashTarget">75%</span> target</p>
+          <p id="dashStatusSub" class="text-xs text-gray-500 mt-1">vs <span id="dashTarget">75%</span> target</p>
         </div>
       </div>
 
@@ -668,6 +679,21 @@
       </div>
 
       <div class="card p-5 mb-6">
+        <a href="https://presidencyuniversity.linways.com/ams/attendance/daily-attendance?redir=true"
+          target="_blank"
+          class="block w-full mb-6 p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-between group hover:bg-indigo-500/20 transition-all">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center">
+              <i class="fas fa-external-link-alt text-indigo-400 text-sm"></i>
+            </div>
+            <div>
+              <p class="text-[10px] font-bold text-indigo-300 uppercase tracking-widest">Daily Attendance Portal</p>
+              <p class="text-[11px] text-gray-400">Export your daily report from Linways</p>
+            </div>
+          </div>
+          <i class="fas fa-chevron-right text-indigo-500/40 group-hover:text-indigo-400 transition-transform group-hover:translate-x-0.5 px-2"></i>
+        </a>
+
         <div class="flex items-center justify-between mb-4">
 
           <div class="flex items-center gap-2">
@@ -1409,7 +1435,27 @@
           <i class="fas fa-times"></i>
         </button>
       </div>
-      <div id="subjPredList" class="space-y-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+      <!-- Result Area -->
+      <div id="subjPredResult" class="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-4 mb-4 flex items-center justify-between">
+          <div class="flex-1">
+              <p class="text-[10px] text-indigo-400 uppercase font-bold tracking-widest mb-0.5">Simulated Result</p>
+              <div class="flex items-baseline gap-2">
+                <span id="subjPredResultPct" class="text-4xl font-black">--%</span>
+                <span id="subjPredStatus" class="text-xs font-bold text-gray-500">Select classes</span>
+              </div>
+          </div>
+          <div class="flex gap-6 pr-2">
+               <div class="text-center">
+                   <p class="text-[9px] text-gray-500 uppercase font-bold tracking-widest mb-1">Bunks</p>
+                   <span id="subjPredResultBunk" class="text-xl font-black">--</span>
+               </div>
+               <div class="text-center">
+                   <p class="text-[9px] text-gray-500 uppercase font-bold tracking-widest mb-1">Need</p>
+                   <span id="subjPredResultNeed" class="text-xl font-black">--</span>
+               </div>
+          </div>
+      </div>
+      <div id="subjPredList" class="space-y-3 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
         <!-- Classes will be listed here -->
       </div>
       <div class="mt-6 pt-4 border-t border-white/5 flex justify-end">

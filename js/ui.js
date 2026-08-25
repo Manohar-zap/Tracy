@@ -169,9 +169,9 @@ function renderUpcomingClasses() {
   if (!upcoming.length) {
     el.innerHTML = `
       <div class="text-center py-3">
-        <p class="text-sm text-gray-400">No upcoming classes.</p>
+        <p class="text-sm text-gray-400">${genZMode ? "Zero classes left." : "No upcoming classes."}</p>
         <p class="text-xs text-gray-500 mt-1">
-          You're done for today ✓
+          ${genZMode ? "You've Handled Today ✓" : "You're done for today ✓"}
         </p>
       </div>
     `;
@@ -267,33 +267,59 @@ function renderUpcomingClasses() {
 function renderDashboard() {
   const { totalAttended, totalClasses, overall } = calcStats(STATE.subjects);
 
-  document.getElementById("dashOverall").textContent = totalClasses
-    ? overall.toFixed(1) + "%"
-    : "--%";
-  document.getElementById("dashOverallBar").style.width =
-    overall.toFixed(1) + "%";
-  document.getElementById("dashPresent").textContent = totalClasses
-    ? totalAttended
-    : "--";
-  document.getElementById("dashAbsent").textContent = totalClasses
-    ? totalClasses - totalAttended
-    : "--";
-  document.getElementById("dashTarget").textContent = STATE.target + "%";
+  const overallEl = document.getElementById("dashOverall");
+  if (overallEl) overallEl.textContent = totalClasses ? overall.toFixed(1) + "%" : "--%";
+
+  const barEl = document.getElementById("dashOverallBar");
+  if (barEl) barEl.style.width = overall.toFixed(1) + "%";
+
+  const presentLabel = document.getElementById("dashPresentLabel");
+  const presentSub = document.getElementById("dashPresentSub");
+  const absentLabel = document.getElementById("dashAbsentLabel");
+  const absentSub = document.getElementById("dashAbsentSub");
+  const statusSub = document.getElementById("dashStatusSub");
+
+  if (genZMode) {
+    if (presentLabel) presentLabel.textContent = "W's Secured";
+    if (presentSub) presentSub.textContent = "Classes handled";
+    if (absentLabel) absentLabel.textContent = "L's Taken";
+    if (absentSub) absentSub.textContent = "Classes ghosted";
+    if (statusSub) statusSub.textContent = "Vibe Check";
+  } else {
+    if (presentLabel) presentLabel.textContent = "Present";
+    if (presentSub) presentSub.textContent = "Total classes attended";
+    if (absentLabel) absentLabel.textContent = "Absent";
+    if (absentSub) absentSub.textContent = "Missed classes";
+    if (statusSub) statusSub.innerHTML = `vs <span id="dashTarget">${STATE.target}%</span> target`;
+  }
+
+  const presentVal = document.getElementById("dashPresent");
+  if (presentVal) presentVal.textContent = totalClasses ? totalAttended : "--";
+
+  const absentVal = document.getElementById("dashAbsent");
+  if (absentVal) absentVal.textContent = totalClasses ? totalClasses - totalAttended : "--";
+
+  // Re-check targetEl if it wasn't wiped by .textContent
+  const targetEl = document.getElementById("dashTarget");
+  if (targetEl) targetEl.textContent = STATE.target + "%";
 
   const statusEl = document.getElementById("dashStatus");
-  if (totalClasses) {
-    const ok = overall >= STATE.target;
-    statusEl.textContent = ok ? getStatusText("safe") : getStatusText("risk");
-    statusEl.className =
-      "text-2xl font-bold " + (ok ? "text-green-400" : "text-red-400");
-  } else {
-    statusEl.textContent = "--";
-    statusEl.className = "text-2xl font-bold";
+  if (statusEl) {
+    if (totalClasses) {
+      const ok = overall >= STATE.target;
+      statusEl.textContent = ok ? getStatusText("safe") : getStatusText("risk");
+      statusEl.className = "text-2xl font-bold " + (ok ? "text-green-400" : "text-red-400");
+    } else {
+      statusEl.textContent = "--";
+      statusEl.className = "text-2xl font-bold";
+    }
   }
 
   renderUpcomingClasses();
 
   const listEl = document.getElementById("dashSubjectList");
+  if (!listEl) return;
+
   if (!STATE.subjects.length) {
     listEl.innerHTML = `<div class="card p-8 text-center text-gray-500 text-sm">
       <i class="fas fa-cloud-upload-alt text-2xl mb-2 block"></i>
@@ -346,7 +372,9 @@ function renderDashboard() {
     rightInfo.appendChild(pctSpan);
     const countsP = document.createElement("p");
     countsP.className = "text-xs text-gray-500";
-    countsP.textContent = `${(s.attended || 0) + (s.dutyLeave || 0)}/${s.total}`;
+    countsP.textContent = genZMode
+      ? `${(s.attended || 0) + (s.dutyLeave || 0)} Handled`
+      : `${(s.attended || 0) + (s.dutyLeave || 0)}/${s.total}`;
     rightInfo.appendChild(countsP);
     card.appendChild(rightInfo);
 
