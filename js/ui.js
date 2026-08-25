@@ -19,24 +19,34 @@ function renderUpcomingClasses() {
 
   const upcoming = [];
 
-  const clean = (str) =>
-    String(str || "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "");
-
   const findSubject = (cell) => {
-    const cellKey = clean(cell);
+    const cellParts = String(cell || "")
+      .toLowerCase()
+      .split(/[\/\n,&+]/)
+      .map(p => clean(p.trim()))
+      .filter(Boolean);
 
     return STATE.subjects.find((s) => {
       const subjectKey = clean(s.name);
-      return (
-        subjectKey.includes(cellKey) ||
-        cellKey.includes(subjectKey)
-      );
+      return cellParts.some(part => {
+        const p = SUBJECT_ALIASES[part] || part;
+        return subjectKey.includes(p) || p.includes(subjectKey);
+      });
     });
   };
 
-  for (let offset = 0; offset < 7 && upcoming.length < 3; offset++) {
+  const showTomorrowAfter = 17; // 5 PM
+  const currentHour = now.getHours();
+
+  for (let offset = 0; offset < 7 && upcoming.length < 10; offset++) {
+    // Before 5 PM, only show today. After 5 PM, only show tomorrow.
+    if (currentHour < showTomorrowAfter) {
+      if (offset > 0) break;
+    } else {
+      if (offset === 0) continue;
+      if (offset > 1) break;
+    }
+
     const date = new Date(now);
     date.setHours(0, 0, 0, 0);
     date.setDate(now.getDate() + offset);
@@ -56,7 +66,7 @@ function renderUpcomingClasses() {
     }
 
     row.hours.forEach((cell, hIdx) => {
-      if (upcoming.length >= 3) return;
+      if (upcoming.length >= 10) return;
 
       const text = String(cell || "").trim();
 

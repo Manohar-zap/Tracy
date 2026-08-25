@@ -1,0 +1,77 @@
+{
+  "id": "7CIT02",
+  "label": "7CIT02",
+  "source": "builtin",
+  "rows": [
+    {
+      "day": "Monday",
+      "hours": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "CHE3003"
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Tuesday",
+      "hours": [
+        "",
+        "",
+        "",
+        "CIT3403",
+        "",
+        "CIT3403/CIT3413",
+        "CIT3404/CIT3407",
+        "CHE3003"
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Wednesday",
+      "hours": [
+        "CIT3403/CIT3413",
+        "",
+        "",
+        "",
+        "",
+        "CIT3404/CIT3407",
+        "",
+        ""
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Thursday",
+      "hours": [
+        "CIT3403/CIT3413",
+        "CIT3404",
+        "PPS4027",
+        "PPS4027",
+        "",
+        "",
+        "CIT3407",
+        "CHE3003"
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Friday",
+      "hours": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "isHoliday": false
+    }
+  ]
+}

@@ -415,6 +415,36 @@ body.light-theme #ttSearchInput::placeholder,
       color: #6b7280;
     }
 
+.status-card-green {
+      background: linear-gradient(135deg, #064e3b, #065f46) !important;
+      color: #ecfdf5 !important;
+    }
+
+.status-card-yellow {
+      background: linear-gradient(135deg, #78350f, #92400e) !important;
+      color: #fffbeb !important;
+    }
+
+.status-card-red {
+      background: linear-gradient(135deg, #7f1d1d, #991b1b) !important;
+      color: #fef2f2 !important;
+    }
+
+body.light-theme .status-card-green {
+      background: linear-gradient(135deg, #dcfce7, #d1fae5) !important;
+      color: #166534 !important;
+    }
+
+body.light-theme .status-card-yellow {
+      background: linear-gradient(135deg, #fef9c3, #fef3c7) !important;
+      color: #854d0e !important;
+    }
+
+body.light-theme .status-card-red {
+      background: linear-gradient(135deg, #fee2e2, #fecaca) !important;
+      color: #991b1b !important;
+    }
+
 #genZSwitch {
       position: relative;
       width: 44px;
@@ -436,7 +466,37 @@ body.light-theme #ttSearchInput::placeholder,
       transition: .25s;
     }
 
-#genZToggle:checked+#genZSwitch {
+#genZToggle:checked+.status-card-green {
+      background: linear-gradient(135deg, #064e3b, #065f46) !important;
+      color: #ecfdf5 !important;
+    }
+
+.status-card-yellow {
+      background: linear-gradient(135deg, #78350f, #92400e) !important;
+      color: #fffbeb !important;
+    }
+
+.status-card-red {
+      background: linear-gradient(135deg, #7f1d1d, #991b1b) !important;
+      color: #fef2f2 !important;
+    }
+
+body.light-theme .status-card-green {
+      background: linear-gradient(135deg, #dcfce7, #d1fae5) !important;
+      color: #166534 !important;
+    }
+
+body.light-theme .status-card-yellow {
+      background: linear-gradient(135deg, #fef9c3, #fef3c7) !important;
+      color: #854d0e !important;
+    }
+
+body.light-theme .status-card-red {
+      background: linear-gradient(135deg, #fee2e2, #fecaca) !important;
+      color: #991b1b !important;
+    }
+
+#genZSwitch {
       background: #6366f1;
     }
 

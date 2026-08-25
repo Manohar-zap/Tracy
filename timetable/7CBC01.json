@@ -1,0 +1,77 @@
+{
+  "id": "7CBC01",
+  "label": "7CBC01",
+  "source": "builtin",
+  "rows": [
+    {
+      "day": "Monday",
+      "hours": [
+        "CBC3407/CBC3413",
+        "",
+        "CBC2506",
+        "",
+        "",
+        "",
+        "",
+        "EEE3103"
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Tuesday",
+      "hours": [
+        "CBC3413",
+        "",
+        "",
+        "CBC3407",
+        "",
+        "",
+        "CBC3401/CBC3402",
+        "EEE3103"
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Wednesday",
+      "hours": [
+        "CBC2506",
+        "CBC3401/CBC3402",
+        "PPS4027",
+        "PPS4027",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Thursday",
+      "hours": [
+        "",
+        "",
+        "CBC3401",
+        "CBC3402",
+        "",
+        "",
+        "",
+        "EEE3103"
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Friday",
+      "hours": [
+        "CBC2506",
+        "",
+        "CBC3407/CBC3413",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "isHoliday": false
+    }
+  ]
+}

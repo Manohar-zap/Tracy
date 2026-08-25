@@ -1,0 +1,77 @@
+{
+  "id": "7CCS02",
+  "label": "7CCS02",
+  "source": "builtin",
+  "rows": [
+    {
+      "day": "Monday",
+      "hours": [
+        "",
+        "",
+        "CCS3402/CCS3403",
+        "",
+        "",
+        "",
+        "CCS3405/CCS3411",
+        "ECE3191"
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Tuesday",
+      "hours": [
+        "CCS3402",
+        "",
+        "CCS3403",
+        "",
+        "",
+        "",
+        "",
+        "ECE3191"
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Wednesday",
+      "hours": [
+        "CCS3402/CCS3403",
+        "",
+        "CCS3405/CCS3411",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Thursday",
+      "hours": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "ECE3191"
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Friday",
+      "hours": [
+        "CCS3405/CCS3411",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "PPS4027",
+        "PPS4027"
+      ],
+      "isHoliday": false
+    }
+  ]
+}

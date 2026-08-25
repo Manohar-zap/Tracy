@@ -10,6 +10,7 @@ const STATE = {
   currentPage: "dashboard",
   dailySubjectMap: {},
   dailyOverallMap: {},
+  skippedPredictions: {}, // { [subjectId]: ["date_hour", ...] }
   lastAttendanceReportDate: null,
 
   weekOverrides: {
@@ -105,6 +106,45 @@ let TIMETABLES_LOADED = false;
 let genZMode = localStorage.getItem("genZMode") === "true";
 let guideMode = false;
 const timetableLoadPromises = new Map();
+
+const HOUR_SCHEDULE = [
+  { start: "08:50", end: "09:45", label: "Hr 1" },
+  { start: "09:45", end: "10:40", label: "Hr 2" },
+  { start: "10:50", end: "11:45", label: "Hr 3" },
+  { start: "11:45", end: "12:35", label: "Hr 4" },
+  { start: "12:35", end: "13:25", label: "Hr 5" },
+  { start: "13:25", end: "14:20", label: "Hr 6" },
+  { start: "14:30", end: "15:25", label: "Hr 7" },
+  { start: "15:25", end: "16:15", label: "Hr 8" },
+];
+
+const SUBJECT_ALIASES = {
+  eda: "exploratorydataanalysis",
+  dbms: "databasemanagementsystems",
+  sfds: "statisticalfoundationsfordatascience",
+  apt: "aptitudetraining",
+  ai: "analysisofalgorithms",
+  ml: "machinelearning",
+  cc: "cloudcomputing",
+};
+
+const clean = (str) =>
+  String(str || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+
+function normalizeDayName(raw) {
+  return String(raw || "")
+    .toLowerCase()
+    .replace(/[^a-z]/g, "");
+}
+
+function weekdayOrderIndex(dayLabel) {
+  const norm = normalizeDayName(dayLabel);
+  const idx = DAY_ORDER.findIndex((d) => norm.includes(d) || d.includes(norm));
+  if (idx === -1) return -1;
+  return idx === 0 ? 7 : idx;
+}
 
 const UNIVERSITY_HOLIDAYS = [
   "2026-06-26", // Muharram

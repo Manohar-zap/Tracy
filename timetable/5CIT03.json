@@ -1,0 +1,77 @@
+{
+  "id": "5CIT03",
+  "label": "5CIT03",
+  "source": "builtin",
+  "rows": [
+    {
+      "day": "Monday",
+      "hours": [
+        "CIT2502",
+        "CIT2501",
+        "CSS2286",
+        "CSS2286",
+        "",
+        "CIT3401/CIT3402",
+        "CSS2264",
+        "CIT2500"
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Tuesday",
+      "hours": [
+        "CBC2000",
+        "CIT2503",
+        "CSS2285",
+        "CSS2264",
+        "",
+        "CIT2502",
+        "CIT2501",
+        "CIT3401/CIT3402"
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Wednesday",
+      "hours": [
+        "CIT2503",
+        "CIT2500",
+        "CSS2265",
+        "CSS2265",
+        "",
+        "CBC2000",
+        "CIT3401_P",
+        ""
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Thursday",
+      "hours": [
+        "",
+        "CIT2501",
+        "CBC2000",
+        "CSS2264",
+        "",
+        "CIT2500",
+        "CIT3402_P",
+        "CIT3402_P"
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Friday",
+      "hours": [
+        "",
+        "",
+        "APT4006",
+        "APT4006",
+        "",
+        "CIT2503",
+        "CIT2502",
+        "CSS2285"
+      ],
+      "isHoliday": false
+    }
+  ]
+}
