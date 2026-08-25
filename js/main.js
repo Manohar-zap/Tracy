@@ -193,36 +193,45 @@ function refreshAll() {
   renderCurrentPage();
 }
 
-// Service Worker Registration
+// Service Worker Registration & Update Logic
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", async () => {
-    let refreshing = false;
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (refreshing) return;
-      refreshing = true;
-      showToast("✨ Tracy updated. Reloading...");
-      setTimeout(() => {
-        location.reload();
-      }, 1000);
-    });
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("service-worker.js").then((reg) => {
+      // Check for updates on load
+      reg.update();
 
-    try {
-      const registration = await navigator.serviceWorker.register("service-worker.js", {
-        updateViaCache: "none",
-      });
-      await registration.update();
-    } catch (err) {
+      // Check for updates every 1 hour
+      setInterval(() => {
+        reg.update();
+      }, 1000 * 60 * 60);
+    }).catch((err) => {
       console.error("Service worker registration failed:", err);
-    }
+    });
+  });
+
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (refreshing) return;
+    refreshing = true;
+    showToast("✨ Tracy updated. Reloading...");
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500);
   });
 }
 
-// Auto-nav home on long inactivity
+// Auto-nav home on long inactivity & Check for updates on resume
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "hidden") {
     localStorage.setItem("lastHiddenTime", Date.now());
   }
   if (document.visibilityState === "visible") {
+    // 1. Check for SW updates when user returns to app
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.ready.then((reg) => reg.update());
+    }
+
+    // 2. Auto-nav home if away for > 5 mins
     const lastHidden = Number(localStorage.getItem("lastHiddenTime") || 0);
     if (Date.now() - lastHidden > 5 * 60 * 1000) {
       navigateTo("dashboard");

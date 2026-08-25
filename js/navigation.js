@@ -206,6 +206,13 @@ function setupGlobalEventListeners() {
           const tab = target.dataset.tab;
           if (tab) switchCampusTab(tab);
           break;
+        case "open-subj-pred":
+          const subjId = target.dataset.id;
+          if (subjId) openSubjectPredictionModal(subjId);
+          break;
+        case "close-subj-pred-modal":
+          closeSubjPredModal();
+          break;
       }
     }
   });

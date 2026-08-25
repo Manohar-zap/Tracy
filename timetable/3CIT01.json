@@ -1,0 +1,77 @@
+{
+  "id": "3CIT01",
+  "label": "3CIT01",
+  "source": "builtin",
+  "rows": [
+    {
+      "day": "Monday",
+      "hours": [
+        "CSS2258",
+        "CSS2253",
+        "CSS2257",
+        "",
+        "CSS2256",
+        "CSS2256",
+        "APT4002",
+        "APT4002"
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Tuesday",
+      "hours": [
+        "",
+        "CSS2255",
+        "CSS2253",
+        "CSS2253",
+        "CSS2258",
+        "CSS2251",
+        "MAT2303",
+        ""
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Wednesday",
+      "hours": [
+        "CSS2257",
+        "CSS2258",
+        "",
+        "",
+        "MAT2303",
+        "CSS2251",
+        "",
+        ""
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Thursday",
+      "hours": [
+        "CSS2254",
+        "CSS2254",
+        "CSS2255",
+        "CSS2255",
+        "CSS2259",
+        "CSS2259",
+        "MAT2303",
+        ""
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Friday",
+      "hours": [
+        "CSS2253",
+        "MAT2303",
+        "CSS2257",
+        "CSS2257",
+        "CSS2251",
+        "CSS2255",
+        "CSS2252",
+        "CSS2252"
+      ],
+      "isHoliday": false
+    }
+  ]
+}

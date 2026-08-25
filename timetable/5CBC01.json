@@ -1,0 +1,77 @@
+{
+  "id": "5CBC01",
+  "label": "5CBC01",
+  "source": "builtin",
+  "rows": [
+    {
+      "day": "Monday",
+      "hours": [
+        "CBC2502",
+        "CSS2502",
+        "CSS2269",
+        "CSS2266",
+        "",
+        "CBC2509",
+        "CBC3400/CBC3406",
+        "FIN1002"
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Tuesday",
+      "hours": [
+        "CBC2500",
+        "CSS2269",
+        "CBC2502",
+        "CBC3400/CBC3406",
+        "",
+        "CBC2509",
+        "CSS2502",
+        ""
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Wednesday",
+      "hours": [
+        "CBC3400/CBC3406",
+        "CSS2269",
+        "",
+        "FIN1002",
+        "",
+        "CBC2500",
+        "CSS2502",
+        ""
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Thursday",
+      "hours": [
+        "CSS2266",
+        "CBC2509",
+        "FIN1002",
+        "CBC2502",
+        "",
+        "CBC2500",
+        "CSS2270",
+        "CSS2270"
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Friday",
+      "hours": [
+        "APT4006",
+        "APT4006",
+        "CBC2503",
+        "CBC2503",
+        "",
+        "CSS2266",
+        "CBC2501",
+        "CBC2501"
+      ],
+      "isHoliday": false
+    }
+  ]
+}

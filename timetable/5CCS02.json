@@ -1,0 +1,77 @@
+{
+  "id": "5CCS02",
+  "label": "5CCS02",
+  "source": "builtin",
+  "rows": [
+    {
+      "day": "Monday",
+      "hours": [
+        "CCS2502",
+        "CCS2500",
+        "CSS2264",
+        "CCS2503",
+        "",
+        "",
+        "CSS2266",
+        ""
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Tuesday",
+      "hours": [
+        "APT4006",
+        "APT4006",
+        "CSS2266",
+        "CCS2510/CCS3400",
+        "",
+        "CCS2509",
+        "CSS2265",
+        "CSS2265"
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Wednesday",
+      "hours": [
+        "FIN1002",
+        "CCS2502",
+        "CCS2501",
+        "CCS2501",
+        "",
+        "CCS2503",
+        "",
+        ""
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Thursday",
+      "hours": [
+        "FIN1002",
+        "CCS2500",
+        "CCS2510_P/CCS3400_P",
+        "CCS3400_P",
+        "",
+        "CSS2264",
+        "CCS2509",
+        ""
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Friday",
+      "hours": [
+        "CSS2264",
+        "CSS2266",
+        "CCS2502",
+        "CCS2510/CCS3400",
+        "",
+        "CCS2509",
+        "FIN1002",
+        "CCS2503"
+      ],
+      "isHoliday": false
+    }
+  ]
+}

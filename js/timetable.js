@@ -73,7 +73,7 @@ async function loadBuiltInTimetable(fileName) {
 
   const promise = (async () => {
     try {
-      const response = await fetch(`timetable/${fileName}.xlsx`, {
+      const response = await fetch(`timetable/${fileName}.json`, {
         cache: "default",
       });
 
@@ -81,30 +81,14 @@ async function loadBuiltInTimetable(fileName) {
         throw new Error(`HTTP ${response.status}`);
       }
 
-      const buffer = await response.arrayBuffer();
+      const timetable = await response.json();
 
-      const wb = XLSX.read(buffer, {
-        type: "array",
-      });
-
-      const sheet = wb.Sheets[wb.SheetNames[0]];
-
-      if (!sheet) {
-        throw new Error("No worksheet found");
+      if (!timetable || !timetable.rows || !timetable.rows.length) {
+        throw new Error("Invalid or empty timetable data");
       }
 
-      const rows = buildTimetableRows(sheet);
-
-      if (!rows.length) {
-        throw new Error("Timetable has no rows");
-      }
-
-      const timetable = {
-        id: fileName,
-        label: fileName,
-        rows,
-        source: "builtin",
-      };
+      // Ensure consistent properties
+      timetable.source = "builtin";
 
       STATE.timetables.push(timetable);
 

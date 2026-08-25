@@ -1,0 +1,77 @@
+{
+  "id": "1MTAIE01",
+  "label": "1MTAIE01",
+  "source": "builtin",
+  "rows": [
+    {
+      "day": "Monday",
+      "hours": [
+        "MAT4011",
+        "ENG5001",
+        "AIE4002",
+        "AIE4001",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Tuesday",
+      "hours": [
+        "AIE4025",
+        "AIE4013",
+        "AIE4002",
+        "AIE4002",
+        "",
+        "AIE4000",
+        "",
+        ""
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Wednesday",
+      "hours": [
+        "AIE4013",
+        "AIE4002",
+        "AIE4000",
+        "MAT4011",
+        "",
+        "ENG5001",
+        "",
+        ""
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Thursday",
+      "hours": [
+        "MAT4011",
+        "AIE4013",
+        "AIE4025_P",
+        "AIE4025_P",
+        "",
+        "AIE4025",
+        "ENG5001",
+        ""
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Friday",
+      "hours": [
+        "AIE4000",
+        "AIE4001",
+        "AIE4001",
+        "AIE4001",
+        "",
+        "MAT4011",
+        "",
+        ""
+      ],
+      "isHoliday": false
+    }
+  ]
+}

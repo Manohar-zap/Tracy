@@ -1,0 +1,77 @@
+{
+  "id": "5CAI03",
+  "label": "5CAI03",
+  "source": "builtin",
+  "rows": [
+    {
+      "day": "Monday",
+      "hours": [
+        "APT4006",
+        "APT4006",
+        "CSS2507",
+        "",
+        "CAI3400_P",
+        "CAI3400_P",
+        "CAI2502",
+        "CSS2266"
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Tuesday",
+      "hours": [
+        "CSS2266",
+        "CAI2502",
+        "CAI3400",
+        "CAI3400",
+        "CSS2507",
+        "CAI2512",
+        "CSS2285",
+        "CSS2271"
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Wednesday",
+      "hours": [
+        "CSS2286",
+        "CSS2286",
+        "",
+        "",
+        "CSS2285",
+        "CAI2512",
+        "",
+        ""
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Thursday",
+      "hours": [
+        "CSS2508",
+        "CSS2508",
+        "CAI3400",
+        "CAI3400",
+        "CAI2503",
+        "CAI2503",
+        "CSS2271",
+        "CSS2266"
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Friday",
+      "hours": [
+        "",
+        "CAI2502",
+        "CSS2271",
+        "CSS2271",
+        "CSS2507",
+        "CAI2512",
+        "CAI2503",
+        "CAI2503"
+      ],
+      "isHoliday": false
+    }
+  ]
+}

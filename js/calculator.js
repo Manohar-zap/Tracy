@@ -100,7 +100,7 @@ function renderCalc() {
 
   if (!t) {
     document.getElementById("calcPercent").textContent = "--%";
-    document.getElementById("calcStatus").textContent = "Select a subject";
+    document.getElementById("calcStatus").textContent = "Select Subject";
     const needEl = document.getElementById("calcNeed");
     const bunkEl = document.getElementById("calcBunk");
 
@@ -114,17 +114,17 @@ function renderCalc() {
   const pctEl = document.getElementById("calcPercent");
   pctEl.textContent = pct.toFixed(1) + "%";
 
+  const calcStatus = document.getElementById("calcStatus");
+
   if (pct >= STATE.target) {
-    pctEl.className = "text-3xl font-bold text-green-400";
-    const calcStatus = document.getElementById("calcStatus");
+    pctEl.className = "text-3xl md:text-5xl font-bold text-green-400";
     if (calcStatus) calcStatus.textContent = getStatusText("safe");
   } else if (pct >= STATE.target - 10) {
-    pctEl.className = "text-3xl font-bold text-yellow-400";
-    document.getElementById("calcStatus").textContent =
-      getStatusText("warning");
+    pctEl.className = "text-3xl md:text-5xl font-bold text-yellow-400";
+    if (calcStatus) calcStatus.textContent = getStatusText("warning");
   } else {
-    pctEl.className = "text-3xl font-bold text-red-400";
-    document.getElementById("calcStatus").textContent = getStatusText("risk");
+    pctEl.className = "text-3xl md:text-5xl font-bold text-red-400";
+    if (calcStatus) calcStatus.textContent = getStatusText("risk");
   }
 
   const { need, bunk } = calcNeedAndBunk(
@@ -135,9 +135,9 @@ function renderCalc() {
   const calcNeedEl = document.getElementById("calcNeed");
   const calcBunkEl = document.getElementById("calcBunk");
 
-  if (calcNeedEl) calcNeedEl.textContent = need > 0 ? "+" + need : "0";
+  if (calcNeedEl) calcNeedEl.textContent = need > 0 ? need : "0";
 
-  if (calcBunkEl) calcBunkEl.textContent = bunk > 0 ? bunk + " bunks" : "0";
+  if (calcBunkEl) calcBunkEl.textContent = bunk > 0 ? bunk : "0";
   renderCalcChart(a, t);
 }
 
@@ -249,9 +249,9 @@ function renderQuickCalc() {
 
   const { need, bunk } = calcNeedAndBunk({ attended, total }, quickCalcTarget);
   document.getElementById("qcNeed").textContent =
-    need > 0 ? "+" + need + "" : "0";
+    need > 0 ? need : "0";
   document.getElementById("qcBunk").textContent =
-    bunk > 0 ? bunk + " bunks" : "0";
+    bunk > 0 ? bunk : "0";
 
   renderQcChart(attended, total);
 }
@@ -326,95 +326,52 @@ function renderCgpaCalc() {
   const curEl = document.getElementById("cgpaCurrent");
   const tgtEl = document.getElementById("cgpaTarget");
   const semEl = document.getElementById("semCompleted");
-  if (!curEl || !tgtEl || !semEl) return;
+  const card = document.getElementById("neededCgpaCard");
+  if (!curEl || !tgtEl || !semEl || !card) return;
 
   let current = parseFloat(curEl.value);
   let target = parseFloat(tgtEl.value);
   let sem = parseInt(semEl.value, 10);
-  if (current > 10) {
-    current = 10;
-    curEl.value = 10;
-  }
 
-  if (target > 10) {
-    target = 10;
-    tgtEl.value = 10;
-  }
+  card.classList.remove("status-card-green", "status-card-yellow", "status-card-red");
 
-  if (sem > 7) {
-    sem = 7;
-    semEl.value = 7;
-  }
-
-  if (current < 0) {
-    current = 0;
-    curEl.value = 0;
-  }
-
-  if (target < 0) {
-    target = 0;
-    tgtEl.value = 0;
-  }
-
-  if (isNaN(sem)) {
-    sem = NaN;
-  }
+  if (current > 10) { current = 10; curEl.value = 10; }
+  if (target > 10) { target = 10; tgtEl.value = 10; }
+  if (sem > 7) { sem = 7; semEl.value = 7; }
+  if (current < 0) { current = 0; curEl.value = 0; }
+  if (target < 0) { target = 0; tgtEl.value = 0; }
 
   const deltaEl = document.getElementById("cgpaDelta");
   const statusEl = document.getElementById("cgpaStatus");
-  const gapEl = document.getElementById("cgpaGap10");
 
   if (isNaN(current) || isNaN(target) || isNaN(sem)) {
     deltaEl.textContent = "--";
-    deltaEl.className = "text-3xl font-bold";
-    if (statusEl) statusEl.textContent = "Enter values";
-    if (gapEl) gapEl.textContent = "--";
+    if (statusEl) statusEl.textContent = "Enter values to calculate";
+    card.classList.add("bg-white/[0.02]");
     return;
   }
+  card.classList.remove("bg-white/[0.02]");
 
-  current = Math.min(10, Math.max(0, current));
-  target = Math.min(10, Math.max(0, target));
   const totalSem = 8;
   const completedSem = Math.min(totalSem - 1, Math.max(1, sem));
-
   const remainingSem = 8 - completedSem;
-
   const requiredAvg = (target * 8 - current * completedSem) / remainingSem;
-
-  const gap10 = 10 - target;
 
   if (requiredAvg <= 10) {
     deltaEl.textContent = requiredAvg.toFixed(2);
+    statusEl.textContent = "";
 
-    if (requiredAvg >= 9) {
-      deltaEl.className = "text-3xl font-bold text-red-400";
-    } else if (requiredAvg >= 8) {
-      deltaEl.className = "text-3xl font-bold text-yellow-400";
+    if (requiredAvg <= 7.5) {
+      card.classList.add("cgpa-green");
+    } else if (requiredAvg <= 8.5) {
+      card.classList.add("cgpa-yellow");
     } else {
-      deltaEl.className = "text-3xl font-bold text-green-400";
+      card.classList.add("cgpa-red");
     }
-
-    if (statusEl) statusEl.textContent = "";
   } else {
     deltaEl.textContent = genZMode ? "It's Over 💀" : "Not Achievable";
-    deltaEl.className = "text-3xl font-bold text-red-400";
-    if (statusEl) statusEl.textContent = "";
-  }
-  const card = document.getElementById("neededCgpaCard");
-
-  card.classList.remove("cgpa-green", "cgpa-yellow", "cgpa-red");
-
-  let lineColor = "#22c55e";
-
-  if (requiredAvg <= 7.5) {
-    card.classList.add("cgpa-green");
-    lineColor = "#22c55e";
-  } else if (requiredAvg <= 8.5) {
-    card.classList.add("cgpa-yellow");
-    lineColor = "#f59e0b";
-  } else {
+    statusEl.textContent = "Beyond 10.0 SGPA";
     card.classList.add("cgpa-red");
-    lineColor = "#ef4444";
   }
 }
 

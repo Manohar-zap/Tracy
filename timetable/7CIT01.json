@@ -1,0 +1,77 @@
+{
+  "id": "7CIT01",
+  "label": "7CIT01",
+  "source": "builtin",
+  "rows": [
+    {
+      "day": "Monday",
+      "hours": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "CIV2006"
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Tuesday",
+      "hours": [
+        "PPS4027",
+        "PPS4027",
+        "",
+        "CIT3403",
+        "",
+        "CIT3403/CIT3413",
+        "CIT3404/CIT3407",
+        "CIV2006"
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Wednesday",
+      "hours": [
+        "CIT3403/CIT3413",
+        "",
+        "",
+        "",
+        "",
+        "CIT3404/CIT3407",
+        "",
+        ""
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Thursday",
+      "hours": [
+        "CIT3403/CIT3413",
+        "CIT3404",
+        "",
+        "",
+        "",
+        "",
+        "CIT3407",
+        "CIV2006"
+      ],
+      "isHoliday": false
+    },
+    {
+      "day": "Friday",
+      "hours": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "isHoliday": false
+    }
+  ]
+}

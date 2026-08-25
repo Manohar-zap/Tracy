@@ -54,29 +54,25 @@ function countSubjectInRows(
   minOrderIdx,
   overrides,
   weekOffset = 0,
+  subjectId = null,
 ) {
   const clean = (s) =>
     String(s || "")
       .toLowerCase()
       .replace(/[^a-z0-9]/g, "");
 
-  const SUBJECT_ALIASES = {
-    eda: "exploratorydataanalysis",
-    dbms: "databasemanagementsystems",
-    sfds: "statisticalfoundationsfordatascience",
-    apt: "aptitudetraining",
-    ai: "analysisofalgorithms",
-  };
-
   const sKey = clean(subjectName);
   let count = 0;
+
+  const skippedList = subjectId ? (STATE.skippedPredictions?.[subjectId] || []) : [];
 
   rows.forEach((row) => {
     if (row.isHoliday) return;
 
     const holidayDate = getDateForTimetableDay(row.day, weekOffset);
+    if (!holidayDate) return;
 
-    if (holidayDate && isUniversityHoliday(holidayDate)) {
+    if (isUniversityHoliday(holidayDate)) {
       return;
     }
     const dayKey = normalizeDayName(row.day);
@@ -87,15 +83,15 @@ function countSubjectInRows(
 
     if (minOrderIdx !== undefined) {
       const orderIdx = weekdayOrderIndex(row.day);
-
       if (orderIdx === -1 || orderIdx < minOrderIdx) {
         return;
       }
     }
 
     const suspended = overrides?.suspendedSubjects?.[dayKey] || [];
+    const dateStr = holidayDate.toISOString().split("T")[0];
 
-    row.hours.forEach((cell) => {
+    row.hours.forEach((cell, hIdx) => {
       const text = String(cell || "").trim();
 
       if (!text) return;
@@ -121,7 +117,11 @@ function countSubjectInRows(
         }
 
         if (sKey.includes(tKey) || tKey.includes(sKey)) {
-          count++;
+          // Check if this specific class instance is skipped
+          const skipKey = `${dateStr}_${hIdx}`;
+          if (!skippedList.includes(skipKey)) {
+            count++;
+          }
         }
       });
     });
@@ -134,6 +134,8 @@ function countSubjectInRows(
         const b = clean(subjectName);
 
         if (a.includes(b) || b.includes(a)) {
+          // Note: Saturday/Sunday overrides don't easily map to date strings here
+          // For now, we count them normally as they are manual additions
           count++;
         }
       });
@@ -213,7 +215,12 @@ function renderPredTable(tableId, weekNum) {
     return;
   }
 
-  const todayIdx = getTodayOrderIdx();
+  let todayIdx = getTodayOrderIdx();
+  const now = new Date();
+  if (now.getHours() >= 17) {
+    todayIdx++;
+  }
+
   tbody.innerHTML = "";
   STATE.subjects.forEach((s) => {
     let extra;
@@ -225,6 +232,7 @@ function renderPredTable(tableId, weekNum) {
             todayIdx,
             STATE.weekOverrides.week1,
             0,
+            s.id,
           )
         : 0;
     } else {
@@ -235,6 +243,7 @@ function renderPredTable(tableId, weekNum) {
             todayIdx,
             STATE.weekOverrides.week1,
             1,
+            s.id,
           )
         : 0;
       const week2Full = w2
@@ -243,6 +252,8 @@ function renderPredTable(tableId, weekNum) {
             s.name,
             undefined,
             STATE.weekOverrides.week2,
+            1,
+            s.id,
           )
         : 0;
       extra = week1Remainder + week2Full;
@@ -317,7 +328,11 @@ function renderPredCards() {
 
   const w1 = getTimetableById(STATE.week1TimetableId);
   const w2 = getTimetableById(STATE.week2TimetableId);
-  const todayIdx = getTodayOrderIdx();
+  let todayIdx = getTodayOrderIdx();
+  const now = new Date();
+  if (now.getHours() >= 17) {
+    todayIdx++;
+  }
 
   if (!STATE.subjects.length) {
     el.innerHTML =
@@ -343,6 +358,7 @@ function renderPredCards() {
               todayIdx,
               STATE.weekOverrides.week1,
               0,
+              s.id,
             )
           : 0;
       } else {
@@ -353,6 +369,7 @@ function renderPredCards() {
               todayIdx,
               STATE.weekOverrides.week1,
               1,
+              s.id,
             )
           : 0;
 
@@ -362,6 +379,8 @@ function renderPredCards() {
               s.name,
               undefined,
               STATE.weekOverrides.week2,
+              1,
+              s.id,
             )
           : 0;
 
@@ -389,7 +408,9 @@ function renderPredCards() {
       }
 
       const card = document.createElement("div");
-      card.className = "sub-card";
+      card.className = "sub-card cursor-pointer";
+      card.dataset.action = "open-subj-pred";
+      card.dataset.id = s.id;
 
       const nameP = document.createElement("p");
       nameP.className = "text-xs font-medium truncate text-gray-300 mb-1";
@@ -441,5 +462,116 @@ function getStatusText(type) {
     warning: "Clutch Time",
     risk: "Cooked",
   }[type];
+}
+
+function openSubjectPredictionModal(id) {
+  const s = STATE.subjects.find((subj) => subj.id === id);
+  if (!s) return;
+
+  const modal = document.getElementById("subjectPredictionModal");
+  document.getElementById("subjPredTitle").textContent = s.name;
+  const listEl = document.getElementById("subjPredList");
+  listEl.innerHTML = "";
+
+  const w1 = getTimetableById(STATE.week1TimetableId);
+  const w2 = getTimetableById(STATE.week2TimetableId);
+
+  const classes = [];
+  const todayIdx = getTodayOrderIdx();
+  const now = new Date();
+  const effectiveTodayIdx = now.getHours() >= 17 ? todayIdx + 1 : todayIdx;
+
+  const collect = (tt, weekOffset, label) => {
+    if (!tt) return;
+    tt.rows.forEach((row) => {
+      if (row.isHoliday) return;
+      const date = getDateForTimetableDay(row.day, weekOffset);
+      if (!date || isUniversityHoliday(date)) return;
+
+      const orderIdx = weekdayOrderIndex(row.day);
+      if (weekOffset === 0 && orderIdx < effectiveTodayIdx) return;
+
+      const dateStr = date.toISOString().split("T")[0];
+      const displayDate = date.toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      });
+
+      row.hours.forEach((cell, hIdx) => {
+        const text = String(cell || "").trim();
+        if (!text || text.toLowerCase().includes("holiday")) return;
+
+        const cellParts = text.toLowerCase().split(/[\/\n,&+]/).map(p => clean(p.trim())).filter(Boolean);
+        const subjectKey = clean(s.name);
+        const match = cellParts.some(part => {
+          const p = SUBJECT_ALIASES[part] || part;
+          return subjectKey.includes(p) || p.includes(subjectKey);
+        });
+
+        if (match) {
+          classes.push({
+            dateStr,
+            displayDate,
+            hourIdx: hIdx,
+            label: `${label} - Hr ${hIdx + 1}`,
+            skipKey: `${dateStr}_${hIdx}`,
+          });
+        }
+      });
+    });
+  };
+
+  collect(w1, 0, "This Week");
+  collect(w2, 1, "Next Week");
+
+  if (classes.length === 0) {
+    listEl.innerHTML = '<p class="text-center text-gray-500 py-10">No upcoming classes found in timetable.</p>';
+  } else {
+    const skipped = STATE.skippedPredictions?.[id] || [];
+    classes.forEach((cls) => {
+      const isSkipped = skipped.includes(cls.skipKey);
+      const div = document.createElement("div");
+      div.className = `p-3 rounded-xl border flex items-center justify-between transition-all ${
+        isSkipped ? "border-red-500/30 bg-red-500/5 opacity-60" : "border-white/5 bg-white/5"
+      }`;
+
+      div.innerHTML = `
+        <div>
+          <p class="text-xs text-indigo-400 font-medium">${cls.displayDate}</p>
+          <p class="text-sm font-semibold">${cls.label}</p>
+        </div>
+        <button class="px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors ${
+          isSkipped ? "bg-red-500 text-white" : "bg-white/10 text-gray-400 hover:bg-white/20"
+        }" onclick="togglePredictionSkip('${id}', '${cls.skipKey}')">
+          ${isSkipped ? "Missed" : "Attend"}
+        </button>
+      `;
+      listEl.appendChild(div);
+    });
+  }
+
+  modal.classList.add("open");
+}
+
+function togglePredictionSkip(subjectId, skipKey) {
+  if (!STATE.skippedPredictions) STATE.skippedPredictions = {};
+  if (!STATE.skippedPredictions[subjectId]) STATE.skippedPredictions[subjectId] = [];
+
+  const list = STATE.skippedPredictions[subjectId];
+  const idx = list.indexOf(skipKey);
+  if (idx > -1) {
+    list.splice(idx, 1);
+  } else {
+    list.push(skipKey);
+  }
+
+  saveState();
+  openSubjectPredictionModal(subjectId); // Re-render modal
+  renderPredictionPage(); // Update background charts/cards
+}
+
+function closeSubjPredModal() {
+  document.getElementById("subjectPredictionModal").classList.remove("open");
 }
 // ─────────────────────────────────────────────
