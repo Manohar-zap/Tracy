@@ -190,7 +190,6 @@ function downloadIcs(events, filename) {
   a.click();
   URL.revokeObjectURL(a.href);
   showToast(`Added ${events.length} event(s) to calendar file ✓`);
-  window.open("https://omg10.com/4/11449662", "_blank");
 }
 
 function addSubjectToCalendar(subjectId) {

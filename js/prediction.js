@@ -48,7 +48,6 @@ function countSubjectInRows(
   minOrderIdx,
   overrides,
   weekOffset = 0,
-  subjectId = null,
 ) {
   const clean = (s) =>
     String(s || "")
@@ -57,8 +56,6 @@ function countSubjectInRows(
 
   const sKey = clean(subjectName);
   let count = 0;
-
-  const skippedList = subjectId ? (STATE.skippedPredictions?.[subjectId] || []) : [];
 
   rows.forEach((row) => {
     if (row.isHoliday) return;
@@ -83,9 +80,8 @@ function countSubjectInRows(
     }
 
     const suspended = overrides?.suspendedSubjects?.[dayKey] || [];
-    const dateStr = holidayDate.toISOString().split("T")[0];
 
-    row.hours.forEach((cell, hIdx) => {
+    row.hours.forEach((cell) => {
       const text = String(cell || "").trim();
 
       if (!text) return;
@@ -111,11 +107,7 @@ function countSubjectInRows(
         }
 
         if (sKey.includes(tKey) || tKey.includes(sKey)) {
-          // Check if this specific class instance is skipped
-          const skipKey = `${dateStr}_${hIdx}`;
-          if (!skippedList.includes(skipKey)) {
-            count++;
-          }
+          count++;
         }
       });
     });
@@ -128,8 +120,6 @@ function countSubjectInRows(
         const b = clean(subjectName);
 
         if (a.includes(b) || b.includes(a)) {
-          // Note: Saturday/Sunday overrides don't easily map to date strings here
-          // For now, we count them normally as they are manual additions
           count++;
         }
       });
@@ -226,7 +216,6 @@ function renderPredTable(tableId, weekNum) {
             todayIdx,
             STATE.weekOverrides.week1,
             0,
-            s.id,
           )
         : 0;
     } else {
@@ -237,7 +226,6 @@ function renderPredTable(tableId, weekNum) {
             todayIdx,
             STATE.weekOverrides.week1,
             1,
-            s.id,
           )
         : 0;
       const week2Full = w2
@@ -247,7 +235,6 @@ function renderPredTable(tableId, weekNum) {
             undefined,
             STATE.weekOverrides.week2,
             1,
-            s.id,
           )
         : 0;
       extra = week1Remainder + week2Full;
@@ -352,7 +339,6 @@ function renderPredCards() {
               todayIdx,
               STATE.weekOverrides.week1,
               0,
-              s.id,
             )
           : 0;
       } else {
@@ -363,7 +349,6 @@ function renderPredCards() {
               todayIdx,
               STATE.weekOverrides.week1,
               1,
-              s.id,
             )
           : 0;
 
@@ -374,7 +359,6 @@ function renderPredCards() {
               undefined,
               STATE.weekOverrides.week2,
               1,
-              s.id,
             )
           : 0;
 
@@ -521,6 +505,7 @@ function openSubjectPredictionModal(id) {
 
   if (classes.length === 0) {
     listEl.innerHTML = '<p class="text-center text-gray-500 py-10">No upcoming classes found in timetable.</p>';
+    updateSubjPredResult(s, 0, 0);
   } else {
     const skipped = STATE.skippedPredictions?.[id] || [];
     classes.forEach((cls) => {
@@ -538,14 +523,50 @@ function openSubjectPredictionModal(id) {
         <button class="px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors ${
           isSkipped ? "bg-red-500 text-white" : "bg-white/10 text-gray-400 hover:bg-white/20"
         }" onclick="togglePredictionSkip('${id}', '${cls.skipKey}')">
-          ${isSkipped ? "Missed" : "Attend"}
+          ${isSkipped ? (genZMode ? "Bunk" : "Missed") : (genZMode ? "Lock In" : "Attend")}
         </button>
       `;
       listEl.appendChild(div);
     });
+
+    // Calculate simulated result for modal
+    const totalPossible = classes.length;
+    const willAttend = totalPossible - skipped.filter(k => classes.some(c => c.skipKey === k)).length;
+    updateSubjPredResult(s, willAttend, totalPossible);
   }
 
   modal.classList.add("open");
+}
+
+function updateSubjPredResult(subject, willAttend, totalPossible) {
+  const futureA = (subject.attended || 0) + (subject.dutyLeave || 0) + willAttend;
+  const futureT = (subject.total || 0) + totalPossible;
+
+  const pct = futureT ? (futureA / futureT) * 100 : 0;
+  const { need, bunk } = calcNeedAndBunk({ attended: futureA, total: futureT }, STATE.target);
+
+  const pctEl = document.getElementById("subjPredResultPct");
+  const statusEl = document.getElementById("subjPredStatus");
+  const bunkEl = document.getElementById("subjPredResultBunk");
+  const needEl = document.getElementById("subjPredResultNeed");
+
+  pctEl.textContent = `${pct.toFixed(1)}%`;
+  bunkEl.textContent = bunk;
+  needEl.textContent = need;
+
+  if (pct >= STATE.target) {
+    pctEl.className = "text-3xl md:text-4xl font-black text-green-400";
+    statusEl.textContent = getStatusText("safe");
+    statusEl.className = "text-xs font-bold text-green-500/80";
+  } else if (pct >= STATE.target - 10) {
+    pctEl.className = "text-3xl md:text-4xl font-black text-yellow-400";
+    statusEl.textContent = getStatusText("warning");
+    statusEl.className = "text-xs font-bold text-yellow-500/80";
+  } else {
+    pctEl.className = "text-3xl md:text-4xl font-black text-red-400";
+    statusEl.textContent = getStatusText("risk");
+    statusEl.className = "text-xs font-bold text-red-500/80";
+  }
 }
 
 function togglePredictionSkip(subjectId, skipKey) {
@@ -561,8 +582,7 @@ function togglePredictionSkip(subjectId, skipKey) {
   }
 
   saveState();
-  openSubjectPredictionModal(subjectId); // Re-render modal
-  renderPredictionPage(); // Update background charts/cards
+  openSubjectPredictionModal(subjectId); // Re-render modal only
 }
 
 function closeSubjPredModal() {

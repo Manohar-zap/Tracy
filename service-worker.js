@@ -1,4 +1,4 @@
-const CACHE_NAME = "tracy-v5.9.3"; // Bump version to clear old Cache-First entries
+const CACHE_NAME = "tracy-v5.9.9"; // Bump version to clear old Cache-First entries
 
 const ASSETS = [
   "./",
