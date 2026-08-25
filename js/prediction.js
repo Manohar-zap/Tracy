@@ -15,12 +15,6 @@ function weekdayOrderIndex(dayLabel) {
   return idx === 0 ? 7 : idx;
 }
 
-function isUniversityHoliday(date) {
-  const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-
-  return UNIVERSITY_HOLIDAYS.includes(key);
-}
-
 function getDateForTimetableDay(dayLabel, weekOffset = 0) {
   const dayIdx = weekdayOrderIndex(dayLabel);
   if (dayIdx === -1) return null;
@@ -307,11 +301,11 @@ function renderPredTable(tableId, weekNum) {
     tdBunk.textContent =
       bunk > 0
         ? genZMode
-          ? `${bunk} Free`
+          ? `+${bunk} Aura`
           : `${bunk} safe`
         : need > 0
           ? genZMode
-            ? `Lock In ${need}`
+            ? `Dial In ${need}`
             : `+${need} req`
           : "0";
     tr.appendChild(tdBunk);
@@ -437,10 +431,10 @@ function renderPredCards() {
       statusP.textContent =
         need > 0
           ? genZMode
-            ? `Lock In (${need})`
+            ? `Dial In (${need})`
             : `+${need} needed for ${STATE.target}%`
           : genZMode
-            ? `${bunk} Free Passes`
+            ? `+${bunk} Aura`
             : `${bunk} safe bunks`;
       card.appendChild(statusP);
 
@@ -458,8 +452,8 @@ function getStatusText(type) {
   }
 
   return {
-    safe: "Locked In",
-    warning: "Clutch Time",
+    safe: "Goated",
+    warning: "Sketchy",
     risk: "Cooked",
   }[type];
 }

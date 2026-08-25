@@ -11,7 +11,7 @@
         "CSS2264",
         "",
         "",
-        "CIT3401/CIT3402",
+        "CIT3402",
         "CIT2501",
         "CSS2285"
       ],
@@ -27,7 +27,7 @@
         "",
         "CBC2000",
         "CIT2503",
-        "CIT3401/CIT3402"
+        "CIT3402"
       ],
       "isHoliday": false
     },
@@ -40,7 +40,7 @@
         "CSS2286",
         "",
         "CIT2500",
-        "CIT3401_P",
+        "",
         ""
       ],
       "isHoliday": false
@@ -54,8 +54,8 @@
         "CIT2501",
         "",
         "CSS2264",
-        "CIT3402_P",
-        "CIT3402_P"
+        "CIT3402",
+        "CIT3402"
       ],
       "isHoliday": false
     },

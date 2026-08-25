@@ -13,7 +13,7 @@
         "APT4006",
         "APT4006",
         "CSS2266",
-        "CSD3401/CSD3422"
+        "CSD3401"
       ],
       "isHoliday": false
     },
@@ -27,7 +27,7 @@
         "CSD2007",
         "CAI2500",
         "CSS2269",
-        "CSD3401/CSD3422"
+        "CSD3401"
       ],
       "isHoliday": false
     },
@@ -37,10 +37,10 @@
         "CSS2266",
         "CSS2271",
         "CSS2269",
-        "CSS2269",
+        "",
         "CSD1706",
         "CSD1706",
-        "CSD3401/CSD3422",
+        "CSD3401",
         ""
       ],
       "isHoliday": false
@@ -51,7 +51,7 @@
         "CSD2007",
         "CSS2271",
         "CAI2500",
-        "CAI2500",
+        "",
         "CSD2008",
         "CSD2008",
         "",

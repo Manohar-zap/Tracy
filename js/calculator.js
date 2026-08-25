@@ -369,7 +369,7 @@ function renderCgpaCalc() {
       card.classList.add("cgpa-red");
     }
   } else {
-    deltaEl.textContent = genZMode ? "It's Over 💀" : "Not Achievable";
+    deltaEl.textContent = genZMode ? "Infinite L 💀" : "Not Achievable";
     statusEl.textContent = "Beyond 10.0 SGPA";
     card.classList.add("cgpa-red");
   }

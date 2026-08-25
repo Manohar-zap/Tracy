@@ -12,7 +12,7 @@
         "CSS2266",
         "",
         "CBC2509",
-        "CBC3400/CBC3406",
+        "CBC3400",
         "FIN1002"
       ],
       "isHoliday": false
@@ -23,7 +23,7 @@
         "CBC2500",
         "CSS2269",
         "CBC2502",
-        "CBC3400/CBC3406",
+        "CBC3400",
         "",
         "CBC2509",
         "CSS2502",
@@ -34,7 +34,7 @@
     {
       "day": "Wednesday",
       "hours": [
-        "CBC3400/CBC3406",
+        "CBC3400",
         "CSS2269",
         "",
         "FIN1002",
