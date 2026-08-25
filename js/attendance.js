@@ -50,8 +50,8 @@ function getStatusText(type) {
   }
 
   return {
-    safe: "Locked In",
-    warning: "Clutch Time",
+    safe: "Goated",
+    warning: "Sketchy",
     risk: "Cooked",
   }[type];
 }

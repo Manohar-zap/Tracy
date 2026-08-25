@@ -171,6 +171,12 @@ const UNIVERSITY_HOLIDAYS = [
   "2027-06-15", // Muharram
 ];
 
+function isUniversityHoliday(date) {
+  if (!date) return false;
+  const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  return UNIVERSITY_HOLIDAYS.includes(key);
+}
+
 // ─────────────────────────────────────────────
 // 22. SITE CONFIG (Google Forms URLs)
 // ─────────────────────────────────────────────

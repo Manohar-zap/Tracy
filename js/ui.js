@@ -51,6 +51,30 @@ function renderUpcomingClasses() {
     date.setHours(0, 0, 0, 0);
     date.setDate(now.getDate() + offset);
 
+    if (isUniversityHoliday(date)) {
+      const dayLabel = offset === 0 ? "Today" : "Tomorrow";
+      el.innerHTML = genZMode
+        ? `
+        <div class="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-5 text-center">
+          <div class="text-3xl mb-2">🎈</div>
+          <p class="text-base font-bold text-indigo-400 uppercase tracking-widest">Absolute Cinema</p>
+          <p class="text-xs text-gray-500 mt-1">
+            ${dayLabel} is a holiday. Just vibes 🥂
+          </p>
+        </div>
+      `
+        : `
+        <div class="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-5 text-center">
+          <div class="text-3xl mb-2">🥳</div>
+          <p class="text-base font-bold text-indigo-400">It's a Holiday!</p>
+          <p class="text-xs text-gray-500 mt-1">
+            ${dayLabel} is a university holiday. Enjoy your break!
+          </p>
+        </div>
+      `;
+      return;
+    }
+
     const dayIdx = date.getDay();
 
     const row = tt.rows.find(
@@ -166,10 +190,10 @@ function renderUpcomingClasses() {
       const bunkText =
         item.need > 0
           ? genZMode
-            ? `Lock In ${item.need}`
+            ? `Dial In ${item.need}`
             : `+${item.need} needed`
           : genZMode
-            ? `${item.bunk} Free Passes`
+            ? `+${item.bunk} Aura`
             : `${item.bunk} safe bunks`;
 
       const bunkClass =
@@ -331,11 +355,11 @@ function renderDashboard() {
     const statusSpan = document.createElement("span");
     if (need > 0) {
       statusSpan.className = "text-yellow-400";
-      statusSpan.textContent = genZMode ? `Lock In ${need}` : `Need +${need}`;
+      statusSpan.textContent = genZMode ? `Dial In ${need}` : `Need +${need}`;
     } else {
       statusSpan.className = "text-green-400";
       statusSpan.textContent = genZMode
-        ? `${bunk} Free Passes`
+        ? `+${bunk} Aura`
         : `${bunk} bunks safe`;
     }
     statusDiv.appendChild(statusSpan);
@@ -523,12 +547,12 @@ function checkAttendanceReportStatus() {
         <button type="button" class="help-btn absolute top-3 right-3" data-action="help" data-target="helpAttendanceModal" title="How to get attendance Excel">i</button>
         <div class="text-4xl mb-3">🚨</div>
         <p class="text-lg font-semibold text-orange-400">
-            Don't blame Tracy when you're feeding it ancient data 💀
+            Ancient data detected. That's a massive L 💀
         </p>
         <p class="text-sm text-gray-500 mt-2">
             Upload the latest Excel.
             <br>
-            These stats ain't it anymore.
+            These stats are giving NPC vibes.
         </p>
     </div>
   `
