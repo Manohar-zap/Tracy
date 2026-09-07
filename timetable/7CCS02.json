@@ -8,11 +8,11 @@
       "hours": [
         "",
         "",
-        "CCS3402",
+        "CCS3402/CCS3403",
         "",
         "",
         "",
-        "CCS3411",
+        "CCS3411/CCS3405",
         "ECE3191"
       ],
       "isHoliday": false
@@ -34,9 +34,9 @@
     {
       "day": "Wednesday",
       "hours": [
-        "CCS3402",
+        "CCS3402/CCS3403",
         "",
-        "CCS3411",
+        "CCS3411/CCS3405",
         "",
         "",
         "",
@@ -62,7 +62,7 @@
     {
       "day": "Friday",
       "hours": [
-        "CCS3411",
+        "CCS3411/CCS3405",
         "",
         "",
         "",

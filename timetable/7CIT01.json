@@ -25,8 +25,8 @@
         "",
         "CIT3403",
         "",
-        "",
-        "CIT3404",
+        "CIT3403/CIT3413",
+        "CIT3404/CIT3407",
         "CIV2006"
       ],
       "isHoliday": false
@@ -34,12 +34,12 @@
     {
       "day": "Wednesday",
       "hours": [
-        "CIT3403",
+        "CIT3403/CIT3413",
         "",
         "",
         "",
         "",
-        "CIT3404",
+        "CIT3404/CIT3407",
         "",
         ""
       ],
@@ -48,7 +48,7 @@
     {
       "day": "Thursday",
       "hours": [
-        "CIT3403",
+        "CIT3403/CIT3413",
         "CIT3404",
         "",
         "",
