@@ -6,7 +6,7 @@
     {
       "day": "Monday",
       "hours": [
-        "CBC3407",
+        "CBC3407/CBC3413",
         "",
         "CBC2506",
         "",
@@ -26,7 +26,7 @@
         "CBC3407",
         "",
         "",
-        "CBC3401",
+        "CBC3401/CBC3402",
         "EEE3103"
       ],
       "isHoliday": false
@@ -35,7 +35,7 @@
       "day": "Wednesday",
       "hours": [
         "CBC2506",
-        "CBC3401",
+        "CBC3401/CBC3402",
         "PPS4027",
         "PPS4027",
         "",
@@ -64,7 +64,7 @@
       "hours": [
         "CBC2506",
         "",
-        "CBC3407",
+        "CBC3407/CBC3413",
         "",
         "",
         "",
