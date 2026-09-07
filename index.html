@@ -275,7 +275,7 @@
           </h2>
         </div>
 
-        <div id="upcomingClassesList" class="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+        <div id="upcomingClassesList" class="space-y-2 max-h-[320px] overflow-y-auto pr-1 no-scrollbar">
           <p class="text-sm text-gray-500">
             Select a timetable to see upcoming classes.
           </p>
@@ -473,11 +473,10 @@
 
       <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
         <h2 class="font-semibold">Subject-wise Prediction Cards</h2>
-        <button id="addCalendarBtn" class="btn-ghost text-xs" data-action="add-calendar"><i
-            class="fas fa-calendar-plus mr-1"></i>Add to Calendar</button>
       </div>
       <div class="mb-4">
         <select id="predCardsWeekSelect" class="w-full rounded-lg px-3 py-2">
+          <option value="current">Current</option>
           <option value="1">Week 1</option>
           <option value="2">Week 2</option>
         </select>
@@ -525,7 +524,7 @@
               <!-- Text Results -->
               <div class="flex flex-col items-start text-left min-w-0">
                 <div class="mb-2">
-                  <span id="qcPercent" class="text-4xl md:text-8xl font-bold tracking-tighter">--%</span>
+                  <span id="qcPercent" class="text-4xl md:text-6xl font-bold tracking-tight">--%</span>
                   <p id="qcStatus" class="text-sm md:text-xl text-gray-400 mt-1 font-medium">Enter values</p>
                 </div>
                 <div class="flex flex-row items-center gap-5 md:gap-10 mt-2">
@@ -602,7 +601,7 @@
               <!-- Text Results -->
               <div class="flex flex-col items-start text-left min-w-0">
                 <div class="mb-2">
-                  <span id="calcPercent" class="text-4xl md:text-8xl font-bold tracking-tighter">--%</span>
+                  <span id="calcPercent" class="text-4xl md:text-6xl font-bold tracking-tight">--%</span>
                   <p id="calcStatus" class="text-sm md:text-xl text-gray-400 mt-1 font-medium">Select Subject</p>
                 </div>
                 <div class="flex flex-row items-center gap-5 md:gap-10 mt-2">

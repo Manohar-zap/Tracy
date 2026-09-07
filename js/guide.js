@@ -31,13 +31,6 @@ const GUIDE_STEPS = [
     text: "View your attendance predictions and safe bunk limits.",
   },
   {
-    page: "prediction",
-    target: "#addCalendarBtn",
-    title: "📆 Add to Calendar",
-    text: "Add predicted classes to your calendar.",
-    pos: "bottom",
-  },
-  {
     page: "analytics",
     target: "#dailyUploadBtn",
     title: "📊 Daily Analysis",

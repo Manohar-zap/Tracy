@@ -229,6 +229,14 @@ function setupGlobalEventListeners() {
   if (adsCloseBtn) {
     adsCloseBtn.addEventListener("click", closeAdsPopup);
   }
+
+  // Prediction Cards Week Selector
+  const predWeekSelect = document.getElementById("predCardsWeekSelect");
+  if (predWeekSelect) {
+    predWeekSelect.addEventListener("change", () => {
+      renderPredCards();
+    });
+  }
 }
 
 function switchCampusTab(tab) {

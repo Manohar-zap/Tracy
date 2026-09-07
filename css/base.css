@@ -37,6 +37,19 @@ body {
       border-radius: 100px;
     }
 
+#upcomingClassesList,
+.no-scrollbar {
+      -ms-overflow-style: none !important;  /* IE and Edge */
+      scrollbar-width: none !important;  /* Firefox */
+    }
+
+#upcomingClassesList::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
+      display: none !important;  /* Safari and Chrome */
+      width: 0 !important;
+      height: 0 !important;
+    }
+
 .border-warning-flash {
       border-color: #f59e0b !important;
     }

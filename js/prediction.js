@@ -305,7 +305,7 @@ function renderPredCards() {
   const el = document.getElementById("predCards");
   if (!el) return;
 
-  const week = document.getElementById("predCardsWeekSelect")?.value || "1";
+  const week = document.getElementById("predCardsWeekSelect")?.value || "current";
 
   const w1 = getTimetableById(STATE.week1TimetableId);
   const w2 = getTimetableById(STATE.week2TimetableId);
@@ -331,7 +331,9 @@ function renderPredCards() {
     .forEach((s) => {
       let extra = 0;
 
-      if (week === "1") {
+      if (week === "current" || week === "0") {
+        extra = 0;
+      } else if (week === "1") {
         extra = w1
           ? countSubjectInRows(
               w1.rows,
@@ -341,14 +343,14 @@ function renderPredCards() {
               0,
             )
           : 0;
-      } else {
+      } else if (week === "2") {
         const week1Remainder = w1
           ? countSubjectInRows(
               w1.rows,
               s.name,
               todayIdx,
               STATE.weekOverrides.week1,
-              1,
+              0,
             )
           : 0;
 
@@ -407,7 +409,7 @@ function renderPredCards() {
 
       const extraP = document.createElement("p");
       extraP.className = "text-xs text-indigo-400 mt-1";
-      extraP.textContent = `+${extra} classes`;
+      extraP.textContent = extra > 0 ? `+${extra} classes` : "Current Status";
       card.appendChild(extraP);
 
       const statusP = document.createElement("p");

@@ -99,7 +99,11 @@ function renderCalc() {
   document.getElementById("calcAttendedInput").value = a;
 
   if (!t) {
-    document.getElementById("calcPercent").textContent = "--%";
+    const calcPctEl = document.getElementById("calcPercent");
+    if (calcPctEl) {
+      calcPctEl.textContent = "--%";
+      calcPctEl.className = "text-4xl md:text-6xl font-bold tracking-tight";
+    }
     document.getElementById("calcStatus").textContent = "Select Subject";
     const needEl = document.getElementById("calcNeed");
     const bunkEl = document.getElementById("calcBunk");
@@ -117,13 +121,13 @@ function renderCalc() {
   const calcStatus = document.getElementById("calcStatus");
 
   if (pct >= STATE.target) {
-    pctEl.className = "text-3xl md:text-5xl font-bold text-green-400";
+    pctEl.className = "text-4xl md:text-6xl font-bold text-green-400";
     if (calcStatus) calcStatus.textContent = getStatusText("safe");
   } else if (pct >= STATE.target - 10) {
-    pctEl.className = "text-3xl md:text-5xl font-bold text-yellow-400";
+    pctEl.className = "text-4xl md:text-6xl font-bold text-yellow-400";
     if (calcStatus) calcStatus.textContent = getStatusText("warning");
   } else {
-    pctEl.className = "text-3xl md:text-5xl font-bold text-red-400";
+    pctEl.className = "text-4xl md:text-6xl font-bold text-red-400";
     if (calcStatus) calcStatus.textContent = getStatusText("risk");
   }
 
@@ -225,7 +229,7 @@ function renderQuickCalc() {
 
   if (!total) {
     pctEl.textContent = "--%";
-    pctEl.className = "text-3xl font-bold";
+    pctEl.className = "text-4xl md:text-6xl font-bold tracking-tight";
     statusEl.textContent = "Enter values";
     document.getElementById("qcNeed").textContent = "--";
     document.getElementById("qcBunk").textContent = "--";
@@ -237,13 +241,13 @@ function renderQuickCalc() {
   pctEl.textContent = pct.toFixed(1) + "%";
 
   if (pct >= quickCalcTarget) {
-    pctEl.className = "text-3xl font-bold text-green-400";
+    pctEl.className = "text-4xl md:text-6xl font-bold text-green-400";
     statusEl.textContent = getStatusText("safe");
   } else if (pct >= quickCalcTarget - 10) {
-    pctEl.className = "text-3xl font-bold text-yellow-400";
+    pctEl.className = "text-4xl md:text-6xl font-bold text-yellow-400";
     statusEl.textContent = getStatusText("warning");
   } else {
-    pctEl.className = "text-3xl font-bold text-red-400";
+    pctEl.className = "text-4xl md:text-6xl font-bold text-red-400";
     statusEl.textContent = getStatusText("risk");
   }
 

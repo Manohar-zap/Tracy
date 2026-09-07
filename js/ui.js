@@ -23,147 +23,129 @@ function renderUpcomingClasses() {
     const cellParts = String(cell || "")
       .toLowerCase()
       .split(/[\/\n,&+]/)
-      .map(p => clean(p.trim()))
+      .map((p) => clean(p.trim()))
       .filter(Boolean);
 
     return STATE.subjects.find((s) => {
       const subjectKey = clean(s.name);
-      return cellParts.some(part => {
+      return cellParts.some((part) => {
         const p = SUBJECT_ALIASES[part] || part;
         return subjectKey.includes(p) || p.includes(subjectKey);
       });
     });
   };
 
-  const showTomorrowAfter = 17; // 5 PM
-  const currentHour = now.getHours();
+  const date = new Date(now);
+  date.setHours(0, 0, 0, 0);
 
-  for (let offset = 0; offset < 7 && upcoming.length < 10; offset++) {
-    // Before 5 PM, only show today. After 5 PM, only show tomorrow.
-    if (currentHour < showTomorrowAfter) {
-      if (offset > 0) break;
-    } else {
-      if (offset === 0) continue;
-      if (offset > 1) break;
-    }
+  if (isUniversityHoliday(date)) {
+    el.innerHTML = genZMode
+      ? `
+      <div class="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-5 text-center">
+        <div class="text-3xl mb-2">🎈</div>
+        <p class="text-base font-bold text-indigo-400 uppercase tracking-widest">Absolute Cinema</p>
+        <p class="text-xs text-gray-500 mt-1">
+          Today is a holiday. Just vibes 🥂
+        </p>
+      </div>
+    `
+      : `
+      <div class="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-5 text-center">
+        <div class="text-3xl mb-2">🥳</div>
+        <p class="text-base font-bold text-indigo-400">It's a Holiday!</p>
+        <p class="text-xs text-gray-500 mt-1">
+          Today is a university holiday. Enjoy your break!
+        </p>
+      </div>
+    `;
+    return;
+  }
 
-    const date = new Date(now);
-    date.setHours(0, 0, 0, 0);
-    date.setDate(now.getDate() + offset);
+  const dayIdx = date.getDay();
 
-    if (isUniversityHoliday(date)) {
-      const dayLabel = offset === 0 ? "Today" : "Tomorrow";
-      el.innerHTML = genZMode
-        ? `
-        <div class="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-5 text-center">
-          <div class="text-3xl mb-2">🎈</div>
-          <p class="text-base font-bold text-indigo-400 uppercase tracking-widest">Absolute Cinema</p>
-          <p class="text-xs text-gray-500 mt-1">
-            ${dayLabel} is a holiday. Just vibes 🥂
-          </p>
-        </div>
-      `
-        : `
-        <div class="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-5 text-center">
-          <div class="text-3xl mb-2">🥳</div>
-          <p class="text-base font-bold text-indigo-400">It's a Holiday!</p>
-          <p class="text-xs text-gray-500 mt-1">
-            ${dayLabel} is a university holiday. Enjoy your break!
-          </p>
-        </div>
-      `;
-      return;
-    }
+  const row = tt.rows.find(
+    (r) => weekdayOrderIndex(r.day) === (dayIdx === 0 ? 7 : dayIdx),
+  );
 
-    const dayIdx = date.getDay();
-
-    const row = tt.rows.find(
-      (r) => weekdayOrderIndex(r.day) === (dayIdx === 0 ? 7 : dayIdx),
-    );
-
-    if (!row) continue;
-
+  if (row) {
     const dayKey = normalizeDayName(row.day);
 
-    if (overrides.suspendedDays?.includes(dayKey)) {
-      continue;
-    }
+    if (!overrides.suspendedDays?.includes(dayKey)) {
+      row.hours.forEach((cell, hIdx) => {
+        if (upcoming.length >= 10) return;
 
-    row.hours.forEach((cell, hIdx) => {
-      if (upcoming.length >= 10) return;
+        const text = String(cell || "").trim();
 
-      const text = String(cell || "").trim();
+        if (!text || text.toLowerCase().includes("holiday")) return;
 
-      if (!text || text.toLowerCase().includes("holiday")) return;
+        const sched = HOUR_SCHEDULE[hIdx];
+        if (!sched) return;
 
-      const sched = HOUR_SCHEDULE[hIdx];
-      if (!sched) return;
+        const [sh, sm] = sched.start.split(":").map(Number);
+        const [eh, em] = sched.end.split(":").map(Number);
 
-      const [sh, sm] = sched.start.split(":").map(Number);
-      const [eh, em] = sched.end.split(":").map(Number);
+        const startMinutes = sh * 60 + sm;
+        const endMinutes = eh * 60 + em;
 
-      const startMinutes = sh * 60 + sm;
-      const endMinutes = eh * 60 + em;
+        if (currentMinutes >= endMinutes) {
+          return;
+        }
 
-      if (
-        offset === 0 &&
-        currentMinutes >= endMinutes
-      ) {
-        return;
-      }
+        const subject = findSubject(text);
 
-      const subject = findSubject(text);
+        if (!subject) return;
 
-      if (!subject) return;
+        const suspendedSubjects = overrides.suspendedSubjects?.[dayKey] || [];
 
-      const suspendedSubjects =
-        overrides.suspendedSubjects?.[dayKey] || [];
+        const isSuspended = suspendedSubjects.some(
+          (s) => clean(s) === clean(subject.name),
+        );
 
-      const isSuspended = suspendedSubjects.some(
-        (s) => clean(s) === clean(subject.name),
-      );
+        if (isSuspended) return;
 
-      if (isSuspended) return;
+        const currentAttended =
+          (subject.attended || 0) + (subject.dutyLeave || 0);
 
-      const currentAttended =
-        (subject.attended || 0) + (subject.dutyLeave || 0);
+        const currentTotal = subject.total || 0;
 
-      const currentTotal = subject.total || 0;
+        const currentPct = currentTotal
+          ? (currentAttended / currentTotal) * 100
+          : 0;
 
-      const currentPct = currentTotal
-        ? (currentAttended / currentTotal) * 100
-        : 0;
+        const afterAttended = currentAttended + 1;
+        const afterTotal = currentTotal + 1;
 
-      const afterAttended = currentAttended + 1;
-      const afterTotal = currentTotal + 1;
+        const afterAbsent = currentAttended;
+        const afterAbsentTotal = currentTotal + 1;
 
-      const afterPct =
-        (afterAttended / afterTotal) * 100;
+        const afterPct = (afterAttended / afterTotal) * 100;
 
-      const { need, bunk } = calcNeedAndBunk(
-        {
-          attended: afterAttended,
-          total: afterTotal,
-        },
-        STATE.target,
-      );
+        const afterAbsentPct = (afterAbsent / afterAbsentTotal) * 100;
 
-      const isNow =
-        offset === 0 &&
-        currentMinutes >= startMinutes &&
-        currentMinutes < endMinutes;
+        const { need, bunk } = calcNeedAndBunk(
+          {
+            attended: afterAttended,
+            total: afterTotal,
+          },
+          STATE.target,
+        );
 
-      upcoming.push({
-        subject,
-        sched,
-        date,
-        currentPct,
-        afterPct,
-        need,
-        bunk,
-        isNow,
+        const isNow =
+          currentMinutes >= startMinutes && currentMinutes < endMinutes;
+
+        upcoming.push({
+          subject,
+          sched,
+          date,
+          currentPct,
+          afterPct,
+          afterAbsentPct,
+          need,
+          bunk,
+          isNow,
+        });
       });
-    });
+    }
   }
 
   if (!upcoming.length) {
@@ -196,10 +178,7 @@ function renderUpcomingClasses() {
             ? `+${item.bunk} Aura`
             : `${item.bunk} safe bunks`;
 
-      const bunkClass =
-        item.need > 0
-          ? "text-yellow-400"
-          : "text-green-400";
+      const bunkClass = item.need > 0 ? "text-yellow-400" : "text-green-400";
 
       return `
         <div class="rounded-xl border border-white/5 bg-white/[0.02] p-3">
@@ -237,9 +216,21 @@ function renderUpcomingClasses() {
           </div>
 
           <div class="flex items-center justify-between mt-2 pt-2 border-t border-white/5">
-            <p class="text-xs text-gray-500">
-              ${item.currentPct.toFixed(1)}%
-              <span class="mx-1">→</span>
+            <div class="text-xs font-medium">
+              <span class="${
+                item.afterAbsentPct >= STATE.target
+                  ? "text-green-400"
+                  : item.afterAbsentPct >= STATE.target - 10
+                    ? "text-yellow-400"
+                    : "text-red-400"
+              }">
+                ${item.afterAbsentPct.toFixed(1)}%(A)
+              </span>
+              <span class="mx-1 text-gray-500">←</span>
+              <span class="text-gray-300">
+                ${item.currentPct.toFixed(1)}%
+              </span>
+              <span class="mx-1 text-gray-500">→</span>
               <span class="${
                 item.afterPct >= STATE.target
                   ? "text-green-400"
@@ -247,14 +238,13 @@ function renderUpcomingClasses() {
                     ? "text-yellow-400"
                     : "text-red-400"
               }">
-                ${item.afterPct.toFixed(1)}%
+                ${item.afterPct.toFixed(1)}%(P)
               </span>
-              <span class="ml-1">after attending</span>
-            </p>
+            </div>
 
-            <p class="text-xs font-medium ${bunkClass}">
+            <div class="${bunkClass} text-xs font-semibold shrink-0">
               ${bunkText}
-            </p>
+            </div>
           </div>
         </div>
       `;
@@ -268,7 +258,8 @@ function renderDashboard() {
   const { totalAttended, totalClasses, overall } = calcStats(STATE.subjects);
 
   const overallEl = document.getElementById("dashOverall");
-  if (overallEl) overallEl.textContent = totalClasses ? overall.toFixed(1) + "%" : "--%";
+  if (overallEl)
+    overallEl.textContent = totalClasses ? overall.toFixed(1) + "%" : "--%";
 
   const barEl = document.getElementById("dashOverallBar");
   if (barEl) barEl.style.width = overall.toFixed(1) + "%";
@@ -290,14 +281,16 @@ function renderDashboard() {
     if (presentSub) presentSub.textContent = "Total classes attended";
     if (absentLabel) absentLabel.textContent = "Absent";
     if (absentSub) absentSub.textContent = "Missed classes";
-    if (statusSub) statusSub.innerHTML = `vs <span id="dashTarget">${STATE.target}%</span> target`;
+    if (statusSub)
+      statusSub.innerHTML = `vs <span id="dashTarget">${STATE.target}%</span> target`;
   }
 
   const presentVal = document.getElementById("dashPresent");
   if (presentVal) presentVal.textContent = totalClasses ? totalAttended : "--";
 
   const absentVal = document.getElementById("dashAbsent");
-  if (absentVal) absentVal.textContent = totalClasses ? totalClasses - totalAttended : "--";
+  if (absentVal)
+    absentVal.textContent = totalClasses ? totalClasses - totalAttended : "--";
 
   // Re-check targetEl if it wasn't wiped by .textContent
   const targetEl = document.getElementById("dashTarget");
@@ -308,7 +301,8 @@ function renderDashboard() {
     if (totalClasses) {
       const ok = overall >= STATE.target;
       statusEl.textContent = ok ? getStatusText("safe") : getStatusText("risk");
-      statusEl.className = "text-2xl font-bold " + (ok ? "text-green-400" : "text-red-400");
+      statusEl.className =
+        "text-2xl font-bold " + (ok ? "text-green-400" : "text-red-400");
     } else {
       statusEl.textContent = "--";
       statusEl.className = "text-2xl font-bold";
