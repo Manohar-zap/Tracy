@@ -80,10 +80,12 @@ function showGuideStep() {
 
     if (target) {
       target.classList.add("guide-highlight");
-      target.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
+      if (typeof target.scrollIntoView === "function") {
+        target.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
 
       // Position modal away from target with a reliable delay
       setTimeout(() => {

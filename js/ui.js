@@ -201,7 +201,7 @@ function renderUpcomingClasses() {
               </div>
 
               <p class="text-sm font-semibold truncate mt-1">
-                ${item.subject.name}
+                ${escapeHtml(item.subject.name)}
               </p>
             </div>
 
@@ -215,8 +215,8 @@ function renderUpcomingClasses() {
             </div>
           </div>
 
-          <div class="flex items-center justify-between mt-2 pt-2 border-t border-white/5">
-            <div class="text-xs font-medium">
+          <div class="flex items-center justify-between mt-2 pt-2 border-t border-white/5 flex-wrap gap-1 sm:gap-2">
+            <div class="text-[11px] sm:text-xs font-medium">
               <span class="${
                 item.afterAbsentPct >= STATE.target
                   ? "text-green-400"
@@ -226,11 +226,11 @@ function renderUpcomingClasses() {
               }">
                 ${item.afterAbsentPct.toFixed(1)}%(A)
               </span>
-              <span class="mx-1 text-gray-500">←</span>
+              <span class="mx-0.5 sm:mx-1 text-gray-500">←</span>
               <span class="text-gray-300">
                 ${item.currentPct.toFixed(1)}%
               </span>
-              <span class="mx-1 text-gray-500">→</span>
+              <span class="mx-0.5 sm:mx-1 text-gray-500">→</span>
               <span class="${
                 item.afterPct >= STATE.target
                   ? "text-green-400"
@@ -242,7 +242,7 @@ function renderUpcomingClasses() {
               </span>
             </div>
 
-            <div class="${bunkClass} text-xs font-semibold shrink-0">
+            <div class="${bunkClass} text-[11px] sm:text-xs font-semibold shrink-0">
               ${bunkText}
             </div>
           </div>
@@ -358,34 +358,47 @@ function renderDashboard() {
 
     card.appendChild(mainInfo);
 
-    const rightInfo = document.createElement("div");
-    rightInfo.className = "text-right flex-shrink-0";
+    const rightGroup = document.createElement("div");
+    rightGroup.className = "text-right flex-shrink-0 flex flex-col items-end justify-center min-w-[75px]";
+
+    const topRow = document.createElement("div");
+    topRow.className = "flex items-center gap-1.5 justify-end";
+
     const pctSpan = document.createElement("span");
     pctSpan.className = `text-sm font-bold ${cls}`;
     pctSpan.textContent = `${pct.toFixed(1)}%`;
-    rightInfo.appendChild(pctSpan);
-    const countsP = document.createElement("p");
-    countsP.className = "text-xs text-gray-500";
-    countsP.textContent = genZMode
-      ? `${(s.attended || 0) + (s.dutyLeave || 0)} Handled`
-      : `${(s.attended || 0) + (s.dutyLeave || 0)}/${s.total}`;
-    rightInfo.appendChild(countsP);
-    card.appendChild(rightInfo);
+    topRow.appendChild(pctSpan);
+    rightGroup.appendChild(topRow);
 
-    const statusDiv = document.createElement("div");
-    statusDiv.className = "text-right text-xs flex-shrink-0";
+    const bottomRow = document.createElement("div");
+    bottomRow.className = "flex items-center gap-1.5 justify-end text-[11px] sm:text-xs";
+
+    const countsSpan = document.createElement("span");
+    countsSpan.className = "text-gray-500 font-medium";
+    countsSpan.textContent = genZMode
+      ? `${(s.attended || 0) + (s.dutyLeave || 0)} Done`
+      : `${(s.attended || 0) + (s.dutyLeave || 0)}/${s.total}`;
+    bottomRow.appendChild(countsSpan);
+
+    const dot = document.createElement("span");
+    dot.className = "text-gray-600";
+    dot.textContent = "•";
+    bottomRow.appendChild(dot);
+
     const statusSpan = document.createElement("span");
     if (need > 0) {
-      statusSpan.className = "text-yellow-400";
-      statusSpan.textContent = genZMode ? `Dial In ${need}` : `Need +${need}`;
+      statusSpan.className = "text-yellow-400 font-semibold";
+      statusSpan.textContent = genZMode ? `+${need}` : `Need ${need}`;
     } else {
-      statusSpan.className = "text-green-400";
+      statusSpan.className = "text-green-400 font-semibold";
       statusSpan.textContent = genZMode
-        ? `+${bunk} Aura`
-        : `${bunk} bunks safe`;
+        ? `+${bunk}`
+        : `${bunk} safe`;
     }
-    statusDiv.appendChild(statusSpan);
-    card.appendChild(statusDiv);
+    bottomRow.appendChild(statusSpan);
+    rightGroup.appendChild(bottomRow);
+
+    card.appendChild(rightGroup);
 
     listEl.appendChild(card);
   });
@@ -519,11 +532,19 @@ function updateTargetUI() {
 // ─────────────────────────────────────────────
 let _confirmCallback = null;
 
-function confirmAction(msg, cb) {
+function confirmAction(msg, cb, options = {}) {
   closeManageData(); // Hide Manage Data first
 
   _confirmCallback = cb;
-  document.getElementById("confirmMsg").textContent = msg;
+  const titleEl = document.getElementById("confirmTitle");
+  if (titleEl) titleEl.textContent = options.title || "Confirm";
+  const msgEl = document.getElementById("confirmMsg");
+  if (msgEl) msgEl.textContent = msg;
+  const okBtn = document.getElementById("confirmOk");
+  if (okBtn) {
+    okBtn.className = options.btnClass || "btn-danger";
+    okBtn.textContent = options.btnText || "Confirm";
+  }
   document.getElementById("confirmModal").classList.add("open");
 }
 function closeConfirm() {
@@ -629,10 +650,10 @@ function toggleTheme() {
   const icon = document.getElementById("themeIcon");
 
   if (document.body.classList.contains("light-theme")) {
-    icon.className = "fas fa-sun text-yellow-500";
+    if (icon) icon.className = "fas fa-sun text-yellow-500";
     localStorage.setItem("theme", "light");
   } else {
-    icon.className = "fas fa-moon text-yellow-300";
+    if (icon) icon.className = "fas fa-moon text-yellow-300";
     localStorage.setItem("theme", "dark");
   }
   const meta = document.querySelector('meta[name="theme-color"]');

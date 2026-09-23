@@ -1,4 +1,27 @@
 const SITE_CLOSED = false;
+const CAMPUS_API =
+  "https://script.google.com/macros/s/AKfycbzJN3ifkutdyS5LfCOpS3iKClUPa2n3y9QV8Rlc5myvxTv6X6IwS_mykedcEr3hq6Ud/exec";
+
+function validateUrl(url) {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch (e) {
+    return false;
+  }
+}
+
+function escapeHtml(str) {
+  if (str == null) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 const STATE = {
   subjects: [], // [{ id, name, attended, total }]
   profile: {}, // { name, dept, roll, batch, term, reg }
@@ -193,3 +216,7 @@ function initSiteConfig() {
 }
 
 // ─────────────────────────────────────────────
+window.STATE = STATE;
+window.escapeHtml = escapeHtml;
+window.validateUrl = validateUrl;
+window.clean = clean;

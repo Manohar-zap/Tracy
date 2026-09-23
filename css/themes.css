@@ -279,6 +279,12 @@ body.light-theme .number-input {
       border-color: #e2e8f0;
     }
 
+body.light-theme .tt-table th:first-child,
+    body.light-theme .tt-table td:first-child {
+      background: #ffffff;
+      border-right: 2px solid #cbd5e1;
+    }
+
 body.light-theme .tt-table td,
     body.light-theme .pred-table td {
       border-color: #e2e8f0;
@@ -288,6 +294,21 @@ body.light-theme .tt-table td,
 body.light-theme .tt-table tr:hover,
     body.light-theme .pred-table tr:hover {
       background: #f8fafc;
+    }
+
+body.light-theme .quick-target-btn {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+
+body.light-theme .quick-target-btn:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+
+body.light-theme .quick-target-btn.active {
+      background: #4f46e5 !important;
+      color: #ffffff !important;
     }
 
 /* Modals & Toasts */

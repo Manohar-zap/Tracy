@@ -87,21 +87,46 @@
     }
 
 .tt-table {
-      border-collapse: collapse;
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
     }
 
 .tt-table td,
-    .tt-table th {
-      border: 1px solid rgba(255, 255, 255, 0.07);
+.tt-table th {
+      border-right: 1px solid rgba(255, 255, 255, 0.07);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
       padding: 8px 10px;
       font-size: 12px;
       white-space: nowrap;
+    }
+
+.tt-table tr:first-child th {
+      border-top: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+.tt-table th:first-child,
+.tt-table td:first-child {
+      border-left: 1px solid rgba(255, 255, 255, 0.07);
+      position: sticky;
+      left: 0;
+      z-index: 5;
+      background: #121217;
+      border-right: 2px solid rgba(99, 102, 241, 0.25);
     }
 
 .tt-table th {
       color: var(--text);
       background: var(--card-bg);
       font-weight: 600;
+    }
+
+@media (max-width: 640px) {
+      .tt-table td,
+      .tt-table th {
+        padding: 6px 8px;
+        font-size: 11px;
+      }
     }
 
 .sub-card {
@@ -140,10 +165,27 @@
       font-size: 16px;
       font-weight: bold;
       cursor: pointer;
-      transition: background 0.15s;
+      transition: background 0.15s, transform 0.1s;
       background: rgba(255, 255, 255, 0.07);
       color: #f1f5f9;
       padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+.ctrl-btn:active {
+      transform: scale(0.92);
+    }
+
+@media (max-width: 768px) {
+      .ctrl-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+      }
     }
 
 .ctrl-btn.minus {
@@ -173,11 +215,18 @@
       font-weight: 600;
       border: none;
       cursor: pointer;
-      transition: background 0.15s;
+      transition: background 0.15s, transform 0.1s;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
     }
 
 .btn-primary:hover {
       background: var(--primary-dark);
+    }
+
+.btn-primary:active {
+      transform: scale(0.96);
     }
 
 .btn-ghost {
@@ -189,11 +238,18 @@
       font-weight: 500;
       border: none;
       cursor: pointer;
-      transition: background 0.15s;
+      transition: background 0.15s, transform 0.1s;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
     }
 
 .btn-ghost:hover {
       background: var(--sidebar);
+    }
+
+.btn-ghost:active {
+      transform: scale(0.96);
     }
 
 .btn-ghost.active {
@@ -210,11 +266,18 @@
       font-weight: 500;
       border: none;
       cursor: pointer;
-      transition: background 0.15s;
+      transition: background 0.15s, transform 0.1s;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
     }
 
 .btn-danger:hover {
       background: rgba(239, 68, 68, 0.3);
+    }
+
+.btn-danger:active {
+      transform: scale(0.96);
     }
 
 .btn-success {
@@ -226,11 +289,44 @@
       font-weight: 500;
       border: none;
       cursor: pointer;
-      transition: background 0.15s;
+      transition: background 0.15s, transform 0.1s;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
     }
 
 .btn-success:hover {
       background: rgba(16, 185, 129, 0.3);
+    }
+
+.btn-success:active {
+      transform: scale(0.96);
+    }
+
+.quick-target-btn {
+      background: rgba(255, 255, 255, 0.07);
+      color: #94a3b8;
+      cursor: pointer;
+      transition: all 0.15s;
+      min-height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+.quick-target-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #f1f5f9;
+    }
+
+.quick-target-btn.active {
+      background: var(--primary) !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.35);
     }
 
 select {
@@ -391,6 +487,7 @@ input[type=number] {
 
 .dropdown-btn {
       width: 100%;
+      min-height: 42px;
       padding: 10px 14px;
       border: 1px solid var(--card-border);
       border-radius: 10px;
@@ -400,6 +497,8 @@ input[type=number] {
       justify-content: space-between;
       align-items: center;
       cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
 
 .dropdown-menu {
@@ -410,8 +509,9 @@ input[type=number] {
       background: var(--sidebar);
       border: 1px solid var(--card-border);
       border-radius: 10px;
-      max-height: 220px;
+      max-height: 240px;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
       display: none;
       z-index: 100;
     }
@@ -422,12 +522,19 @@ input[type=number] {
 
 .dropdown-item {
       padding: 10px 14px;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
       cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
 
 .dropdown-item:hover {
       background: rgba(99, 102, 241, .18);
-    }#inlineAdsSlides img {
+    }
+
+#inlineAdsSlides img {
       width: 100%;
       border-radius: 12px;
       display: block;

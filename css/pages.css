@@ -15,7 +15,7 @@
     }
 
 .modal {
-      background: var(--card-bg);
+      background: #121217;
       border: 1px solid var(--card-border);
       border-radius: 16px;
       padding: 24px;
@@ -23,7 +23,19 @@
       max-width: 460px;
       max-height: 85vh;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
       color: var(--text);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    }
+
+@media (max-width: 640px) {
+      .modal {
+        width: calc(100% - 24px);
+        max-width: 100%;
+        padding: 18px 16px;
+        border-radius: 16px;
+        max-height: 88vh;
+      }
     }
 
 #toast {
@@ -45,6 +57,16 @@
       opacity: 0;
       transition: transform .3s, opacity .3s;
       max-width: 320px;
+    }
+
+@media (max-width: 768px) {
+      #toast {
+        bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+        right: 14px;
+        left: 14px;
+        max-width: calc(100% - 28px);
+        text-align: center;
+      }
     }
 
 #toast.show {
@@ -145,6 +167,16 @@
 
 .ads-nav.next {
       right: -12px;
+    }
+
+@media (max-width: 640px) {
+      .ads-nav.prev {
+        left: 4px;
+      }
+
+      .ads-nav.next {
+        right: 4px;
+      }
     }
 
 .ads-close {

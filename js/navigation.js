@@ -213,6 +213,30 @@ function setupGlobalEventListeners() {
         case "close-subj-pred-modal":
           closeSubjPredModal();
           break;
+        case "open-add-subject":
+          openSubjectModal();
+          break;
+        case "close-subject-modal":
+          closeSubjectModal();
+          break;
+        case "save-new-subject":
+          saveNewSubject();
+          break;
+        case "close-edit-subject-modal":
+          closeEditSubjectModal();
+          break;
+        case "save-edit-subject":
+          saveEditedSubject();
+          break;
+        case "export-calendar":
+          addAllPredCardsToCalendar();
+          break;
+        case "set-qc-target":
+          const qcT = parseInt(target.dataset.t, 10);
+          if (!isNaN(qcT) && typeof setQuickCalcTarget === "function") {
+            setQuickCalcTarget(qcT);
+          }
+          break;
       }
     }
   });

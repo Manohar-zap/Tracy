@@ -1,16 +1,3 @@
-const CAMPUS_API =
-  "https://script.google.com/macros/s/AKfycbzJN3ifkutdyS5LfCOpS3iKClUPa2n3y9QV8Rlc5myvxTv6X6IwS_mykedcEr3hq6Ud/exec";
-
-function validateUrl(url) {
-  if (!url) return false;
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
-  } catch (e) {
-    return false;
-  }
-}
-
 function renderCampusPosts(posts) {
   const grid = document.getElementById("clubGrid");
   if (!grid) return;

@@ -34,14 +34,14 @@ function resetAttendanceCounts() {
 }
 
 function resetDailyAnalysis() {
-  dailySubjectMap = {};
-  dailyOverallMap = {};
+  if (typeof dailySubjectMap !== "undefined") dailySubjectMap = {};
+  if (typeof dailyOverallMap !== "undefined") dailyOverallMap = {};
 
   STATE.dailySubjectMap = {};
   STATE.dailyOverallMap = {};
 
   saveState();
-  if (dailyChartInst) {
+  if (typeof dailyChartInst !== "undefined" && dailyChartInst) {
     dailyChartInst.destroy();
     dailyChartInst = null;
   }
@@ -53,7 +53,19 @@ function resetDailyAnalysis() {
 }
 
 function fullReset() {
-  localStorage.removeItem(LS_KEY);
+  try {
+    localStorage.removeItem(LS_KEY);
+    localStorage.removeItem("theme");
+    localStorage.removeItem("genZMode");
+    localStorage.removeItem("guideSeen");
+    localStorage.removeItem("lastHiddenTime");
+    sessionStorage.clear();
+    if ("caches" in window) {
+      caches.keys().then((keys) => keys.forEach((k) => caches.delete(k)));
+    }
+  } catch (e) {
+    console.error(e);
+  }
   location.reload();
 }
 

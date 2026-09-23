@@ -1,6 +1,5 @@
 let ttFileChosen = null;
 let previewWeekNum = 1;
-let dailyOverallMap = {};
 
 function buildTimetableRows(sheet) {
   const raw = XLSX.utils.sheet_to_json(sheet, {
@@ -113,7 +112,9 @@ async function loadBuiltInTimetable(fileName) {
 }
 
 function uploadTimetableFile() {
-  const label = document.getElementById("ttLabelInput").value.trim();
+  const labelEl = document.getElementById("ttLabelInput");
+  if (!labelEl) return;
+  const label = labelEl.value.trim();
   if (!label) {
     showToast("Give this timetable a label.");
     return;
@@ -146,11 +147,12 @@ function uploadTimetableFile() {
     STATE.timetables.push({ id: genId(), label, rows, source: "manual" });
     saveState();
 
-    document.getElementById("ttLabelInput").value = "";
+    if (labelEl) labelEl.value = "";
     ttFileChosen = null;
-    document.getElementById("ttFileChosenLabel").textContent =
-      "Choose Excel File";
-    document.getElementById("ttFileInput").value = "";
+    const chosenLabel = document.getElementById("ttFileChosenLabel");
+    if (chosenLabel) chosenLabel.textContent = "Choose Excel File";
+    const fileInput = document.getElementById("ttFileInput");
+    if (fileInput) fileInput.value = "";
 
     renderTimetablePage();
     showToast('Timetable "' + label + '" uploaded ✓');
@@ -304,7 +306,8 @@ const isIOS =
   (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
 const isStandalone =
-  window.matchMedia("(display-mode: standalone)").matches ||
+  (typeof window.matchMedia === "function" &&
+    window.matchMedia("(display-mode: standalone)").matches) ||
   window.navigator.standalone === true;
 
 window.addEventListener("beforeinstallprompt", (e) => {
@@ -414,12 +417,51 @@ function renderTimetablePreview() {
       tr.appendChild(tdHoliday);
     } else {
       for (let h = 0; h < maxHours; h++) {
-        const v = row.hours[h] || "";
+        const v = String(row.hours[h] || "").trim();
         const td = document.createElement("td");
         if (v.toLowerCase().includes("holiday")) {
           td.className = "opacity-40 line-through";
+          td.textContent = v;
+        } else if (v.includes("/")) {
+          const parts = v.split(/[\/\n,&+]/).map((p) => p.trim()).filter(Boolean);
+          const cleanFn = typeof clean === "function" ? clean : (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+          const aliases = typeof SUBJECT_ALIASES !== "undefined" ? SUBJECT_ALIASES : {};
+
+          let matchedPart = null;
+          if (STATE.subjects && STATE.subjects.length) {
+            for (const part of parts) {
+              const pClean = cleanFn(part);
+              const pResolved = aliases[pClean] || pClean;
+              const hasMatch = STATE.subjects.some((s) => {
+                const sClean = cleanFn(s.name);
+                return sClean.includes(pResolved) || pResolved.includes(sClean);
+              });
+              if (hasMatch) {
+                matchedPart = part;
+                break;
+              }
+            }
+          }
+
+          if (matchedPart) {
+            const others = parts.filter((p) => p !== matchedPart);
+            const othersText = others.join(", ");
+            td.innerHTML = `
+              <div class="flex flex-col items-center gap-0.5">
+                <span class="px-2 py-0.5 rounded-md text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">${escapeHtml(matchedPart)}</span>
+                <span class="text-[10px] text-gray-500 truncate max-w-[100px]" title="Other batches: ${escapeHtml(othersText)}">${escapeHtml(othersText)}</span>
+              </div>
+            `;
+          } else {
+            td.innerHTML = `
+              <div class="flex flex-wrap gap-1 justify-center">
+                ${parts.map((p) => `<span class="px-1.5 py-0.5 rounded text-[11px] bg-white/5 text-gray-300 font-mono">${escapeHtml(p)}</span>`).join("")}
+              </div>
+            `;
+          }
+        } else {
+          td.textContent = v;
         }
-        td.textContent = v;
         tr.appendChild(td);
       }
     }

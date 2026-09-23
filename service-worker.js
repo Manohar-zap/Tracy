@@ -1,4 +1,4 @@
-const CACHE_NAME = "tracy-v5.9.9"; // Bump version to clear old Cache-First entries
+const CACHE_NAME = "tracy-v6.0.0"; // Production hardened release
 
 const ASSETS = [
   "./",
@@ -52,6 +52,14 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(event.request.url);
 
+  // Bypass cache for analytics and ad tracking
+  if (
+    url.hostname.includes("google-analytics.com") ||
+    url.hostname.includes("googlesyndication.com")
+  ) {
+    return;
+  }
+
   // 1. HTML: Network-First (Always check for latest version, fallback to cache)
   if (event.request.mode === "navigate" || url.pathname.endsWith("index.html") || url.pathname === "/") {
     event.respondWith(
@@ -61,7 +69,7 @@ self.addEventListener("fetch", (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
           return response;
         })
-        .catch(() => caches.match(event.request)),
+        .catch(() => caches.match(event.request).then((res) => res || caches.match("./index.html") || caches.match("index.html"))),
     );
     return;
   }
@@ -83,7 +91,6 @@ self.addEventListener("fetch", (event) => {
   }
 
   // 3. App Assets (JS/CSS) & External Resources: Stale-While-Revalidate
-  // Fast from cache, update in background.
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const networkFetch = fetch(event.request).then((networkResponse) => {

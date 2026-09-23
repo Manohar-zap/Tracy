@@ -1,20 +1,6 @@
 // 7. PREDICTION ENGINE (redesigned)
 // ─────────────────────────────────────────────
 
-function normalizeDayName(raw) {
-  return String(raw || "")
-    .toLowerCase()
-    .replace(/[^a-z]/g, "");
-}
-
-// Returns Mon=1 .. Sat=6, Sun=7 (so a Mon-Sun week sorts naturally)
-function weekdayOrderIndex(dayLabel) {
-  const norm = normalizeDayName(dayLabel);
-  const idx = DAY_ORDER.findIndex((d) => norm.includes(d) || d.includes(norm));
-  if (idx === -1) return -1;
-  return idx === 0 ? 7 : idx;
-}
-
 function getDateForTimetableDay(dayLabel, weekOffset = 0) {
   const dayIdx = weekdayOrderIndex(dayLabel);
   if (dayIdx === -1) return null;
@@ -99,17 +85,19 @@ function countSubjectInRows(
         .map((s) => s.trim())
         .filter(Boolean);
 
-      subjectsInCell.forEach((sub) => {
+      const cellMatches = subjectsInCell.some((sub) => {
         let tKey = clean(sub);
 
         if (SUBJECT_ALIASES[tKey]) {
           tKey = SUBJECT_ALIASES[tKey];
         }
 
-        if (sKey.includes(tKey) || tKey.includes(sKey)) {
-          count++;
-        }
+        return sKey.includes(tKey) || tKey.includes(sKey);
       });
+
+      if (cellMatches) {
+        count++;
+      }
     });
   });
 
@@ -225,7 +213,7 @@ function renderPredTable(tableId, weekNum) {
             s.name,
             todayIdx,
             STATE.weekOverrides.week1,
-            1,
+            0,
           )
         : 0;
       const week2Full = w2
@@ -428,22 +416,6 @@ function renderPredCards() {
     });
 }
 
-function getStatusText(type) {
-  if (!genZMode) {
-    return {
-      safe: "Safe ✓",
-      warning: "Warning",
-      risk: "At Risk",
-    }[type];
-  }
-
-  return {
-    safe: "Goated",
-    warning: "Sketchy",
-    risk: "Cooked",
-  }[type];
-}
-
 function openSubjectPredictionModal(id) {
   const s = STATE.subjects.find((subj) => subj.id === id);
   if (!s) return;
@@ -517,17 +489,27 @@ function openSubjectPredictionModal(id) {
         isSkipped ? "border-red-500/30 bg-red-500/5 opacity-60" : "border-white/5 bg-white/5"
       }`;
 
-      div.innerHTML = `
-        <div>
-          <p class="text-xs text-indigo-400 font-medium">${cls.displayDate}</p>
-          <p class="text-sm font-semibold">${cls.label}</p>
-        </div>
-        <button class="px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors ${
-          isSkipped ? "bg-red-500 text-white" : "bg-white/10 text-gray-400 hover:bg-white/20"
-        }" onclick="togglePredictionSkip('${id}', '${cls.skipKey}')">
-          ${isSkipped ? (genZMode ? "Bunk" : "Missed") : (genZMode ? "Lock In" : "Attend")}
-        </button>
-      `;
+      const leftDiv = document.createElement("div");
+      const dateP = document.createElement("p");
+      dateP.className = "text-xs text-indigo-400 font-medium";
+      dateP.textContent = cls.displayDate;
+      const labelP = document.createElement("p");
+      labelP.className = "text-sm font-semibold";
+      labelP.textContent = cls.label;
+      leftDiv.appendChild(dateP);
+      leftDiv.appendChild(labelP);
+      div.appendChild(leftDiv);
+
+      const skipBtn = document.createElement("button");
+      skipBtn.className = `px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors ${
+        isSkipped ? "bg-red-500 text-white" : "bg-white/10 text-gray-400 hover:bg-white/20"
+      }`;
+      skipBtn.textContent = isSkipped
+        ? (genZMode ? "Bunk" : "Missed")
+        : (genZMode ? "Lock In" : "Attend");
+      skipBtn.onclick = () => togglePredictionSkip(id, cls.skipKey);
+      div.appendChild(skipBtn);
+
       listEl.appendChild(div);
     });
 

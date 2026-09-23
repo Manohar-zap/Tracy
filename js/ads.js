@@ -64,7 +64,6 @@ function showAdsPopup() {
 
   const slidesEl = document.getElementById("adsSlides");
   const dotsEl = document.getElementById("adsDots");
-  const hintEl = document.getElementById("adsSwipeHint");
   if (!slidesEl) return;
 
   slidesEl.innerHTML = "";

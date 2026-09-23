@@ -217,8 +217,13 @@ function renderQuickCalc() {
   const attEl = document.getElementById("qcAttended");
   if (!totalEl || !attEl) return;
 
-  const total = parseInt(totalEl.value, 10) || 0;
-  let attended = parseInt(attEl.value, 10) || 0;
+  quickCalcTarget = STATE.quickCalcTarget || quickCalcTarget || 75;
+  document
+    .querySelectorAll(".quick-target-btn")
+    .forEach((b) => b.classList.toggle("active", Number(b.dataset.t) === quickCalcTarget));
+
+  const total = Math.max(0, parseInt(totalEl.value, 10) || 0);
+  let attended = Math.max(0, parseInt(attEl.value, 10) || 0);
   if (attended > total) {
     attended = total;
     attEl.value = total;
@@ -337,7 +342,7 @@ function renderCgpaCalc() {
   let target = parseFloat(tgtEl.value);
   let sem = parseInt(semEl.value, 10);
 
-  card.classList.remove("status-card-green", "status-card-yellow", "status-card-red");
+  card.classList.remove("cgpa-green", "cgpa-yellow", "cgpa-red");
 
   if (current > 10) { current = 10; curEl.value = 10; }
   if (target > 10) { target = 10; tgtEl.value = 10; }
@@ -361,7 +366,11 @@ function renderCgpaCalc() {
   const remainingSem = 8 - completedSem;
   const requiredAvg = (target * 8 - current * completedSem) / remainingSem;
 
-  if (requiredAvg <= 10) {
+  if (requiredAvg <= 0) {
+    deltaEl.textContent = "0.00";
+    statusEl.textContent = genZMode ? "Secured W 🎯" : "Target already achieved!";
+    card.classList.add("cgpa-green");
+  } else if (requiredAvg <= 10) {
     deltaEl.textContent = requiredAvg.toFixed(2);
     statusEl.textContent = "";
 

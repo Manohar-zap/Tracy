@@ -1,6 +1,34 @@
-// 19. UTILITIES
+// 19. UTILITIES & ERROR IDENTIFIER
+window.__ERROR_LOGS = [];
+
+function generateErrorId() {
+  return "ERR-" + Math.random().toString(36).substring(2, 7).toUpperCase();
+}
+
 function logError(op, err) {
-  console.error(`[Tracy Error] Operation: ${op}`, err);
+  const errId = generateErrorId();
+  const timestamp = new Date().toISOString();
+  const errMsg = err && (err.message || (typeof err === "string" ? err : JSON.stringify(err)));
+  const errStack = err && err.stack ? err.stack : null;
+
+  const logEntry = {
+    id: errId,
+    timestamp,
+    operation: op,
+    message: errMsg,
+    stack: errStack,
+  };
+
+  console.error(`[Tracy Error] [${errId}] Operation: ${op}`, err);
+
+  if (window.__ERROR_LOGS) {
+    window.__ERROR_LOGS.unshift(logEntry);
+    if (window.__ERROR_LOGS.length > 30) {
+      window.__ERROR_LOGS.pop();
+    }
+  }
+
+  return errId;
 }
 
 // Global Exception Handler
@@ -231,10 +259,13 @@ document.addEventListener("visibilitychange", () => {
       navigator.serviceWorker.ready.then((reg) => reg.update());
     }
 
-    // 2. Auto-nav home if away for > 5 mins
+    // 2. Auto-nav home if away for > 5 mins (only if previously active and recorded)
     const lastHidden = Number(localStorage.getItem("lastHiddenTime") || 0);
-    if (Date.now() - lastHidden > 5 * 60 * 1000) {
+    if (lastHidden > 0 && Date.now() - lastHidden > 5 * 60 * 1000) {
       navigateTo("dashboard");
     }
   }
 });
+
+
+

@@ -244,10 +244,15 @@ function processDailyRows(rows, tt) {
       const hourIdx = numMatch ? parseInt(numMatch[0], 10) - 1 : -1;
       const ttSubj = hourIdx >= 0 ? (ttHours[hourIdx] || "").trim() : "";
 
-      const subj =
-        STATE.subjects.find((s) =>
-          s.name.toLowerCase().includes(ttSubj.toLowerCase()),
-        )?.name || ttSubj;
+      const cellParts = ttSubj.toLowerCase().split(/[\/\n,&+]/).map(p => clean(p.trim())).filter(Boolean);
+      const matchedSubj = STATE.subjects.find((s) => {
+        const sKey = clean(s.name);
+        return cellParts.some((part) => {
+          const p = SUBJECT_ALIASES[part] || part;
+          return sKey.includes(p) || p.includes(sKey);
+        });
+      });
+      const subj = matchedSubj ? matchedSubj.name : ttSubj;
       if (!subj || subj.toLowerCase().includes("holiday")) return;
       overallAgg[dateLabel] = overallAgg[dateLabel] || {
         p: 0,
@@ -300,7 +305,16 @@ function processDailyRows(rows, tt) {
   saveState();
   populateDailySubjectSelect();
 
-  document.getElementById("dailyDropdownText").textContent = "Select Subject";
+  const subjects = Object.keys(dailySubjectMap).sort();
+  if (subjects.length > 0) {
+    const firstSubj = subjects[0];
+    const textEl = document.getElementById("dailyDropdownText");
+    if (textEl) textEl.textContent = firstSubj.replace(/\s*\([^)]+\)\s*$/, "");
+    updateDailyChartView(firstSubj);
+  } else {
+    const textEl = document.getElementById("dailyDropdownText");
+    if (textEl) textEl.textContent = "Select Subject";
+  }
   showToast("Daily report processed ✓");
 }
 

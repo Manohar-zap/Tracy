@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://pagead2.googlesyndication.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://cdn.jsdelivr.net https://www.google-analytics.com https://region1.google-analytics.com; frame-src 'self' https://googleads.g.doubleclick.net https://www.google.com;">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <link rel="manifest" href="manifest.json">
   <title>Tracy – Attendance Dashboard</title>
   <script src="https://cdn.tailwindcss.com/3.4.5"></script>
@@ -120,6 +120,7 @@
           <button class="btn-danger text-xs flex-shrink-0"
             onclick="confirmAction('Delete uploaded daily attendance data?', resetDailyAnalysis)">Reset</button>
         </div>
+
         <div class="flex justify-between items-center gap-3 pt-3 border-t border-white/5">
           <div>
             <p class="text-sm font-medium text-red-400">Full Reset</p>
@@ -179,8 +180,11 @@
     </nav>
 
     <div class="mt-auto pt-8">
-      <div class="section-label">Target Attendance</div>
-      <div class="flex gap-1 flex-wrap">
+      <div class="section-label flex items-center justify-between">
+        <span>Target Attendance</span>
+        <span id="sideTarget" class="text-indigo-400 font-bold">75%</span>
+      </div>
+      <div class="flex gap-1 flex-wrap mt-1.5">
         <button class="badge badge-safe target-btn" data-t="75">75%</button>
         <button class="badge badge-warn target-btn" data-t="80">80%</button>
         <button class="badge target-btn" style="background:rgba(99,102,241,0.15);color:#a5b4fc" data-t="85">85%</button>
@@ -282,73 +286,36 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div class="card p-4">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 mb-6">
+        <div class="card p-3 sm:p-4">
           <p class="text-xs text-gray-400 mb-1">Overall</p>
           <p id="dashOverall" class="text-2xl font-bold">--%</p>
           <div class="progress-track h-1.5 mt-2">
             <div id="dashOverallBar" class="progress-fill bg-indigo-500" style="width:0%"></div>
           </div>
         </div>
-        <div class="card p-4">
+        <div class="card p-3 sm:p-4">
           <p id="dashPresentLabel" class="text-xs text-gray-400 mb-1">Present</p>
           <p id="dashPresent" class="text-2xl font-bold text-green-400">--</p>
           <p id="dashPresentSub" class="text-xs text-gray-500 mt-1">Total classes attended</p>
         </div>
-        <div class="card p-4">
+        <div class="card p-3 sm:p-4">
           <p id="dashAbsentLabel" class="text-xs text-gray-400 mb-1">Absent</p>
           <p id="dashAbsent" class="text-2xl font-bold text-red-400">--</p>
           <p id="dashAbsentSub" class="text-xs text-gray-500 mt-1">Missed classes</p>
         </div>
-        <div class="card p-4">
+        <div class="card p-3 sm:p-4">
           <p class="text-xs text-gray-400 mb-1">Status</p>
           <p id="dashStatus" class="text-2xl font-bold">--</p>
           <p id="dashStatusSub" class="text-xs text-gray-500 mt-1">vs <span id="dashTarget">75%</span> target</p>
         </div>
       </div>
 
-      <div class="flex items-center justify-between mb-3">
-        <h2 class="font-semibold">Subjects</h2>
-      </div>
+      <h2 class="font-semibold mb-3">Subjects</h2>
       <div id="dashSubjectList" class="space-y-2">
         <div class="card p-8 text-center text-gray-500 text-sm">
           <i class="fas fa-cloud-upload-alt text-2xl mb-2 block"></i>
           Import an Excel report to view the data.
-        </div>
-      </div>
-    </div>
-
-    <!-- ── ATTENDANCE ── -->
-    <div class="page fade-up" id="page-attendance">
-      <div class="page-header flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <button class="md:hidden bg-transparent p-2" data-action="open-sidebar"><i class="fas fa-bars-staggered text-xl"></i></button>
-          <h1 class="text-xl font-bold">Attendance</h1>
-        </div>
-      </div>
-
-      <div class="card overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="border-b border-white/5 bg-white/2">
-                <th class="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Subject</th>
-                <th class="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider text-center">Attended
-                </th>
-                <th class="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider text-center">Total</th>
-                <th class="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider text-center">%</th>
-                <th class="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="attendanceTableBody" class="divide-y divide-white/5">
-              <tr>
-                <td colspan="5" class="px-4 py-8 text-center text-gray-500 text-sm">
-                  <i class="fas fa-cloud-upload-alt text-2xl mb-2 block"></i>
-                  Import an Excel report to view detailed attendance.
-                </td>
-              </tr>
-            </tbody>
-          </table>
         </div>
       </div>
     </div>
@@ -473,6 +440,10 @@
 
       <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
         <h2 class="font-semibold">Subject-wise Prediction Cards</h2>
+        <button class="btn-ghost text-xs flex items-center gap-1.5" data-action="export-calendar" title="Export .ics calendar schedule for all subjects">
+          <i class="fas fa-calendar-plus text-indigo-400"></i>
+          <span>Export Calendar (.ics)</span>
+        </button>
       </div>
       <div class="mb-4">
         <select id="predCardsWeekSelect" class="w-full rounded-lg px-3 py-2">
@@ -492,10 +463,19 @@
           Quick Calculator
         </h1>
       </div>
-      <p class="text-xs text-gray-500 mb-5">Note - Increasing Attended classses also increases Total classes</p>
-      <h2 class="font-semibold mb-3 mt-8">Manual Calculator</h2>
-      <div class="card p-6 mb-6">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <p class="text-xs text-gray-500 mb-3">Note - Increasing Attended classes also increases Total classes</p>
+      
+      <div class="flex items-center gap-2 mb-4 flex-wrap">
+        <span class="text-xs text-gray-400">Target:</span>
+        <button class="badge quick-target-btn active" data-action="set-qc-target" data-t="75">75%</button>
+        <button class="badge quick-target-btn" data-action="set-qc-target" data-t="80">80%</button>
+        <button class="badge quick-target-btn" data-action="set-qc-target" data-t="85">85%</button>
+        <button class="badge quick-target-btn" data-action="set-qc-target" data-t="90">90%</button>
+      </div>
+
+      <h2 class="font-semibold mb-3 mt-4">Manual Calculator</h2>
+      <div class="card p-4 sm:p-6 mb-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           <!-- Controls Column -->
           <div class="lg:col-span-5 xl:col-span-4 flex flex-col gap-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
@@ -518,23 +498,23 @@
           <div id="qcResultCard" class="lg:col-span-7 xl:col-span-8 flex items-center justify-start rounded-3xl p-4 md:p-8 transition-colors duration-500">
             <div class="flex flex-row items-center gap-4 md:gap-12 w-full">
               <!-- Chart Container -->
-              <div class="relative w-36 h-36 md:w-72 md:h-72 flex-shrink-0">
+              <div class="relative w-28 h-28 xs:w-32 xs:h-32 sm:w-44 sm:h-44 md:w-72 md:h-72 flex-shrink-0">
                 <canvas id="qcChart"></canvas>
               </div>
               <!-- Text Results -->
-              <div class="flex flex-col items-start text-left min-w-0">
+              <div class="flex flex-col items-start text-left min-w-0 flex-1">
                 <div class="mb-2">
-                  <span id="qcPercent" class="text-4xl md:text-6xl font-bold tracking-tight">--%</span>
-                  <p id="qcStatus" class="text-sm md:text-xl text-gray-400 mt-1 font-medium">Enter values</p>
+                  <span id="qcPercent" class="text-3xl sm:text-4xl md:text-6xl font-bold tracking-tight">--%</span>
+                  <p id="qcStatus" class="text-sm md:text-xl text-gray-400 mt-1 font-medium truncate max-w-full">Enter values</p>
                 </div>
-                <div class="flex flex-row items-center gap-5 md:gap-10 mt-2">
-                  <div class="flex items-baseline gap-2">
+                <div class="flex flex-wrap items-center gap-3 sm:gap-5 md:gap-10 mt-2">
+                  <div class="flex items-baseline gap-1.5 sm:gap-2">
                     <span class="text-xs md:text-base text-gray-500 font-medium">Bunks:</span>
-                    <span id="qcBunk" class="text-2xl md:text-4xl font-bold">--</span>
+                    <span id="qcBunk" class="text-xl sm:text-2xl md:text-4xl font-bold">--</span>
                   </div>
-                  <div class="flex items-baseline gap-2">
+                  <div class="flex items-baseline gap-1.5 sm:gap-2">
                     <span class="text-xs md:text-base text-gray-500 font-medium">Need:</span>
-                    <span id="qcNeed" class="text-2xl md:text-4xl font-bold">--</span>
+                    <span id="qcNeed" class="text-xl sm:text-2xl md:text-4xl font-bold">--</span>
                   </div>
                 </div>
               </div>
@@ -545,8 +525,8 @@
 
       <h2 class="font-semibold mb-3">Subject Calculator <span class="text-xs text-gray-500 font-normal">(linked to a
           saved subject)</span></h2>
-      <div class="card p-6 mb-6">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div class="card p-4 sm:p-6 mb-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           <!-- Controls Column -->
           <div class="lg:col-span-5 xl:col-span-4 flex flex-col gap-4">
             <div id="calcSubjectDropdown" class="custom-dropdown">
@@ -595,23 +575,23 @@
           <div id="calcResultCard" class="lg:col-span-7 xl:col-span-8 flex items-center justify-start rounded-3xl p-4 md:p-8 transition-colors duration-500">
             <div class="flex flex-row items-center gap-4 md:gap-12 w-full">
               <!-- Chart Container -->
-              <div class="relative w-36 h-36 md:w-72 md:h-72 flex-shrink-0">
+              <div class="relative w-28 h-28 xs:w-32 xs:h-32 sm:w-44 sm:h-44 md:w-72 md:h-72 flex-shrink-0">
                 <canvas id="calcChart"></canvas>
               </div>
               <!-- Text Results -->
-              <div class="flex flex-col items-start text-left min-w-0">
+              <div class="flex flex-col items-start text-left min-w-0 flex-1">
                 <div class="mb-2">
-                  <span id="calcPercent" class="text-4xl md:text-6xl font-bold tracking-tight">--%</span>
-                  <p id="calcStatus" class="text-sm md:text-xl text-gray-400 mt-1 font-medium">Select Subject</p>
+                  <span id="calcPercent" class="text-3xl sm:text-4xl md:text-6xl font-bold tracking-tight">--%</span>
+                  <p id="calcStatus" class="text-sm md:text-xl text-gray-400 mt-1 font-medium truncate max-w-full">Select Subject</p>
                 </div>
-                <div class="flex flex-row items-center gap-5 md:gap-10 mt-2">
-                  <div class="flex items-baseline gap-2">
+                <div class="flex flex-wrap items-center gap-3 sm:gap-5 md:gap-10 mt-2">
+                  <div class="flex items-baseline gap-1.5 sm:gap-2">
                     <span class="text-xs md:text-base text-gray-500 font-medium">Bunks:</span>
-                    <span id="calcBunk" class="text-2xl md:text-4xl font-bold">--</span>
+                    <span id="calcBunk" class="text-xl sm:text-2xl md:text-4xl font-bold">--</span>
                   </div>
-                  <div class="flex items-baseline gap-2">
+                  <div class="flex items-baseline gap-1.5 sm:gap-2">
                     <span class="text-xs md:text-base text-gray-500 font-medium">Need:</span>
-                    <span id="calcNeed" class="text-2xl md:text-4xl font-bold">--</span>
+                    <span id="calcNeed" class="text-xl sm:text-2xl md:text-4xl font-bold">--</span>
                   </div>
                 </div>
               </div>
@@ -621,8 +601,8 @@
       </div>
 
       <h2 class="font-semibold mb-3 mt-10">CGPA Calculator</h2>
-      <div class="card p-6 mb-6">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div class="card p-4 sm:p-6 mb-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           <!-- Inputs Column -->
           <div class="lg:col-span-5 xl:col-span-4 flex flex-col gap-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
@@ -647,7 +627,7 @@
           </div>
 
           <!-- Result Column -->
-          <div id="neededCgpaCard" class="lg:col-span-7 xl:col-span-8 flex items-center justify-center rounded-3xl p-6 transition-colors duration-500 min-h-[220px] text-center">
+          <div id="neededCgpaCard" class="lg:col-span-7 xl:col-span-8 flex items-center justify-center rounded-3xl p-4 sm:p-6 transition-colors duration-500 min-h-[200px] sm:min-h-[220px] text-center">
             <div class="relative z-10">
               <div class="text-sm font-semibold uppercase tracking-wider opacity-60 mb-2">
                 Needed Average SGPA
@@ -808,7 +788,7 @@
         <h1 class="text-xl font-bold">About Tracy</h1>
       </div>
 
-      <div class="card p-6 max-w-2xl">
+      <div class="card p-4 sm:p-6 max-w-2xl">
         <p>
           <b class="text-gray-200">Tracy</b> is a student-focused web application
           designed to help users understand and manage academic attendance information.
@@ -858,7 +838,7 @@
         <h1 class="text-xl font-bold">Terms &amp; Conditions</h1>
       </div>
 
-      <div class="card p-6 max-w-2xl">
+      <div class="card p-4 sm:p-6 max-w-2xl">
         <p><b>Last updated:</b> August 13, 2026</p>
 
         <h2>1. Acceptance of These Terms</h2>
@@ -959,7 +939,7 @@
         <h1 class="text-xl font-bold">Privacy Policy</h1>
       </div>
 
-      <div class="card p-6 max-w-2xl">
+      <div class="card p-4 sm:p-6 max-w-2xl">
         <p><b>Last updated:</b> August 13, 2026</p>
 
         <h2>1. Overview</h2>
@@ -1130,7 +1110,7 @@
         <h1 class="text-xl font-bold">Disclaimer</h1>
       </div>
 
-      <div class="card p-6 max-w-2xl">
+      <div class="card p-4 sm:p-6 max-w-2xl">
         <p>
           Tracy is provided as a general-purpose student utility. The information,
           calculations, predictions, timetables, and other content displayed by
@@ -1213,7 +1193,7 @@
         <h1 class="text-xl font-bold">Contact Us</h1>
       </div>
 
-      <div class="card p-6 max-w-2xl">
+      <div class="card p-4 sm:p-6 max-w-2xl">
 
         <p>
           Have a question, found a bug, noticed incorrect timetable information,
@@ -1462,6 +1442,69 @@
       </div>
     </div>
   </div>
+
+  <!-- Add Subject Modal -->
+  <div id="subjectModal" class="modal-backdrop">
+    <div class="modal max-w-md w-[95%]">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-semibold"><i class="fas fa-plus-circle text-indigo-400 mr-2"></i>Add Subject</h3>
+        <button class="btn-ghost p-2 rounded-xl" data-action="close-subject-modal"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs text-gray-400 mb-1">Subject Name / Code</label>
+          <input type="text" id="newSubjectName" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500" placeholder="e.g. Operating Systems (CSS2254)">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Attended Classes</label>
+            <input type="number" id="newSubjectAttended" min="0" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500" placeholder="0">
+          </div>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Total Classes</label>
+            <input type="number" id="newSubjectTotal" min="0" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500" placeholder="0">
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-3 mt-6">
+        <button class="btn-ghost text-xs" data-action="close-subject-modal">Cancel</button>
+        <button class="btn-primary text-xs" data-action="save-new-subject">Add Subject</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Subject Modal -->
+  <div id="editSubjectModal" class="modal-backdrop">
+    <div class="modal max-w-md w-[95%]">
+      <input type="hidden" id="editSubjectIndex" value="">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-semibold"><i class="fas fa-edit text-indigo-400 mr-2"></i>Edit Subject</h3>
+        <button class="btn-ghost p-2 rounded-xl" data-action="close-edit-subject-modal"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs text-gray-400 mb-1">Subject Name</label>
+          <input type="text" id="editSubjectName" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Attended Classes</label>
+            <input type="number" id="editSubjectAttended" min="0" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Total Classes</label>
+            <input type="number" id="editSubjectTotal" min="0" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-3 mt-6">
+        <button class="btn-ghost text-xs" data-action="close-edit-subject-modal">Cancel</button>
+        <button class="btn-primary text-xs" data-action="save-edit-subject">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+
 
   <script src="js/state.js"></script>
   <script src="js/storage.js"></script>

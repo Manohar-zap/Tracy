@@ -1,15 +1,5 @@
 // 25. ADD TO CALENDAR (prediction cards)
 // ─────────────────────────────────────────────
-const HOUR_SCHEDULE = [
-  { start: "08:50", end: "09:45", label: "Hr 1" },
-  { start: "09:45", end: "10:40", label: "Hr 2" },
-  { start: "10:50", end: "11:45", label: "Hr 3" },
-  { start: "11:45", end: "12:35", label: "Hr 4" },
-  { start: "12:35", end: "13:25", label: "Hr 5" },
-  { start: "13:25", end: "14:20", label: "Hr 6" },
-  { start: "14:30", end: "15:25", label: "Hr 7" },
-  { start: "15:25", end: "16:15", label: "Hr 8" },
-];
 
 function getNextDateForDay(dayName) {
   const norm = normalizeDayName(dayName);
@@ -54,7 +44,7 @@ function getSubjectPredInfo(subjectId) {
           s.name,
           todayIdx,
           STATE.weekOverrides.week1,
-          1,
+          0,
         )
       : 0;
     const w2f = w2
@@ -63,6 +53,7 @@ function getSubjectPredInfo(subjectId) {
           s.name,
           undefined,
           STATE.weekOverrides.week2,
+          1,
         )
       : 0;
     extra = w1r + w2f;
@@ -129,8 +120,18 @@ function buildCalendarEventsForSubject(subjectId) {
       const text = String(cell || "").trim();
       if (!text || text.toLowerCase().includes("holiday")) return;
 
-      const tKey = clean(text);
-      if (!(sKey.includes(tKey) || tKey.includes(sKey))) return;
+      const cellParts = text
+        .toLowerCase()
+        .split(/[\/\n,&+]/)
+        .map((p) => clean(p.trim()))
+        .filter(Boolean);
+
+      const cellMatches = cellParts.some((part) => {
+        const p = SUBJECT_ALIASES[part] || part;
+        return sKey.includes(p) || p.includes(sKey);
+      });
+
+      if (!cellMatches) return;
 
       const sched = HOUR_SCHEDULE[hIdx] || {
         start: "09:00",

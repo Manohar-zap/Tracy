@@ -42,31 +42,50 @@ function populateDailySubjectSelect() {
 }
 
 function parseAttendanceExcel(file) {
+  if (!file) return;
+  if (file.size > 15 * 1024 * 1024) {
+    showToast("File is too large (max 15MB).");
+    return;
+  }
+  const ext = (file.name || "").toLowerCase();
+  if (!ext.endsWith(".xlsx") && !ext.endsWith(".xls") && !ext.endsWith(".csv")) {
+    showToast("Please upload a valid Excel (.xlsx / .xls) file.");
+    return;
+  }
+
   try {
     const reader = new FileReader();
     reader.onload = (evt) => {
       try {
         const data = new Uint8Array(evt.target.result);
         const wb = XLSX.read(data, { type: "array" });
+        if (!wb.SheetNames || !wb.SheetNames.length) {
+          showToast("Excel file contains no readable sheets.");
+          return;
+        }
         const sheet = wb.Sheets[wb.SheetNames[0]];
         const raw = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
         // Extract profile
         const profile = {};
-        raw.forEach((row) => {
-          row.forEach((cell) => {
-            const text = String(cell || "");
-            if (text.includes("Student Name"))
-              profile.name = text.split(":")[1]?.trim();
-            if (text.includes("Roll No")) profile.roll = text.split(":")[1]?.trim();
-            if (text.includes("Registration"))
-              profile.reg = text.split(":")[1]?.trim();
-            if (text.includes("Batch")) profile.batch = text.split(":")[1]?.trim();
-            if (text.includes("Department"))
-              profile.dept = text.split(":")[1]?.trim();
-            if (text.includes("Term")) profile.term = text.split(":")[1]?.trim();
+        if (Array.isArray(raw)) {
+          raw.forEach((row) => {
+            if (Array.isArray(row)) {
+              row.forEach((cell) => {
+                const text = String(cell || "");
+                if (text.includes("Student Name"))
+                  profile.name = text.split(":")[1]?.trim();
+                if (text.includes("Roll No")) profile.roll = text.split(":")[1]?.trim();
+                if (text.includes("Registration"))
+                  profile.reg = text.split(":")[1]?.trim();
+                if (text.includes("Batch")) profile.batch = text.split(":")[1]?.trim();
+                if (text.includes("Department"))
+                  profile.dept = text.split(":")[1]?.trim();
+                if (text.includes("Term")) profile.term = text.split(":")[1]?.trim();
+              });
+            }
           });
-        });
+        }
         if (Object.keys(profile).length) STATE.profile = profile;
 
         // Save the actual upload date
@@ -77,12 +96,12 @@ function parseAttendanceExcel(file) {
         const subjects = [];
 
         XLSX.utils.sheet_to_json(sheet).forEach((row) => {
-          const nameRaw = row["__EMPTY"];
-          if (!nameRaw || nameRaw === "Course Name" || nameRaw === "Total") return;
+          const nameRaw = String(row["__EMPTY"] || row["Course Name"] || row["Subject Name"] || row["Subject"] || row["Course"] || "").trim();
+          if (!nameRaw || nameRaw === "Course Name" || nameRaw === "Subject Name" || nameRaw === "Total" || nameRaw === "Sl.No.") return;
 
-          const total = Number(row["__EMPTY_1"]) || 0;
-          const attended = Number(row["__EMPTY_2"]) || 0;
-          const dutyLeave = Number(row["__EMPTY_3"]) || 0;
+          const total = Number(row["__EMPTY_1"] ?? row["Total"] ?? row["Total Hours"] ?? row["Conducted"] ?? 0) || 0;
+          const attended = Number(row["__EMPTY_2"] ?? row["Attended"] ?? row["Present"] ?? 0) || 0;
+          const dutyLeave = Number(row["__EMPTY_3"] ?? row["Duty Leave"] ?? row["DutyLeave"] ?? row["OD"] ?? 0) || 0;
           if (total === 0) return;
 
           const existing = STATE.subjects.find(
