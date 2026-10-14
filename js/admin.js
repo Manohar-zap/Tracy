@@ -10,6 +10,7 @@
   let holdTimer = null;
   let holdStartTime = 0;
   let isHolding = false;
+  let isCompleted = false; // guard: prevent double-fire of onHoldComplete
   let isSessionUnlocked = false;
 
   async function sha256(str) {
@@ -25,14 +26,12 @@
     const targetEl = logoContainer || boltIcon;
 
     if (targetEl) {
-      // Modern Pointer Events
+      // Pointer Events cover mouse + touch on modern browsers
       targetEl.addEventListener("pointerdown", onHoldStart);
       window.addEventListener("pointerup", onHoldCancel);
       window.addEventListener("pointercancel", onHoldCancel);
 
-      // Desktop & Mobile Touch Fallbacks
-      targetEl.addEventListener("mousedown", onHoldStart);
-      window.addEventListener("mouseup", onHoldCancel);
+      // Touch fallback for older mobile browsers that don't support Pointer Events
       targetEl.addEventListener("touchstart", onHoldStart, { passive: true });
       window.addEventListener("touchend", onHoldCancel);
       window.addEventListener("touchcancel", onHoldCancel);
@@ -54,6 +53,7 @@
   function onHoldStart(e) {
     if (isHolding) return;
     isHolding = true;
+    isCompleted = false;
     holdStartTime = Date.now();
 
     // Purely silent: no styles, no animations, no visual change
@@ -72,6 +72,7 @@
     }
 
     isHolding = false;
+    isCompleted = false;
     if (holdTimer) {
       clearTimeout(holdTimer);
       holdTimer = null;
@@ -79,6 +80,8 @@
   }
 
   function onHoldComplete() {
+    if (isCompleted) return; // prevent double-fire (setTimeout + onHoldCancel race)
+    isCompleted = true;
     isHolding = false;
     if (holdTimer) {
       clearTimeout(holdTimer);
