@@ -30,6 +30,8 @@ const STATE = {
   week2TimetableId: null,
   target: 75, // global target — dashboard / attendance coloring
   quickCalcTarget: 75, // standalone calculator target toggle
+  customHolidays: {}, // { "YYYY-MM-DD": { name: "...", isHoliday: true } }
+  disabledHolidays: [], // ["YYYY-MM-DD"]
   currentPage: "dashboard",
   dailySubjectMap: {},
   dailyOverallMap: {},
@@ -234,7 +236,26 @@ const UNIVERSITY_HOLIDAYS = [
 
 function isUniversityHoliday(date) {
   if (!date) return false;
-  const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  let key = "";
+  if (typeof date === "string") {
+    key = date.slice(0, 10);
+  } else if (date instanceof Date && !isNaN(date.getTime())) {
+    key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  } else {
+    return false;
+  }
+
+  // 1. Check custom overrides in STATE (added via Admin UI)
+  if (STATE.customHolidays && STATE.customHolidays[key] !== undefined) {
+    return Boolean(STATE.customHolidays[key].isHoliday);
+  }
+
+  // 2. Check disabled university holidays
+  if (Array.isArray(STATE.disabledHolidays) && STATE.disabledHolidays.includes(key)) {
+    return false;
+  }
+
+  // 3. Default university calendar
   return UNIVERSITY_HOLIDAYS.includes(key);
 }
 
@@ -255,6 +276,8 @@ function initSiteConfig() {
 
 // ─────────────────────────────────────────────
 window.STATE = STATE;
+window.UNIVERSITY_HOLIDAYS = UNIVERSITY_HOLIDAYS;
+window.isUniversityHoliday = isUniversityHoliday;
 window.escapeHtml = escapeHtml;
 window.validateUrl = validateUrl;
 window.clean = clean;

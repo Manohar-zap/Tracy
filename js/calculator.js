@@ -199,28 +199,14 @@ function resetCalc() {
 // ─────────────────────────────────────────────
 // 12. STANDALONE QUICK CALCULATOR (new — not linked to any subject)
 // ─────────────────────────────────────────────
-let quickCalcTarget = 75;
 let qcChartInst = null;
-
-function setQuickCalcTarget(t) {
-  quickCalcTarget = t;
-  STATE.quickCalcTarget = t;
-  saveState();
-  document
-    .querySelectorAll(".quick-target-btn")
-    .forEach((b) => b.classList.toggle("active", Number(b.dataset.t) === t));
-  renderQuickCalc();
-}
 
 function renderQuickCalc() {
   const totalEl = document.getElementById("qcTotal");
   const attEl = document.getElementById("qcAttended");
   if (!totalEl || !attEl) return;
 
-  quickCalcTarget = STATE.quickCalcTarget || quickCalcTarget || 75;
-  document
-    .querySelectorAll(".quick-target-btn")
-    .forEach((b) => b.classList.toggle("active", Number(b.dataset.t) === quickCalcTarget));
+  const target = STATE.target || 75;
 
   const total = Math.max(0, parseInt(totalEl.value, 10) || 0);
   let attended = Math.max(0, parseInt(attEl.value, 10) || 0);
@@ -238,17 +224,17 @@ function renderQuickCalc() {
     statusEl.textContent = "Enter values";
     document.getElementById("qcNeed").textContent = "--";
     document.getElementById("qcBunk").textContent = "--";
-    renderQcChart(0, 0);
+    renderQcChart(0, 0, target);
     return;
   }
 
   const pct = (attended / total) * 100;
   pctEl.textContent = pct.toFixed(1) + "%";
 
-  if (pct >= quickCalcTarget) {
+  if (pct >= target) {
     pctEl.className = "text-4xl md:text-6xl font-bold text-green-400";
     statusEl.textContent = getStatusText("safe");
-  } else if (pct >= quickCalcTarget - 10) {
+  } else if (pct >= target - 10) {
     pctEl.className = "text-4xl md:text-6xl font-bold text-yellow-400";
     statusEl.textContent = getStatusText("warning");
   } else {
@@ -256,16 +242,16 @@ function renderQuickCalc() {
     statusEl.textContent = getStatusText("risk");
   }
 
-  const { need, bunk } = calcNeedAndBunk({ attended, total }, quickCalcTarget);
+  const { need, bunk } = calcNeedAndBunk({ attended, total }, target);
   document.getElementById("qcNeed").textContent =
     need > 0 ? need : "0";
   document.getElementById("qcBunk").textContent =
     bunk > 0 ? bunk : "0";
 
-  renderQcChart(attended, total);
+  renderQcChart(attended, total, target);
 }
 
-function renderQcChart(a, t) {
+function renderQcChart(a, t, target = 75) {
   const ctx = document.getElementById("qcChart");
   if (!ctx) return;
   if (qcChartInst) {
@@ -277,7 +263,7 @@ function renderQcChart(a, t) {
 
   const { need, bunk } = calcNeedAndBunk(
     { attended: a, total: t },
-    quickCalcTarget,
+    target || STATE.target || 75,
   );
 
   if (a === 0 && bunk === 0 && need === 0 && absent === 0) return;

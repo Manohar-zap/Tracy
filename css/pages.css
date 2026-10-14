@@ -636,4 +636,24 @@
   border-radius: 9999px;
   background: #6366f1;
   box-shadow: 0 0 10px rgba(99, 102, 241, 0.6);
+}
+
+/* ─────────────────────────────────────────────
+   ADMIN SECRET TRIGGER & MODAL STYLES
+   ───────────────────────────────────────────── */
+.admin-hold-active {
+  animation: adminPulse 0.9s infinite alternate ease-in-out !important;
+  transform: scale(1.08) !important;
+  box-shadow: 0 0 16px rgba(168, 85, 247, 0.8), 0 0 30px rgba(236, 72, 153, 0.5) !important;
+}
+
+@keyframes adminPulse {
+  0% {
+    transform: scale(1.04);
+    box-shadow: 0 0 12px rgba(168, 85, 247, 0.6);
+  }
+  100% {
+    transform: scale(1.12);
+    box-shadow: 0 0 24px rgba(245, 158, 11, 0.9), 0 0 36px rgba(168, 85, 247, 0.7);
+  }
 }

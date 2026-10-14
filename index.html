@@ -31,12 +31,12 @@
 
     gtag('config', 'G-MDEYB85ZN0');
   </script>
-  <link rel="stylesheet" href="css/base.css?v=6.1.9">
-  <link rel="stylesheet" href="css/layout.css?v=6.1.9">
-  <link rel="stylesheet" href="css/components.css?v=6.1.9">
-  <link rel="stylesheet" href="css/pages.css?v=6.1.9">
-  <link rel="stylesheet" href="css/animations.css?v=6.1.9">
-  <link rel="stylesheet" href="css/themes.css?v=6.1.9">
+  <link rel="stylesheet" href="css/base.css?v=6.1.10">
+  <link rel="stylesheet" href="css/layout.css?v=6.1.10">
+  <link rel="stylesheet" href="css/components.css?v=6.1.10">
+  <link rel="stylesheet" href="css/pages.css?v=6.1.10">
+  <link rel="stylesheet" href="css/animations.css?v=6.1.10">
+  <link rel="stylesheet" href="css/themes.css?v=6.1.10">
 </head>
 
 <body>
@@ -149,8 +149,13 @@
     <div class="flex items-center justify-between mb-14">
 
       <div class="flex items-center gap-2">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center">
-          <i id="genZBtn" class="fas fa-bolt"></i>
+        <div id="tracyLogoContainer" class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center relative cursor-pointer select-none" title="Hold for 5s for Admin UI" oncontextmenu="return false;" style="touch-action: none; -webkit-touch-callout: none;">
+          <i id="genZBtn" class="fas fa-bolt text-white"></i>
+          <!-- Circular countdown ring for 5-second secret admin hold -->
+          <svg id="adminHoldSvg" class="absolute inset-0 w-full h-full -rotate-90 pointer-events-none opacity-0 transition-opacity duration-200" viewBox="0 0 36 36">
+            <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2" />
+            <circle id="adminHoldProgress" cx="18" cy="18" r="15" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="94.25" />
+          </svg>
         </div>
 
         <span class="text-lg font-bold">
@@ -483,14 +488,6 @@
         </h1>
       </div>
       <p class="text-xs text-gray-500 mb-3">Note - Increasing Attended classes also increases Total classes</p>
-      
-      <div class="flex items-center gap-2 mb-4 flex-wrap">
-        <span class="text-xs text-gray-400">Target:</span>
-        <button class="badge quick-target-btn active" data-action="set-qc-target" data-t="75">75%</button>
-        <button class="badge quick-target-btn" data-action="set-qc-target" data-t="80">80%</button>
-        <button class="badge quick-target-btn" data-action="set-qc-target" data-t="85">85%</button>
-        <button class="badge quick-target-btn" data-action="set-qc-target" data-t="90">90%</button>
-      </div>
 
       <h2 class="font-semibold mb-3 mt-4">Manual Calculator</h2>
       <div class="card p-4 sm:p-6 mb-6">
@@ -1440,7 +1437,6 @@
       </div>
     </div>
 
-
   </main>
 
   <!-- Mobile bottom nav -->
@@ -1570,23 +1566,133 @@
     </div>
   </div>
 
+  <!-- ── ADMIN HOLIDAY MANAGER MODAL (Secret 5s hold on thunder logo) ── -->
+  <div id="adminModal" class="modal-backdrop">
+    <div class="modal max-w-lg w-[95%] p-5 sm:p-6 rounded-2xl bg-[#0d0e15] border border-purple-500/30 shadow-2xl max-h-[90vh] overflow-y-auto">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-white/10">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-purple-500/20">
+            <i class="fas fa-shield-halved text-sm"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="font-bold text-white text-base">Admin Holiday Control</h3>
+              <span class="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40">Secret</span>
+            </div>
+            <p class="text-xs text-gray-400">Modify holidays without editing code or dataset</p>
+          </div>
+        </div>
+        <button type="button" class="btn-ghost text-gray-400 hover:text-white p-1.5" data-action="close-admin-modal" title="Close">
+          <i class="fas fa-times text-base"></i>
+        </button>
+      </div>
+
+      <!-- ── Quick 1-Tap Toggles for Tomorrow & Today ── -->
+      <div class="mt-4">
+        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 block flex items-center gap-1.5">
+          <i class="fas fa-bolt text-amber-400"></i> Quick 1-Tap Toggles
+        </label>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <!-- Tomorrow Card -->
+          <div id="adminTomorrowCard" class="p-3 rounded-xl border border-white/10 bg-white/[0.03] flex flex-col justify-between gap-2.5">
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-white" id="adminTomorrowLabel">Tomorrow</span>
+                <span id="adminTomorrowBadge" class="text-[10px] px-2 py-0.5 rounded-md font-semibold">...</span>
+              </div>
+              <div id="adminTomorrowDateStr" class="text-[11px] text-gray-400 mt-0.5">...</div>
+            </div>
+            <button type="button" id="adminToggleTomorrowBtn" class="btn-primary text-xs py-1.5 px-3 w-full flex items-center justify-center gap-1.5">
+              <i class="fas fa-toggle-on"></i>
+              <span id="adminTomorrowBtnText">Toggle Holiday</span>
+            </button>
+          </div>
+
+          <!-- Today Card -->
+          <div id="adminTodayCard" class="p-3 rounded-xl border border-white/10 bg-white/[0.03] flex flex-col justify-between gap-2.5">
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-white">Today</span>
+                <span id="adminTodayBadge" class="text-[10px] px-2 py-0.5 rounded-md font-semibold">...</span>
+              </div>
+              <div id="adminTodayDateStr" class="text-[11px] text-gray-400 mt-0.5">...</div>
+            </div>
+            <button type="button" id="adminToggleTodayBtn" class="btn-primary text-xs py-1.5 px-3 w-full flex items-center justify-center gap-1.5">
+              <i class="fas fa-toggle-on"></i>
+              <span id="adminTodayBtnText">Toggle Holiday</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Add Specific Date Holiday Form ── -->
+      <div class="mt-4 p-3.5 rounded-xl border border-white/10 bg-white/[0.02]">
+        <label class="text-xs font-semibold text-gray-300 block mb-2 flex items-center gap-1.5">
+          <i class="fas fa-calendar-plus text-indigo-400"></i> Declare Custom Date Holiday / Working Day
+        </label>
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+          <div class="sm:col-span-5">
+            <input type="date" id="adminCustomDate" class="w-full text-xs bg-white/5 border border-white/10 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-purple-500" />
+          </div>
+          <div class="sm:col-span-4">
+            <input type="text" id="adminCustomName" placeholder="Holiday reason (optional)" class="w-full text-xs bg-white/5 border border-white/10 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-purple-500" />
+          </div>
+          <div class="sm:col-span-3">
+            <button type="button" id="adminAddHolidayBtn" class="w-full btn-primary text-xs py-2 px-3 flex items-center justify-center gap-1 bg-purple-600 hover:bg-purple-500 border-none text-white">
+              <i class="fas fa-plus text-[10px]"></i>
+              <span>Save</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Active Holidays & Overrides List ── -->
+      <div class="mt-4">
+        <div class="flex items-center justify-between mb-2">
+          <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+            <i class="fas fa-list-check text-indigo-400"></i> Active Holidays & Overrides
+          </label>
+          <span id="adminHolidayCount" class="text-[11px] text-gray-400">...</span>
+        </div>
+
+        <div id="adminHolidaysList" class="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+          <!-- Dynamically populated rows -->
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="mt-5 pt-3 border-t border-white/10 flex items-center justify-between">
+        <p class="text-[11px] text-gray-500 leading-tight">
+          ⚡ Updates live across Timetable, Dashboard, Predictions, & Calendar.
+        </p>
+        <button type="button" class="btn-ghost text-xs py-1.5 px-3" data-action="close-admin-modal">
+          Close
+        </button>
+      </div>
+
+    </div>
+  </div>
 
 
-  <script src="js/state.js?v=6.1.9"></script>
-  <script src="js/storage.js?v=6.1.9"></script>
-  <script src="js/navigation.js?v=6.1.9"></script>
-  <script src="js/ui.js?v=6.1.9"></script>
-  <script src="js/attendance.js?v=6.1.9"></script>
-  <script src="js/excel.js?v=6.1.9"></script>
-  <script src="js/timetable.js?v=6.1.9"></script>
-  <script src="js/prediction.js?v=6.1.9"></script>
-  <script src="js/calculator.js?v=6.1.9"></script>
-  <script src="js/analytics.js?v=6.1.9"></script>
-  <script src="js/calendar.js?v=6.1.9"></script>
-  <script src="js/campus.js?v=6.1.9"></script>
-  <script src="js/guide.js?v=6.1.9"></script>
-  <script src="js/ads.js?v=6.1.9"></script>
-  <script src="js/main.js?v=6.1.9"></script>
+
+  <script src="js/state.js?v=6.1.10"></script>
+  <script src="js/storage.js?v=6.1.10"></script>
+  <script src="js/navigation.js?v=6.1.10"></script>
+  <script src="js/ui.js?v=6.1.10"></script>
+  <script src="js/attendance.js?v=6.1.10"></script>
+  <script src="js/excel.js?v=6.1.10"></script>
+  <script src="js/timetable.js?v=6.1.10"></script>
+  <script src="js/prediction.js?v=6.1.10"></script>
+  <script src="js/calculator.js?v=6.1.10"></script>
+  <script src="js/analytics.js?v=6.1.10"></script>
+  <script src="js/calendar.js?v=6.1.10"></script>
+  <script src="js/campus.js?v=6.1.10"></script>
+  <script src="js/guide.js?v=6.1.10"></script>
+  <script src="js/admin.js?v=6.1.10"></script>
+  <script src="js/ads.js?v=6.1.10"></script>
+  <script src="js/main.js?v=6.1.10"></script>
 </body>
 
 </html>

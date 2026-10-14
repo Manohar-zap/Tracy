@@ -1,4 +1,4 @@
-const CACHE_NAME = "tracy-v6.1.9"; // Fix target selection in quick calculator
+const CACHE_NAME = "tracy-v6.1.10"; // Secret Admin UI for holidays & remove target from quick calc
 
 const ASSETS = [
   "./",
@@ -18,6 +18,7 @@ const ASSETS = [
   "./js/calendar.js",
   "./js/campus.js",
   "./js/guide.js",
+  "./js/admin.js",
   "./js/ads.js",
   "./css/base.css",
   "./css/layout.css",
