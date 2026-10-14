@@ -247,8 +247,19 @@ function formatDateKey(date) {
 function getWorkingDayOverride(date) {
   if (!date) return null;
   const key = formatDateKey(date);
-  if (STATE.customWorkingDays && STATE.customWorkingDays[key]) {
+  if (key && STATE.customWorkingDays && STATE.customWorkingDays[key]) {
     return STATE.customWorkingDays[key];
+  }
+  // Check day name fallback (e.g. "Saturday" or "Sunday")
+  if (date instanceof Date && !isNaN(date.getTime())) {
+    const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
+    if (STATE.customWorkingDays && STATE.customWorkingDays[dayName]) {
+      return STATE.customWorkingDays[dayName];
+    }
+  } else if (typeof date === "string" && !date.includes("-")) {
+    if (STATE.customWorkingDays && STATE.customWorkingDays[date]) {
+      return STATE.customWorkingDays[date];
+    }
   }
   return null;
 }
@@ -259,7 +270,7 @@ function isUniversityHoliday(date) {
   if (!key) return false;
 
   // 0. If declared as a Working Day override, it is NOT a holiday
-  if (STATE.customWorkingDays && STATE.customWorkingDays[key]) {
+  if (getWorkingDayOverride(date)) {
     return false;
   }
 

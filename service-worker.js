@@ -1,4 +1,4 @@
-const CACHE_NAME = "tracy-v6.1.12"; // Admin working weekend overrides & timetable day sync
+const CACHE_NAME = "tracy-v6.1.13"; // Enhanced admin working weekend presets & quick assign chips
 
 const ASSETS = [
   "./",

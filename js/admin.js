@@ -5,7 +5,7 @@
 (function () {
   // Obfuscated digest for authorization: sha256("zap007")
   const AUTH_HASH = "2c486a90d89af9ab70d99a0c614198d50fce3aaf094884ce3eec6ddb4f0bffea";
-  const HOLD_DURATION = 4800; // ~5 seconds invisible hold
+  const HOLD_DURATION = 2000; // 2 seconds comfortable hold
 
   let holdTimer = null;
   let holdStartTime = 0;
@@ -25,7 +25,25 @@
     const boltIcon = document.getElementById("genZBtn");
     const targetEl = logoContainer || boltIcon;
 
+    let tapCount = 0;
+    let lastTapTime = 0;
+
     if (targetEl) {
+      // 5-tap shortcut: rapidly tapping the logo 5 times also triggers passkey prompt
+      targetEl.addEventListener("click", () => {
+        const now = Date.now();
+        if (now - lastTapTime < 500) {
+          tapCount++;
+          if (tapCount >= 4) { // 5 total taps in succession
+            tapCount = 0;
+            onHoldComplete();
+          }
+        } else {
+          tapCount = 1;
+        }
+        lastTapTime = now;
+      });
+
       // Pointer Events cover mouse + touch on modern browsers
       targetEl.addEventListener("pointerdown", onHoldStart);
       window.addEventListener("pointerup", onHoldCancel);
@@ -42,12 +60,19 @@
       });
     }
 
-    // Escape key listener to close active overlays
+    // Keyboard shortcuts: Escape to close, Alt+A or Ctrl+Shift+A to open Admin prompt
     window.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         destroyActiveOverlay();
       }
+      if ((e.altKey && (e.key === "a" || e.key === "A")) || (e.ctrlKey && e.shiftKey && (e.key === "a" || e.key === "A"))) {
+        e.preventDefault();
+        onHoldComplete();
+      }
     });
+
+    // Console emergency shortcut
+    window.__openAdmin = onHoldComplete;
   }
 
   function onHoldStart(e) {
@@ -65,8 +90,8 @@
   function onHoldCancel() {
     if (!isHolding) return;
 
-    // Slight margin tolerance: if user held within 200ms of target, grant completion
-    if (Date.now() - holdStartTime >= HOLD_DURATION - 200) {
+    // Slight margin tolerance: if user held within 350ms of target, grant completion
+    if (Date.now() - holdStartTime >= HOLD_DURATION - 350) {
       onHoldComplete();
       return;
     }
@@ -274,36 +299,57 @@
         </div>
 
         <!-- Declare Working Day for Sat/Sun (Weekday Timetable Order) -->
-        <div class="mt-4 p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/[0.03]">
-          <div class="flex items-center justify-between mb-1.5">
-            <label class="text-xs font-semibold text-amber-300 block flex items-center gap-1.5">
-              <i class="fas fa-briefcase text-amber-400"></i> Declare Working Sat / Sun (Timetable Order)
+        <div class="mt-4 p-4 rounded-xl border border-amber-500/30 bg-amber-500/[0.04]">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-xs font-bold text-amber-300 block flex items-center gap-1.5">
+              <i class="fas fa-briefcase text-amber-400"></i> Add Weekday Timetable on Sat / Sun
             </label>
-            <div class="flex gap-1.5">
-              <button type="button" id="dynQuickSatBtn" class="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30">Upcoming Sat</button>
-              <button type="button" id="dynQuickSunBtn" class="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30">Upcoming Sun</button>
+            <span class="text-[10px] px-2 py-0.5 rounded font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">Weekend Working Day</span>
+          </div>
+          <p class="text-[11px] text-gray-400 mb-3">Choose which weekend day will run, and which Monday–Friday schedule it will follow.</p>
+
+          <!-- 1-Tap Quick Action Buttons -->
+          <div class="mb-3">
+            <span class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">1-Tap Quick Assign:</span>
+            <div class="flex flex-wrap gap-1.5">
+              <button type="button" class="dyn-quick-chip text-[11px] px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-medium transition" data-preset="this_sat" data-order="Monday">⚡ This Sat → Mon Order</button>
+              <button type="button" class="dyn-quick-chip text-[11px] px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-medium transition" data-preset="this_sat" data-order="Tuesday">⚡ This Sat → Tue Order</button>
+              <button type="button" class="dyn-quick-chip text-[11px] px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-medium transition" data-preset="this_sat" data-order="Wednesday">⚡ This Sat → Wed Order</button>
+              <button type="button" class="dyn-quick-chip text-[11px] px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-medium transition" data-preset="this_sat" data-order="Friday">⚡ This Sat → Fri Order</button>
+              <button type="button" class="dyn-quick-chip text-[11px] px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-medium transition" data-preset="this_sun" data-order="Monday">⚡ This Sun → Mon Order</button>
+              <button type="button" class="dyn-quick-chip text-[11px] px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-medium transition" data-preset="this_sun" data-order="Friday">⚡ This Sun → Fri Order</button>
             </div>
           </div>
-          <p class="text-[11px] text-gray-400 mb-2.5">Assign a Monday–Friday timetable to a Saturday or Sunday.</p>
-          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
-            <div class="sm:col-span-4">
-              <label class="text-[10px] text-gray-400 block mb-1">Weekend / Date</label>
-              <input type="date" id="dynWorkingDate" class="w-full text-xs bg-white/5 border border-white/10 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-amber-500" />
+
+          <!-- Custom Selector Form -->
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 pt-2 border-t border-white/5">
+            <div class="sm:col-span-5">
+              <label class="text-[10px] text-gray-400 block mb-1">Target Weekend Day</label>
+              <select id="dynWorkingPreset" class="w-full text-xs bg-[#161822] border border-white/10 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-amber-500">
+                <option value="this_sat">This Saturday (${formatDisplayDate(formatDateKey(getUpcomingWeekend(6, 0)))})</option>
+                <option value="this_sun">This Sunday (${formatDisplayDate(formatDateKey(getUpcomingWeekend(0, 0)))})</option>
+                <option value="next_sat">Next Saturday (${formatDisplayDate(formatDateKey(getUpcomingWeekend(6, 1)))})</option>
+                <option value="next_sun">Next Sunday (${formatDisplayDate(formatDateKey(getUpcomingWeekend(0, 1)))})</option>
+                <option value="every_sat">Every Saturday (Recurring)</option>
+                <option value="every_sun">Every Sunday (Recurring)</option>
+                <option value="custom">Pick Specific Date...</option>
+              </select>
+              <input type="date" id="dynWorkingDate" class="hidden w-full text-xs bg-white/5 border border-white/10 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-amber-500 mt-1.5" />
             </div>
             <div class="sm:col-span-4">
               <label class="text-[10px] text-gray-400 block mb-1">Follows Weekday Timetable</label>
               <select id="dynWorkingDayOrder" class="w-full text-xs bg-[#161822] border border-white/10 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-amber-500">
-                <option value="Monday">Monday Order</option>
-                <option value="Tuesday">Tuesday Order</option>
-                <option value="Wednesday">Wednesday Order</option>
-                <option value="Thursday">Thursday Order</option>
-                <option value="Friday">Friday Order</option>
+                <option value="Monday">Monday Timetable</option>
+                <option value="Tuesday">Tuesday Timetable</option>
+                <option value="Wednesday">Wednesday Timetable</option>
+                <option value="Thursday">Thursday Timetable</option>
+                <option value="Friday">Friday Timetable</option>
               </select>
             </div>
-            <div class="sm:col-span-4 flex items-end">
-              <button type="button" id="dynAddWorkingBtn" class="w-full btn-primary text-xs py-2 px-3 flex items-center justify-center gap-1 bg-amber-600 hover:bg-amber-500 border-none text-white font-semibold">
+            <div class="sm:col-span-3 flex items-end">
+              <button type="button" id="dynAddWorkingBtn" class="w-full btn-primary text-xs py-2 px-3 flex items-center justify-center gap-1.5 bg-amber-600 hover:bg-amber-500 border-none text-white font-semibold shadow-lg shadow-amber-600/20">
                 <i class="fas fa-plus text-[10px]"></i>
-                <span>Add Working Day</span>
+                <span>Add Day</span>
               </button>
             </div>
           </div>
@@ -392,38 +438,72 @@
       });
     }
 
-    const quickSatBtn = document.getElementById("dynQuickSatBtn");
-    if (quickSatBtn) {
-      quickSatBtn.addEventListener("click", () => {
-        const d = getUpcomingWeekend(6);
-        const wInput = document.getElementById("dynWorkingDate");
-        if (wInput) wInput.value = formatDateKey(d);
+    const presetSelect = document.getElementById("dynWorkingPreset");
+    const workingDateInput = document.getElementById("dynWorkingDate");
+    const workingOrderSelect = document.getElementById("dynWorkingDayOrder");
+
+    if (presetSelect && workingDateInput) {
+      presetSelect.addEventListener("change", () => {
+        if (presetSelect.value === "custom") {
+          workingDateInput.classList.remove("hidden");
+          if (!workingDateInput.value) {
+            workingDateInput.value = formatDateKey(getUpcomingWeekend(6, 0));
+          }
+        } else {
+          workingDateInput.classList.add("hidden");
+        }
       });
     }
 
-    const quickSunBtn = document.getElementById("dynQuickSunBtn");
-    if (quickSunBtn) {
-      quickSunBtn.addEventListener("click", () => {
-        const d = getUpcomingWeekend(0);
-        const wInput = document.getElementById("dynWorkingDate");
-        if (wInput) wInput.value = formatDateKey(d);
+    // Attach 1-tap quick action chips
+    overlay.querySelectorAll(".dyn-quick-chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        const preset = chip.dataset.preset;
+        const order = chip.dataset.order;
+        let targetKey = "";
+        if (preset === "this_sat") targetKey = formatDateKey(getUpcomingWeekend(6, 0));
+        else if (preset === "this_sun") targetKey = formatDateKey(getUpcomingWeekend(0, 0));
+        else if (preset === "next_sat") targetKey = formatDateKey(getUpcomingWeekend(6, 1));
+        else if (preset === "next_sun") targetKey = formatDateKey(getUpcomingWeekend(0, 1));
+
+        if (targetKey) {
+          setCustomWorkingDay(targetKey, order);
+        }
       });
-    }
+    });
 
     const addWorkingBtn = document.getElementById("dynAddWorkingBtn");
     if (addWorkingBtn) {
       addWorkingBtn.addEventListener("click", () => {
-        const wInput = document.getElementById("dynWorkingDate");
-        const oSelect = document.getElementById("dynWorkingDayOrder");
-        const dateVal = wInput ? wInput.value.trim() : "";
-        const orderVal = oSelect ? oSelect.value.trim() : "Monday";
+        const preset = presetSelect ? presetSelect.value : "this_sat";
+        const orderVal = workingOrderSelect ? workingOrderSelect.value.trim() : "Monday";
+        let targetKey = "";
+        let customLabel = "";
 
-        if (!dateVal) {
+        if (preset === "this_sat") {
+          targetKey = formatDateKey(getUpcomingWeekend(6, 0));
+        } else if (preset === "this_sun") {
+          targetKey = formatDateKey(getUpcomingWeekend(0, 0));
+        } else if (preset === "next_sat") {
+          targetKey = formatDateKey(getUpcomingWeekend(6, 1));
+        } else if (preset === "next_sun") {
+          targetKey = formatDateKey(getUpcomingWeekend(0, 1));
+        } else if (preset === "every_sat") {
+          targetKey = "Saturday";
+          customLabel = `Every Saturday (${orderVal} Order)`;
+        } else if (preset === "every_sun") {
+          targetKey = "Sunday";
+          customLabel = `Every Sunday (${orderVal} Order)`;
+        } else if (preset === "custom") {
+          targetKey = workingDateInput ? workingDateInput.value.trim() : "";
+        }
+
+        if (!targetKey) {
           if (typeof showToast === "function") showToast("Please select a date for the working day.");
           return;
         }
 
-        setCustomWorkingDay(dateVal, orderVal);
+        setCustomWorkingDay(targetKey, orderVal, customLabel);
       });
     }
 
@@ -442,9 +522,8 @@
       customDateInput.value = formatDateKey(getTomorrowDate());
     }
 
-    const workingDateInput = document.getElementById("dynWorkingDate");
     if (workingDateInput && !workingDateInput.value) {
-      workingDateInput.value = formatDateKey(getUpcomingWeekend(6));
+      workingDateInput.value = formatDateKey(getUpcomingWeekend(6, 0));
     }
 
     renderPanelContents();
@@ -545,21 +624,28 @@
     applyChanges();
   }
 
-  function getUpcomingWeekend(targetDayIdx) {
+  function getUpcomingWeekend(targetDayIdx, weekOffset = 0) {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
-    const cur = d.getDay();
+    const cur = d.getDay(); // 0 Sun .. 6 Sat
     let diff = (targetDayIdx - cur + 7) % 7;
-    if (diff === 0) diff = 7;
-    d.setDate(d.getDate() + diff);
+    d.setDate(d.getDate() + diff + (weekOffset * 7));
     return d;
   }
 
   function setCustomWorkingDay(key, dayOrder, customName) {
     if (!STATE.customWorkingDays) STATE.customWorkingDays = {};
-    const d = new Date(key + "T00:00:00");
-    const dayName = !isNaN(d.getTime()) ? d.toLocaleDateString("en-US", { weekday: "long" }) : "Working Day";
-    const label = customName || `${dayName} (${dayOrder} Order)`;
+    
+    let label = customName;
+    if (!label) {
+      if (key === "Saturday" || key === "Sunday") {
+        label = `Every ${key} (${dayOrder} Order)`;
+      } else {
+        const d = new Date(key + "T00:00:00");
+        const dayName = !isNaN(d.getTime()) ? d.toLocaleDateString("en-US", { weekday: "long" }) : "Working Day";
+        label = `${dayName} (${dayOrder} Order)`;
+      }
+    }
 
     STATE.customWorkingDays[key] = {
       dayOrder: dayOrder || "Monday",
@@ -575,7 +661,7 @@
     }
 
     if (typeof showToast === "function") {
-      showToast(`Added ${dayName} as Working Day (${dayOrder} Order) 💼`);
+      showToast(`Added ${label} 💼`);
     }
 
     applyChanges();
