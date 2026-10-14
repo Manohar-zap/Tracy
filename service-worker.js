@@ -1,4 +1,4 @@
-const CACHE_NAME = "tracy-v6.1.8"; // Card-fit zoom for visual onboarding guide
+const CACHE_NAME = "tracy-v6.1.9"; // Fix target selection in quick calculator
 
 const ASSETS = [
   "./",

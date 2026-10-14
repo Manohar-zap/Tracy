@@ -134,13 +134,7 @@ function setupGlobalEventListeners() {
       return;
     }
 
-    // Handle Target Attendance Change
-    if (target.dataset.t) {
-      setTarget(parseInt(target.dataset.t));
-      return;
-    }
-
-    // Handle Actions
+    // Handle Actions (Priority over generic data attributes)
     const action = target.dataset.action;
     if (action) {
       // Prevent bubbling for trigger-input if it's the actual input (unlikely but safe)
@@ -246,7 +240,20 @@ function setupGlobalEventListeners() {
             setQuickCalcTarget(qcT);
           }
           break;
+        case "set-target":
+          const t = parseInt(target.dataset.t, 10);
+          if (!isNaN(t) && typeof setTarget === "function") {
+            setTarget(t);
+          }
+          break;
       }
+      return;
+    }
+
+    // Handle Target Attendance Change (Fallback for elements with only data-t)
+    if (target.dataset.t) {
+      setTarget(parseInt(target.dataset.t, 10));
+      return;
     }
   });
 
