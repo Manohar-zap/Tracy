@@ -4,40 +4,40 @@
 
 const GUIDE_STEPS = [
   {
-    title: "1. Select Student Login",
-    text: "Visit the Presidency University Linways portal in your browser and click <b>Student Login</b> to begin.",
-    img: "guide/step-1.jpeg",
+    title: "1. Sign In to Linways AMS",
+    text: "Visit the Presidency University Linways portal and enter your student credentials to log in.",
+    img: "guide/image_01.jpg",
     linkText: "Open Linways Portal",
     linkUrl: "https://presidencyuniversity.linways.com",
   },
   {
-    title: "2. Sign In to Linways AMS",
-    text: "Enter your Student Roll/Admission Number and Password, then click <b>Sign in</b>.",
-    img: "guide/step-2.jpeg",
+    title: "2. Open Navigation Menu",
+    text: "Tap the sidebar menu icon (☰) at the top-left to reveal the student navigation options.",
+    img: "guide/image_02.jpg",
   },
   {
-    title: "3. Open Navigation & Select Attendance",
-    text: "Tap the sidebar menu icon (☰) at the top-left, then select <b>Attendance</b> from the menu.",
-    img: "guide/step-3.jpeg",
+    title: "3. Select Attendance",
+    text: "Tap <b>Attendance</b> in the sidebar menu to open your attendance section.",
+    img: "guide/image_03.jpg",
   },
   {
     title: "4. Download Attendance Spreadsheet",
-    text: "On the Attendance page, click the purple <b>Export</b> button to download your official <b>.xlsx</b> attendance report.",
-    img: "guide/step-4.jpeg",
+    text: "On the Attendance page, tap the purple <b>Export</b> button to download your official <b>.xlsx</b> report.",
+    img: "guide/image_05.jpg",
     linkText: "Direct Attendance Report Link",
     linkUrl: "https://presidencyuniversity.linways.com/ams/attendance/consolidated-attendance-report?redir=true",
   },
   {
     title: "5. Daily Attendance (Optional)",
-    text: "For day-by-day analysis in the Analytics tab, go to <b>Daily Attendance</b> and tap <b>Export</b> to get your session-wise report.",
-    img: "guide/step-5.jpeg",
+    text: "For day-by-day analysis in the Analytics tab, open <b>Daily Attendance</b> and tap <b>Export</b>.",
+    img: "guide/image_07.jpg",
     linkText: "Direct Daily Report Link",
     linkUrl: "https://presidencyuniversity.linways.com/ams/attendance/daily-attendance?redir=true",
   },
   {
     title: "6. Drop & Track in ZapTrack!",
-    text: "Return here to ZapTrack, drop or upload your downloaded <b>.xlsx</b> file, and start tracking your safe bunks, attendance stats, and timetable predictions!",
-    img: "guide/step-6.jpeg",
+    text: "Return here to ZapTrack, drop or upload your downloaded <b>.xlsx</b> file into the box, and start tracking your safe bunks and stats!",
+    img: "guide/image_06.jpg",
   },
 ];
 

@@ -407,18 +407,19 @@
 
 .guide-img-container {
   position: relative;
-  width: 100%;
-  background: #08080c;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
+  width: auto;
+  max-width: 210px;
+  height: clamp(280px, 48vh, 380px);
+  aspect-ratio: 1 / 2;
+  margin: 12px auto 8px auto;
+  background: #000000;
+  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  border-radius: 20px;
   overflow: hidden;
-  margin-top: 12px;
-  margin-bottom: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 220px;
-  max-height: 350px;
+  box-shadow: 0 14px 35px -8px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(99, 102, 241, 0.2);
   user-select: none;
   -webkit-user-select: none;
   touch-action: pan-y;
@@ -426,26 +427,25 @@
 
 @media (max-width: 640px) {
   .guide-img-container {
-    min-height: 180px;
-    max-height: 270px;
-    margin-top: 10px;
-    margin-bottom: 6px;
+    max-width: 185px;
+    height: clamp(250px, 45vh, 340px);
+    margin: 8px auto 6px auto;
+    border-radius: 18px;
   }
 }
 
 .guide-img {
-  width: auto;
-  max-width: 100%;
-  height: auto;
-  max-height: 350px;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   transition: opacity 0.2s ease-in-out;
   display: block;
+  border-radius: 18px;
 }
 
 @media (max-width: 640px) {
   .guide-img {
-    max-height: 270px;
+    border-radius: 16px;
   }
 }
 

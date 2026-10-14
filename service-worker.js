@@ -1,4 +1,4 @@
-const CACHE_NAME = "tracy-v6.1.5"; // Fix malformed faculty/section codes in timetables
+const CACHE_NAME = "tracy-v6.1.6"; // Mobile ratio guide visual images update
 
 const ASSETS = [
   "./",
@@ -26,12 +26,13 @@ const ASSETS = [
   "./css/animations.css",
   "./css/themes.css",
   "./icons/icon.svg",
-  "./guide/step-1.jpeg",
-  "./guide/step-2.jpeg",
-  "./guide/step-3.jpeg",
-  "./guide/step-4.jpeg",
-  "./guide/step-5.jpeg",
-  "./guide/step-6.jpeg",
+  "./guide/image_01.jpg",
+  "./guide/image_02.jpg",
+  "./guide/image_03.jpg",
+  "./guide/image_04.jpg",
+  "./guide/image_05.jpg",
+  "./guide/image_06.jpg",
+  "./guide/image_07.jpg",
 ];
 
 self.addEventListener("install", (event) => {
