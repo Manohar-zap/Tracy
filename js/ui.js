@@ -16,6 +16,7 @@ function renderUpcomingClasses() {
   const overrides = STATE.weekOverrides?.week1 || {};
   const now = new Date();
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const isAfter5PM = now.getHours() >= 17;
 
   const upcoming = [];
 
@@ -35,47 +36,107 @@ function renderUpcomingClasses() {
     });
   };
 
-  const date = new Date(now);
-  date.setHours(0, 0, 0, 0);
+  let activeDate = new Date(now);
+  activeDate.setHours(0, 0, 0, 0);
 
-  if (isUniversityHoliday(date)) {
-    el.innerHTML = genZMode
-      ? `
-      <div class="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-5 text-center">
-        <div class="text-3xl mb-2">🎈</div>
-        <p class="text-base font-bold text-indigo-400 uppercase tracking-widest">Absolute Cinema</p>
-        <p class="text-xs text-gray-500 mt-1">
-          Today is a holiday. Just vibes 🥂
-        </p>
-      </div>
-    `
-      : `
-      <div class="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-5 text-center">
-        <div class="text-3xl mb-2">🥳</div>
-        <p class="text-base font-bold text-indigo-400">It's a Holiday!</p>
-        <p class="text-xs text-gray-500 mt-1">
-          Today is a university holiday. Enjoy your break!
-        </p>
-      </div>
-    `;
-    return;
+  let isNextDay = false;
+  let activeTt = tt;
+  let activeOverrides = overrides;
+  let activeRow = null;
+
+  if (isAfter5PM) {
+    // 5 PM onwards: find the next day with scheduled classes (up to 7 days forward)
+    for (let offset = 1; offset <= 7; offset++) {
+      const candidateDate = new Date(now);
+      candidateDate.setDate(now.getDate() + offset);
+      candidateDate.setHours(0, 0, 0, 0);
+
+      if (typeof isUniversityHoliday === "function" && isUniversityHoliday(candidateDate)) {
+        continue;
+      }
+
+      const dayIdx = candidateDate.getDay();
+      const orderIdx = dayIdx === 0 ? 7 : dayIdx;
+
+      // Determine week timetable (week 1 vs week 2)
+      const todayOrder = getTodayOrderIdx();
+      const isNextWeek = (todayOrder + offset) > 7;
+
+      const candidateTt = isNextWeek
+        ? (getTimetableById(STATE.week2TimetableId) || tt)
+        : (getTimetableById(STATE.week1TimetableId) || tt);
+
+      const candidateOverrides = isNextWeek
+        ? (STATE.weekOverrides?.week2 || STATE.weekOverrides?.week1 || {})
+        : (STATE.weekOverrides?.week1 || {});
+
+      if (!candidateTt || !candidateTt.rows) continue;
+
+      const candidateRow = candidateTt.rows.find(
+        (r) => weekdayOrderIndex(r.day) === orderIdx,
+      );
+
+      if (
+        candidateRow &&
+        !candidateRow.isHoliday &&
+        candidateRow.hours &&
+        candidateRow.hours.some((h) => {
+          const t = String(h || "").trim();
+          return t && !t.toLowerCase().includes("holiday");
+        })
+      ) {
+        activeDate = candidateDate;
+        activeTt = candidateTt;
+        activeOverrides = candidateOverrides;
+        activeRow = candidateRow;
+        isNextDay = true;
+        break;
+      }
+    }
+  } else {
+    // Before 5 PM: today
+    if (typeof isUniversityHoliday === "function" && isUniversityHoliday(activeDate)) {
+      el.innerHTML = genZMode
+        ? `
+        <div class="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-5 text-center">
+          <div class="text-3xl mb-2">🎈</div>
+          <p class="text-base font-bold text-indigo-400 uppercase tracking-widest">Absolute Cinema</p>
+          <p class="text-xs text-gray-500 mt-1">
+            Today is a holiday. Just vibes 🥂
+          </p>
+        </div>
+      `
+        : `
+        <div class="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-5 text-center">
+          <div class="text-3xl mb-2">🥳</div>
+          <p class="text-base font-bold text-indigo-400">It's a Holiday!</p>
+          <p class="text-xs text-gray-500 mt-1">
+            Today is a university holiday. Enjoy your break!
+          </p>
+        </div>
+      `;
+      const badgeEl = document.getElementById("upcomingDayBadge");
+      if (badgeEl) {
+        badgeEl.textContent = "Today";
+        badgeEl.classList.remove("hidden");
+      }
+      return;
+    }
+
+    const dayIdx = activeDate.getDay();
+    activeRow = activeTt.rows.find(
+      (r) => weekdayOrderIndex(r.day) === (dayIdx === 0 ? 7 : dayIdx),
+    );
   }
 
-  const dayIdx = date.getDay();
+  if (activeRow) {
+    const dayKey = normalizeDayName(activeRow.day);
 
-  const row = tt.rows.find(
-    (r) => weekdayOrderIndex(r.day) === (dayIdx === 0 ? 7 : dayIdx),
-  );
-
-  if (row) {
-    const dayKey = normalizeDayName(row.day);
-
-    if (!overrides.suspendedDays?.includes(dayKey)) {
-      row.hours.forEach((cell, hIdx) => {
+    if (!activeOverrides.suspendedDays?.includes(dayKey)) {
+      activeRow.hours.forEach((cell, hIdx) => {
         if (upcoming.length >= 10) return;
 
         const text = String(cell || "").trim();
-
         if (!text || text.toLowerCase().includes("holiday")) return;
 
         const sched = HOUR_SCHEDULE[hIdx];
@@ -87,26 +148,24 @@ function renderUpcomingClasses() {
         const startMinutes = sh * 60 + sm;
         const endMinutes = eh * 60 + em;
 
-        if (currentMinutes >= endMinutes) {
+        // Skip passed classes only when viewing today
+        if (!isNextDay && currentMinutes >= endMinutes) {
           return;
         }
 
         const subject = findSubject(text);
-
         if (!subject) return;
 
-        const suspendedSubjects = overrides.suspendedSubjects?.[dayKey] || [];
-
+        const suspendedSubjects = activeOverrides.suspendedSubjects?.[dayKey] || [];
         const isSuspended = suspendedSubjects.some(
           (s) => clean(s) === clean(subject.name),
         );
-
         if (isSuspended) return;
 
         // Detect consecutive block of the same subject on this day
         const getSubjectAt = (idx) => {
-          if (idx < 0 || idx >= row.hours.length) return null;
-          const c = String(row.hours[idx] || "").trim();
+          if (idx < 0 || idx >= activeRow.hours.length) return null;
+          const c = String(activeRow.hours[idx] || "").trim();
           if (!c || c.toLowerCase().includes("holiday")) return null;
           return findSubject(c);
         };
@@ -123,7 +182,7 @@ function renderUpcomingClasses() {
         }
 
         let blockEnd = hIdx;
-        while (blockEnd < row.hours.length - 1) {
+        while (blockEnd < activeRow.hours.length - 1) {
           const nextSub = getSubjectAt(blockEnd + 1);
           if (nextSub && clean(nextSub.name) === currentSubKey) {
             blockEnd++;
@@ -152,7 +211,6 @@ function renderUpcomingClasses() {
         const afterAbsentTotal = currentTotal + addedClasses;
 
         const afterPct = afterTotal ? (afterAttended / afterTotal) * 100 : 0;
-
         const afterAbsentPct = afterAbsentTotal ? (afterAbsent / afterAbsentTotal) * 100 : 0;
 
         const { need, bunk } = calcNeedAndBunk(
@@ -164,12 +222,13 @@ function renderUpcomingClasses() {
         );
 
         const isNow =
+          !isNextDay &&
           currentMinutes >= startMinutes && currentMinutes < endMinutes;
 
         upcoming.push({
           subject,
           sched,
-          date,
+          date: activeDate,
           currentPct,
           afterPct,
           afterAbsentPct,
@@ -183,13 +242,34 @@ function renderUpcomingClasses() {
     }
   }
 
+  const tomorrow = new Date(now);
+  tomorrow.setDate(now.getDate() + 1);
+  const isTomorrow = isNextDay && activeDate.toDateString() === tomorrow.toDateString();
+
+  // Update header badge
+  const badgeEl = document.getElementById("upcomingDayBadge");
+  if (badgeEl) {
+    if (isNextDay) {
+      badgeEl.textContent = isTomorrow ? "Tomorrow" : activeDate.toLocaleDateString("en-US", { weekday: "short" });
+      badgeEl.classList.remove("hidden");
+    } else {
+      badgeEl.textContent = "Today";
+      badgeEl.classList.remove("hidden");
+    }
+  }
+
   if (!upcoming.length) {
+    const emptyMsg = isNextDay
+      ? (genZMode ? "No classes scheduled. You're chilling 🌴" : `No classes scheduled for ${isTomorrow ? "tomorrow" : activeDate.toLocaleDateString("en-US", { weekday: "short" })}.`)
+      : (genZMode ? "Zero classes left." : "No upcoming classes.");
+    const subMsg = isNextDay
+      ? "Enjoy your free time!"
+      : (genZMode ? "You've Handled Today ✓" : "You're done for today ✓");
+
     el.innerHTML = `
       <div class="text-center py-3">
-        <p class="text-sm text-gray-400">${genZMode ? "Zero classes left." : "No upcoming classes."}</p>
-        <p class="text-xs text-gray-500 mt-1">
-          ${genZMode ? "You've Handled Today ✓" : "You're done for today ✓"}
-        </p>
+        <p class="text-sm text-gray-400">${emptyMsg}</p>
+        <p class="text-xs text-gray-500 mt-1">${subMsg}</p>
       </div>
     `;
     return;
@@ -200,9 +280,9 @@ function renderUpcomingClasses() {
       const dayLabel =
         item.date.toDateString() === now.toDateString()
           ? "Today"
-          : item.date.toLocaleDateString("en-US", {
-              weekday: "short",
-            });
+          : item.date.toDateString() === tomorrow.toDateString()
+            ? "Tomorrow"
+            : item.date.toLocaleDateString("en-US", { weekday: "short" });
 
       const bunkText =
         item.need > 0
@@ -618,14 +698,37 @@ function checkAttendanceReportStatus() {
   if (!box || !content || !STATE.lastAttendanceReportDate) return;
 
   const reportDate = new Date(STATE.lastAttendanceReportDate);
-  const today = new Date();
+  const now = new Date();
 
-  reportDate.setHours(0, 0, 0, 0);
-  today.setHours(0, 0, 0, 0);
+  // Reset to midnight for calendar day difference
+  const reportDay = new Date(reportDate.getFullYear(), reportDate.getMonth(), reportDate.getDate());
+  const nowDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const daysDiff = Math.round((nowDay - reportDay) / (1000 * 60 * 60 * 24));
 
-  const daysOld = Math.floor((today - reportDate) / (1000 * 60 * 60 * 24));
+  const CUTOFF_MINUTES = 16 * 60 + 30; // 4:30 PM
+  const reportMinutes = reportDate.getHours() * 60 + reportDate.getMinutes();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
-  if (daysOld >= 1) {
+  const wasUploadedAfter430 = reportMinutes >= CUTOFF_MINUTES;
+  const isNowAfter430 = nowMinutes >= CUTOFF_MINUTES;
+
+  let isOutdated = false;
+  if (daysDiff === 0) {
+    // Uploaded today: outdated only if uploaded before 4:30 PM and now it is past 4:30 PM
+    isOutdated = !wasUploadedAfter430 && isNowAfter430;
+  } else if (daysDiff === 1) {
+    // Uploaded yesterday: if uploaded after 4:30 PM, it's valid for today until 4:30 PM
+    if (wasUploadedAfter430) {
+      isOutdated = isNowAfter430;
+    } else {
+      isOutdated = true;
+    }
+  } else if (daysDiff >= 2) {
+    // Uploaded 2 or more days ago
+    isOutdated = true;
+  }
+
+  if (isOutdated) {
     box.classList.remove("border-indigo-500");
     box.classList.add("border-2", "border-warning-flash");
     content.innerHTML = genZMode

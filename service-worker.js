@@ -1,4 +1,4 @@
-const CACHE_NAME = "tracy-v6.1.3"; // Multi-hour lab cumulative attendance fix
+const CACHE_NAME = "tracy-v6.1.4"; // Upcoming classes 5pm switch & attendance report 4:30pm rule
 
 const ASSETS = [
   "./",
