@@ -1,11 +1,13 @@
 {
-  "updatedAt": "2026-10-14T18:13:11.690Z",
+  "updatedAt": "2026-10-14T19:21:05.731Z",
   "holidays": {
     "2026-10-19": {
       "name": "Monday Holiday",
       "isHoliday": true
     }
   },
-  "disabled": [],
+  "disabled": [
+    "2026-10-17"
+  ],
   "workingDays": {}
 }
