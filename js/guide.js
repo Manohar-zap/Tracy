@@ -8,6 +8,7 @@ const GUIDE_STEPS = [
     caption: "Enter credentials & tap Sign In",
     text: "Visit the Linways portal, enter your student username and password, then tap <b>Sign in</b>.",
     img: "guide/image_01.jpg",
+    objectPosition: "center 28%",
     linkText: "Open Linways Portal",
     linkUrl: "https://presidencyuniversity.linways.com",
   },
@@ -16,12 +17,14 @@ const GUIDE_STEPS = [
     caption: "Tap 'Attendance' in sidebar (Red Box)",
     text: "Tap the hamburger menu (☰) at top, then tap the highlighted <b>Attendance</b> section.",
     img: "guide/image_04.jpg",
+    objectPosition: "28% 48%",
   },
   {
     title: "3. Download Attendance Report",
     caption: "Tap the 'Export' button (Red Box)",
     text: "On the Attendance page, tap the purple <b>Export</b> button highlighted in red to download your <b>.xlsx</b> report.",
     img: "guide/image_05.jpg",
+    objectPosition: "center 44%",
     linkText: "Direct Attendance Report Link",
     linkUrl: "https://presidencyuniversity.linways.com/ams/attendance/consolidated-attendance-report?redir=true",
   },
@@ -30,6 +33,7 @@ const GUIDE_STEPS = [
     caption: "Drop or tap the upload box (Red Box)",
     text: "Return to ZapTrack and drop or tap the <b>dashed upload card</b> highlighted in red — your safe bunks and stats will load instantly!",
     img: "guide/image_06.jpg",
+    objectPosition: "center 18%",
   },
 ];
 
@@ -128,6 +132,7 @@ function showGuideStep() {
 
   // Smooth image swap
   if (imgEl) {
+    imgEl.style.objectPosition = step.objectPosition || "center center";
     imgEl.classList.add("fade-out");
     setTimeout(() => {
       imgEl.src = step.img;

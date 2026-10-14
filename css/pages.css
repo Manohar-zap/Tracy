@@ -355,11 +355,11 @@
   z-index: 140;
 }
 
-/* Modal shell - tall mobile aspect to show full screenshot */
+/* Modal shell - responsive card */
 .guide-modal-content {
-  width: 380px !important;
-  max-width: 95vw !important;
-  height: min(92vh, 760px) !important;
+  width: 92% !important;
+  max-width: 410px !important;
+  height: min(92vh, 660px) !important;
   padding: 0 !important;
   border-radius: 24px !important;
   background: #0a0b12 !important;
@@ -375,26 +375,23 @@
 @media (max-width: 640px) {
   .guide-modal-content {
     width: 95% !important;
-    max-width: 360px !important;
-    height: min(94vh, 720px) !important;
+    max-width: 390px !important;
+    height: min(94vh, 620px) !important;
     border-radius: 20px !important;
   }
 }
 
-/* ── Hero image zone — fills vertical space ── */
+/* ── Hero image zone — fills width and frames the card ── */
 .guide-img-hero {
   position: relative;
   width: 100%;
   flex: 1 1 0;
-  min-height: 0;
-  background: #050508;
+  min-height: 240px;
+  background: #08090f;
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
   touch-action: pan-y;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 /* Subtle top vignette for badge/close button visibility */
@@ -404,18 +401,19 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 60px;
+  height: 55px;
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.45) 0%, transparent 100%);
   pointer-events: none;
   z-index: 2;
 }
 
-/* Full picture contained without any cropping */
+/* Image fills the card width, zoomed to card area without awkward letterboxing */
 .guide-img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  object-position: top center;
+  object-fit: cover;
   display: block;
   transition: opacity 0.22s ease-in-out;
 }
@@ -523,12 +521,13 @@
   box-sizing: border-box;
   background: linear-gradient(
     to top,
-    rgba(10, 11, 18, 0.96) 0%,
-    rgba(10, 11, 18, 0.92) 80%,
+    rgba(10, 11, 18, 0.98) 0%,
+    rgba(10, 11, 18, 0.93) 70%,
+    rgba(10, 11, 18, 0.6) 90%,
     transparent 100%
   );
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = "tracy-v6.1.7"; // Clean elective slot format (sub1/sub2) & purge dirty timetables
+const CACHE_NAME = "tracy-v6.1.8"; // Card-fit zoom for visual onboarding guide
 
 const ASSETS = [
   "./",
