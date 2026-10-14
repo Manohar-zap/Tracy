@@ -1,4 +1,4 @@
-const CACHE_NAME = "tracy-v6.1.4"; // Upcoming classes 5pm switch & attendance report 4:30pm rule
+const CACHE_NAME = "tracy-v6.1.5"; // Fix malformed faculty/section codes in timetables
 
 const ASSETS = [
   "./",

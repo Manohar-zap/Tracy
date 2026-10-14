@@ -27,13 +27,10 @@ def clean_subject(text):
     if any(x in text.lower() for x in ['lunch', 'hcnul', 'break', 'kaerb']):
         return ""
     # Regex to capture course codes or combined ones.
-    # Pattern: PUNIV... OR 3-4 letters + 4 digits
-    codes = re.findall(r'[A-Z0-9]{3,}/?[A-Z0-9]{3,}', text)
-    valid_codes = []
-    for c in codes:
-        if re.search(r'[A-Z]{3}[0-9]{4}|PUNIV|AIE|MAT|ENG|APT|CIV|PPS|ECE|EEE', c):
-            valid_codes.append(c)
-    return "/".join(valid_codes) if valid_codes else ""
+    # Pattern: 3-4 letters + 4 digits (e.g. MAT2303, CSS2254)
+    codes = re.findall(r'[A-Z]{3,4}[0-9]{4}', text)
+    valid_codes = [c for c in codes if not c.startswith('PUNIV')]
+    return "/".join(dict.fromkeys(valid_codes)) if valid_codes else ""
 
 def fix():
     with pdfplumber.open(pdf_path) as pdf:

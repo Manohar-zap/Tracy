@@ -156,6 +156,44 @@ const clean = (str) =>
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "");
 
+function sanitizeSubjectCell(cell) {
+  if (!cell || typeof cell !== "string") return cell || "";
+  const trimmed = cell.trim();
+  if (!trimmed) return "";
+
+  // If cell contains delimiters like / or , or \n
+  if (trimmed.includes("/") || trimmed.includes("&") || trimmed.includes("\n") || trimmed.includes(",")) {
+    const rawParts = trimmed.split(/[\/\n,&+]/).map((p) => p.trim()).filter(Boolean);
+    // Filter out faculty codes (e.g. PUNIV01748) and registration/section IDs (e.g. 20243MAT0002 or pure numbers/long codes)
+    const validParts = rawParts.filter(
+      (p) => !/^puniv\w*$/i.test(p) && !/^\d{5,}\w*$/i.test(p)
+    );
+    if (validParts.length === 1) {
+      return validParts[0];
+    }
+    if (validParts.length > 1) {
+      return validParts.join("/");
+    }
+    return rawParts[rawParts.length - 1] || trimmed;
+  }
+
+  // Single token that is PUNIV or section code
+  if (/^puniv\w*$/i.test(trimmed) || /^\d{5,}\w*$/i.test(trimmed)) {
+    return "";
+  }
+  return trimmed;
+}
+
+function sanitizeTimetable(tt) {
+  if (!tt || !Array.isArray(tt.rows)) return tt;
+  tt.rows.forEach((row) => {
+    if (Array.isArray(row.hours)) {
+      row.hours = row.hours.map(sanitizeSubjectCell);
+    }
+  });
+  return tt;
+}
+
 function normalizeDayName(raw) {
   return String(raw || "")
     .toLowerCase()

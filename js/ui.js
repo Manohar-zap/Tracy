@@ -21,11 +21,12 @@ function renderUpcomingClasses() {
   const upcoming = [];
 
   const findSubject = (cell) => {
-    const cellParts = String(cell || "")
+    const sanitized = typeof sanitizeSubjectCell === "function" ? sanitizeSubjectCell(cell) : cell;
+    const cellParts = String(sanitized || "")
       .toLowerCase()
       .split(/[\/\n,&+]/)
       .map((p) => clean(p.trim()))
-      .filter(Boolean);
+      .filter((p) => Boolean(p) && !p.startsWith("puniv") && !/^\d{5,}/.test(p));
 
     return STATE.subjects.find((s) => {
       const subjectKey = clean(s.name);
@@ -136,7 +137,8 @@ function renderUpcomingClasses() {
       activeRow.hours.forEach((cell, hIdx) => {
         if (upcoming.length >= 10) return;
 
-        const text = String(cell || "").trim();
+        const rawText = String(cell || "").trim();
+        const text = typeof sanitizeSubjectCell === "function" ? sanitizeSubjectCell(rawText) : rawText;
         if (!text || text.toLowerCase().includes("holiday")) return;
 
         const sched = HOUR_SCHEDULE[hIdx];
@@ -165,7 +167,8 @@ function renderUpcomingClasses() {
         // Detect consecutive block of the same subject on this day
         const getSubjectAt = (idx) => {
           if (idx < 0 || idx >= activeRow.hours.length) return null;
-          const c = String(activeRow.hours[idx] || "").trim();
+          const rawC = String(activeRow.hours[idx] || "").trim();
+          const c = typeof sanitizeSubjectCell === "function" ? sanitizeSubjectCell(rawC) : rawC;
           if (!c || c.toLowerCase().includes("holiday")) return null;
           return findSubject(c);
         };

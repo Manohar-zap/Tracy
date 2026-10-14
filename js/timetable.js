@@ -16,7 +16,10 @@ function buildTimetableRows(sheet) {
     const dayRaw = String(row[0] || "").trim();
     if (!dayRaw) continue;
 
-    const hours = row.slice(1).map((v) => String(v || "").trim());
+    const hours = row.slice(1).map((v) => {
+      const s = String(v || "").trim();
+      return typeof sanitizeSubjectCell === "function" ? sanitizeSubjectCell(s) : s;
+    });
 
     const isHoliday = hours.some((v) => v.toLowerCase().includes("holiday"));
 
@@ -88,6 +91,9 @@ async function loadBuiltInTimetable(fileName) {
 
       // Ensure consistent properties
       timetable.source = "builtin";
+      if (typeof sanitizeTimetable === "function") {
+        sanitizeTimetable(timetable);
+      }
 
       STATE.timetables.push(timetable);
 
@@ -443,13 +449,25 @@ function renderTimetablePreview() {
       tr.appendChild(tdHoliday);
     } else {
       for (let h = 0; h < maxHours; h++) {
-        const v = String(row.hours[h] || "").trim();
+        let v = typeof sanitizeSubjectCell === "function"
+          ? sanitizeSubjectCell(String(row.hours[h] || ""))
+          : String(row.hours[h] || "").trim();
         const td = document.createElement("td");
         if (v.toLowerCase().includes("holiday")) {
           td.className = "opacity-40 line-through";
           td.textContent = v;
         } else if (v.includes("/")) {
-          const parts = v.split(/[\/\n,&+]/).map((p) => p.trim()).filter(Boolean);
+          const rawParts = v.split(/[\/\n,&+]/).map((p) => p.trim()).filter(Boolean);
+          const parts = rawParts.filter(
+            (p) => !/^puniv\w*$/i.test(p) && !/^\d{5,}\w*$/i.test(p),
+          );
+
+          if (parts.length <= 1) {
+            td.textContent = parts[0] || "";
+            tr.appendChild(td);
+            continue;
+          }
+
           const cleanFn = typeof clean === "function" ? clean : (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
           const aliases = typeof SUBJECT_ALIASES !== "undefined" ? SUBJECT_ALIASES : {};
 

@@ -18,6 +18,9 @@ function loadState() {
     Object.keys(STATE).forEach((key) => {
       if (saved[key] !== undefined) STATE[key] = saved[key];
     });
+    if (Array.isArray(STATE.timetables) && typeof sanitizeTimetable === "function") {
+      STATE.timetables.forEach(sanitizeTimetable);
+    }
   } catch (e) {
     logError("Load State", e);
   }
