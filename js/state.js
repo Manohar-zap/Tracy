@@ -161,9 +161,9 @@ function sanitizeSubjectCell(cell) {
   const trimmed = cell.trim();
   if (!trimmed) return "";
 
-  // If cell contains delimiters like / or , or \n
-  if (trimmed.includes("/") || trimmed.includes("&") || trimmed.includes("\n") || trimmed.includes(",")) {
-    const rawParts = trimmed.split(/[\/\n,&+]/).map((p) => p.trim()).filter(Boolean);
+  // If cell contains delimiters like / or , or \n or whitespace or parentheses or puniv
+  if (trimmed.includes("/") || trimmed.includes("&") || trimmed.includes("\n") || trimmed.includes(",") || trimmed.includes("(") || /\s{2,}/.test(trimmed) || /puniv/i.test(trimmed)) {
+    const rawParts = trimmed.split(/[\/\n,&+()\s]+/).map((p) => p.trim()).filter(Boolean);
     // Filter out faculty codes (e.g. PUNIV01748) and registration/section IDs (e.g. 20243MAT0002 or pure numbers/long codes)
     const validParts = rawParts.filter(
       (p) => !/^puniv\w*$/i.test(p) && !/^\d{5,}\w*$/i.test(p)

@@ -67,7 +67,19 @@ async function loadBuiltInTimetable(fileName) {
     (t) => t.id === fileName && t.source === "builtin",
   );
 
-  if (existing) return existing;
+  if (existing) {
+    if (typeof sanitizeTimetable === "function") {
+      sanitizeTimetable(existing);
+    }
+    const hasDirty = existing.rows && existing.rows.some((r) =>
+      r.hours && r.hours.some((h) => /puniv|\d{5,}/i.test(String(h)))
+    );
+    if (!hasDirty) {
+      return existing;
+    }
+    // Purge obsolete dirty timetable from STATE
+    STATE.timetables = STATE.timetables.filter((t) => t !== existing);
+  }
 
   if (timetableLoadPromises.has(fileName)) {
     return timetableLoadPromises.get(fileName);
@@ -75,8 +87,8 @@ async function loadBuiltInTimetable(fileName) {
 
   const promise = (async () => {
     try {
-      const response = await fetch(`timetable/${fileName}.json`, {
-        cache: "default",
+      const response = await fetch(`timetable/${fileName}.json?v=6.1.7`, {
+        cache: "reload",
       });
 
       if (!response.ok) {
@@ -488,20 +500,10 @@ function renderTimetablePreview() {
           }
 
           if (matchedPart) {
-            const others = parts.filter((p) => p !== matchedPart);
-            const othersText = others.join(", ");
-            td.innerHTML = `
-              <div class="flex flex-col items-center gap-0.5">
-                <span class="px-2 py-0.5 rounded-md text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">${escapeHtml(matchedPart)}</span>
-                <span class="text-[10px] text-gray-500 truncate max-w-[100px]" title="Other batches: ${escapeHtml(othersText)}">${escapeHtml(othersText)}</span>
-              </div>
-            `;
+            td.textContent = matchedPart;
+            td.title = `Elective slot: (${parts.join("/")})`;
           } else {
-            td.innerHTML = `
-              <div class="flex flex-wrap gap-1 justify-center">
-                ${parts.map((p) => `<span class="px-1.5 py-0.5 rounded text-[11px] bg-white/5 text-gray-300 font-mono">${escapeHtml(p)}</span>`).join("")}
-              </div>
-            `;
+            td.textContent = `(${parts.join("/")})`;
           }
         } else {
           td.textContent = v;
