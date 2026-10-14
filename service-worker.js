@@ -1,9 +1,10 @@
-const CACHE_NAME = "tracy-v6.1.13"; // Enhanced admin working weekend presets & quick assign chips
+const CACHE_NAME = "tracy-v6.1.14"; // Embedded timetable bundle for guaranteed offline & file protocol support
 
 const ASSETS = [
   "./",
   "./index.html",
   "./manifest.json",
+  "./timetable/bundle.js",
   "./js/main.js",
   "./js/state.js",
   "./js/storage.js",

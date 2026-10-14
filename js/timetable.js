@@ -87,15 +87,30 @@ async function loadBuiltInTimetable(fileName) {
 
   const promise = (async () => {
     try {
-      const response = await fetch(`timetable/${fileName}.json?v=6.1.7`, {
-        cache: "reload",
-      });
+      let timetable = null;
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+      // 1. First check if bundled offline data is available
+      if (window.BUILTIN_TIMETABLES && window.BUILTIN_TIMETABLES[fileName]) {
+        timetable = JSON.parse(JSON.stringify(window.BUILTIN_TIMETABLES[fileName]));
       }
 
-      const timetable = await response.json();
+      // 2. Otherwise fetch from network or dev server
+      if (!timetable) {
+        let response = null;
+        try {
+          response = await fetch(`timetable/${fileName}.json?v=6.1.13`);
+        } catch (fetchErr) {
+          if (window.location.protocol === "file:") {
+            try {
+              response = await fetch(`http://localhost:8085/timetable/${fileName}.json?v=${Date.now()}`);
+            } catch (e2) {}
+          }
+        }
+
+        if (response && response.ok) {
+          timetable = await response.json();
+        }
+      }
 
       if (!timetable || !timetable.rows || !timetable.rows.length) {
         throw new Error("Invalid or empty timetable data");
