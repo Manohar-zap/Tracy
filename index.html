@@ -66,7 +66,11 @@
         <li>On the Linways page, click <b class="text-gray-300">Export</b>.</li>
         <li>Download the <b class="text-gray-300">.xlsx</b> file and drop it in Tracy.</li>
       </ol>
-      <div class="flex justify-end mt-5">
+      <div class="flex items-center justify-between mt-5">
+        <button type="button" class="btn-primary text-xs flex items-center gap-1.5" data-action="open-visual-guide" data-step="0">
+          <i class="fas fa-images"></i>
+          <span>Visual Guide</span>
+        </button>
         <button class="btn-ghost">Got it</button>
       </div>
     </div>
@@ -81,7 +85,11 @@
         <li>On the Linways page, click <b class="text-gray-300">Export</b>.</li>
         <li>Download the <b class="text-gray-300">.xlsx</b> file and drop it in Tracy.</li>
       </ol>
-      <div class="flex justify-end mt-5">
+      <div class="flex items-center justify-between mt-5">
+        <button type="button" class="btn-primary text-xs flex items-center gap-1.5" data-action="open-visual-guide" data-step="4">
+          <i class="fas fa-images"></i>
+          <span>Visual Guide</span>
+        </button>
         <button class="btn-ghost">Got it</button>
       </div>
     </div>
@@ -348,7 +356,7 @@
       </p>
 
       <!-- Selection -->
-      <div class="card p-5 mb-5">
+      <div class="card p-5 mb-5 relative z-30">
         <h3 class="font-semibold mb-3 text-sm">Select Class</h3>
 
         <div id="ttDropdown" class="custom-dropdown">
@@ -366,7 +374,17 @@
       </div>
 
       <!-- Preview -->
-      <div class="card p-4 overflow-x-auto">
+      <div class="card p-4 overflow-x-auto relative z-10">
+        <div class="flex items-center justify-between mb-3 pb-3 border-b border-white/5 flex-wrap gap-2">
+          <div class="flex items-center gap-2">
+            <h3 class="font-semibold text-sm">Schedule</h3>
+            <span id="ttWeekRangeBadge" class="text-[11px] text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20 font-medium">Current Week</span>
+          </div>
+          <div class="flex items-center gap-1 bg-white/5 p-1 rounded-lg">
+            <button type="button" class="preview-tab px-3 py-1 text-xs rounded-md font-medium transition-all active bg-indigo-600 text-white" data-w="1" onclick="previewWeek(1)">Current Week</button>
+            <button type="button" class="preview-tab px-3 py-1 text-xs rounded-md font-medium transition-all text-gray-400 hover:text-white" data-w="2" onclick="previewWeek(2)">Next Week</button>
+          </div>
+        </div>
         <div id="ttPreviewGrid">
           <p class="text-center text-gray-500 text-sm py-8">
             Select a timetable to preview.
@@ -1352,23 +1370,65 @@
 
       </div>
     </div>
-    <div id="guideModal" class="modal-backdrop">
-      <div class="modal" style="max-width:520px">
+    <!-- New Visual Onboarding Guide Modal -->
+    <div id="guideModal" class="modal-backdrop guide-modal-backdrop">
+      <div class="modal guide-modal-content">
 
-        <div class="flex items-center justify-between mb-3">
-          <h3 id="guideTitle" class="text-lg font-semibold"></h3>
-          <span id="guideStep" class="text-xs text-gray-500"></span>
+        <!-- Header -->
+        <div class="flex items-center justify-between pb-2 border-b border-white/10">
+          <span class="guide-step-badge">
+            <i class="fas fa-compass text-indigo-400 mr-1.5"></i>
+            Step <span id="guideStepNum">1</span> of <span id="guideStepTotal">6</span>
+          </span>
+          <button type="button" class="guide-close-btn" data-action="skip-guide" title="Close guide">
+            <i class="fas fa-times"></i>
+          </button>
         </div>
 
-        <div class="text-sm text-gray-300 leading-7">
-          <p id="guideText"></p>
+        <!-- Title & Instruction -->
+        <div class="mt-2.5">
+          <h3 id="guideTitle" class="text-base sm:text-lg font-bold text-white tracking-tight"></h3>
+          <p id="guideText" class="text-xs sm:text-sm text-gray-300 mt-1 leading-relaxed"></p>
+          <div id="guideLinkContainer" class="mt-2 hidden">
+            <a id="guideActionLink" href="#" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors bg-indigo-500/10 hover:bg-indigo-500/20 px-2.5 py-1 rounded-md border border-indigo-500/25">
+              <span id="guideActionText">Open Portal</span>
+              <i class="fas fa-external-link-alt text-[10px]"></i>
+            </a>
+          </div>
         </div>
 
-        <div class="flex justify-between mt-6">
-          <button class="btn-ghost" data-action="skip-guide">Skip</button>
+        <!-- Image Frame -->
+        <div class="guide-img-container" id="guideImgWrapper">
+          <button type="button" class="guide-nav-arrow prev" data-action="prev-guide" title="Previous step">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <img id="guideImage" src="guide/step-1.jpeg" alt="Guide visual step" class="guide-img" loading="eager" />
+          <button type="button" class="guide-nav-arrow next" data-action="next-guide" title="Next step">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+          <div class="guide-swipe-hint">
+            <i class="fas fa-arrows-left-right text-[10px] mr-1"></i>Swipe or click arrows
+          </div>
+        </div>
 
-          <button id="guideNextBtn" class="btn-primary" data-action="next-guide">
-            Next
+        <!-- Dot Indicators -->
+        <div id="guideDots" class="guide-dots"></div>
+
+        <!-- Footer Actions -->
+        <div class="flex items-center justify-between pt-2 border-t border-white/10 mt-1">
+          <div class="flex items-center gap-2">
+            <button type="button" id="guidePrevBtn" class="btn-ghost text-xs py-1.5 px-3 flex items-center gap-1" data-action="prev-guide">
+              <i class="fas fa-arrow-left text-[10px]"></i>
+              <span>Back</span>
+            </button>
+            <button type="button" class="btn-ghost text-xs py-1.5 px-2.5 text-gray-500 hover:text-gray-300" data-action="skip-guide">
+              Skip
+            </button>
+          </div>
+
+          <button type="button" id="guideNextBtn" class="btn-primary text-xs py-1.5 px-4 flex items-center gap-1.5" data-action="next-guide">
+            <span id="guideNextLabel">Next</span>
+            <i id="guideNextIcon" class="fas fa-arrow-right text-[10px]"></i>
           </button>
         </div>
 

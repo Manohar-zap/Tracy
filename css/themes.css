@@ -282,7 +282,7 @@ body.light-theme .number-input {
 body.light-theme .tt-table th:first-child,
     body.light-theme .tt-table td:first-child {
       background: #ffffff;
-      border-right: 2px solid #cbd5e1;
+      border-right: 1px solid #e2e8f0;
     }
 
 body.light-theme .tt-table td,

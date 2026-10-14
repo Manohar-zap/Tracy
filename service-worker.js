@@ -1,4 +1,4 @@
-const CACHE_NAME = "tracy-v6.0.0"; // Production hardened release
+const CACHE_NAME = "tracy-v6.1.3"; // Multi-hour lab cumulative attendance fix
 
 const ASSETS = [
   "./",
@@ -26,6 +26,12 @@ const ASSETS = [
   "./css/animations.css",
   "./css/themes.css",
   "./icons/icon.svg",
+  "./guide/step-1.jpeg",
+  "./guide/step-2.jpeg",
+  "./guide/step-3.jpeg",
+  "./guide/step-4.jpeg",
+  "./guide/step-5.jpeg",
+  "./guide/step-6.jpeg",
 ];
 
 self.addEventListener("install", (event) => {

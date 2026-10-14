@@ -216,7 +216,13 @@ function previewWeek(w) {
   previewWeekNum = w;
   document
     .querySelectorAll(".preview-tab")
-    .forEach((b) => b.classList.toggle("active", Number(b.dataset.w) === w));
+    .forEach((b) => {
+      const isActive = Number(b.dataset.w) === w;
+      b.classList.toggle("active", isActive);
+      b.classList.toggle("bg-indigo-600", isActive);
+      b.classList.toggle("text-white", isActive);
+      b.classList.toggle("text-gray-400", !isActive);
+    });
   renderTimetablePreview();
 }
 
@@ -360,6 +366,19 @@ document.addEventListener("DOMContentLoaded", () => {
 function renderTimetablePreview() {
   const el = document.getElementById("ttPreviewGrid");
   if (!el) return;
+
+  // Update week range badge
+  const badgeEl = document.getElementById("ttWeekRangeBadge");
+  if (badgeEl && typeof getDateForTimetableDay === "function") {
+    const monday = getDateForTimetableDay("Monday", previewWeekNum - 1);
+    const friday = getDateForTimetableDay("Friday", previewWeekNum - 1);
+    if (monday && friday) {
+      const monStr = monday.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      const friStr = friday.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      badgeEl.textContent = `${previewWeekNum === 1 ? "Current Week" : "Next Week"} (${monStr} - ${friStr})`;
+    }
+  }
+
   const id = STATE.week1TimetableId;
   const tt = getTimetableById(id);
 
@@ -396,18 +415,25 @@ function renderTimetablePreview() {
     const tr = document.createElement("tr");
     tr.className = "tt-row";
 
-    const tdDay = document.createElement("td");
-    tdDay.className = "font-medium text-gray-300";
-    tdDay.textContent = row.day;
-    tr.appendChild(tdDay);
-
-    const universityHoliday =
+    const targetDate =
       typeof isUniversityHoliday === "function" &&
       typeof getDateForTimetableDay === "function"
-        ? isUniversityHoliday(
-            getDateForTimetableDay(row.day, previewWeekNum - 1),
-          )
-        : false;
+        ? getDateForTimetableDay(row.day, previewWeekNum - 1)
+        : null;
+
+    const tdDay = document.createElement("td");
+    tdDay.className = "font-medium text-gray-300";
+    if (targetDate) {
+      const dNum = targetDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      tdDay.innerHTML = `<div>${escapeHtml(row.day)}</div><div class="text-[10px] text-gray-500 font-normal">${dNum}</div>`;
+    } else {
+      tdDay.textContent = row.day;
+    }
+    tr.appendChild(tdDay);
+
+    const universityHoliday = targetDate && typeof isUniversityHoliday === "function"
+      ? isUniversityHoliday(targetDate)
+      : false;
 
     if (row.isHoliday || universityHoliday) {
       const tdHoliday = document.createElement("td");

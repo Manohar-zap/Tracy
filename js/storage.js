@@ -58,6 +58,7 @@ function fullReset() {
     localStorage.removeItem("theme");
     localStorage.removeItem("genZMode");
     localStorage.removeItem("guideSeen");
+    localStorage.removeItem("guideSeen_v2");
     localStorage.removeItem("lastHiddenTime");
     sessionStorage.clear();
     if ("caches" in window) {

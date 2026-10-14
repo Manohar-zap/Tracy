@@ -103,6 +103,39 @@ function renderUpcomingClasses() {
 
         if (isSuspended) return;
 
+        // Detect consecutive block of the same subject on this day
+        const getSubjectAt = (idx) => {
+          if (idx < 0 || idx >= row.hours.length) return null;
+          const c = String(row.hours[idx] || "").trim();
+          if (!c || c.toLowerCase().includes("holiday")) return null;
+          return findSubject(c);
+        };
+
+        const currentSubKey = clean(subject.name);
+        let blockStart = hIdx;
+        while (blockStart > 0) {
+          const prevSub = getSubjectAt(blockStart - 1);
+          if (prevSub && clean(prevSub.name) === currentSubKey) {
+            blockStart--;
+          } else {
+            break;
+          }
+        }
+
+        let blockEnd = hIdx;
+        while (blockEnd < row.hours.length - 1) {
+          const nextSub = getSubjectAt(blockEnd + 1);
+          if (nextSub && clean(nextSub.name) === currentSubKey) {
+            blockEnd++;
+          } else {
+            break;
+          }
+        }
+
+        const blockHour = hIdx - blockStart + 1; // 1 for 1st hr, 2 for 2nd hr, etc.
+        const totalBlockHours = blockEnd - blockStart + 1; // total hrs in session (e.g. 2)
+        const addedClasses = blockHour; // cumulative classes up to this hour
+
         const currentAttended =
           (subject.attended || 0) + (subject.dutyLeave || 0);
 
@@ -112,15 +145,15 @@ function renderUpcomingClasses() {
           ? (currentAttended / currentTotal) * 100
           : 0;
 
-        const afterAttended = currentAttended + 1;
-        const afterTotal = currentTotal + 1;
+        const afterAttended = currentAttended + addedClasses;
+        const afterTotal = currentTotal + addedClasses;
 
         const afterAbsent = currentAttended;
-        const afterAbsentTotal = currentTotal + 1;
+        const afterAbsentTotal = currentTotal + addedClasses;
 
-        const afterPct = (afterAttended / afterTotal) * 100;
+        const afterPct = afterTotal ? (afterAttended / afterTotal) * 100 : 0;
 
-        const afterAbsentPct = (afterAbsent / afterAbsentTotal) * 100;
+        const afterAbsentPct = afterAbsentTotal ? (afterAbsent / afterAbsentTotal) * 100 : 0;
 
         const { need, bunk } = calcNeedAndBunk(
           {
@@ -143,6 +176,8 @@ function renderUpcomingClasses() {
           need,
           bunk,
           isNow,
+          blockHour,
+          totalBlockHours,
         });
       });
     }
@@ -172,13 +207,20 @@ function renderUpcomingClasses() {
       const bunkText =
         item.need > 0
           ? genZMode
-            ? `Dial In ${item.need}`
+          ? `Dial In ${item.need}`
             : `+${item.need} needed`
           : genZMode
-            ? `+${item.bunk} Aura`
+          ? `+${item.bunk} Aura`
             : `${item.bunk} safe bunks`;
 
       const bunkClass = item.need > 0 ? "text-yellow-400" : "text-green-400";
+
+      const blockBadge =
+        item.totalBlockHours > 1
+          ? `<span class="text-[10px] text-indigo-300 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20 font-medium">
+              ${item.blockHour === 1 ? "1st hr" : `${item.blockHour} hrs total`}
+             </span>`
+          : "";
 
       return `
         <div class="rounded-xl border border-white/5 bg-white/[0.02] p-3">
@@ -198,6 +240,8 @@ function renderUpcomingClasses() {
                 <span class="text-xs text-gray-500">
                   ${item.sched.label}
                 </span>
+
+                ${blockBadge}
               </div>
 
               <p class="text-sm font-semibold truncate mt-1">

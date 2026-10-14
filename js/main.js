@@ -172,9 +172,9 @@ document.addEventListener("DOMContentLoaded", () => {
       btn.classList.toggle("bg-white/5", !genZMode);
     }
 
-    // Auto-start Guide
-    if (!localStorage.getItem("guideSeen")) {
-      setTimeout(startGuide, 800);
+    // Auto-start Guide for new users
+    if (!localStorage.getItem("guideSeen_v2")) {
+      setTimeout(startGuide, 700);
     }
   } catch (err) {
     logError("App Initialization", err);

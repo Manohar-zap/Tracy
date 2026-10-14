@@ -6,21 +6,19 @@ function getDateForTimetableDay(dayLabel, weekOffset = 0) {
   if (dayIdx === -1) return null;
 
   const today = new Date();
-  const todayIdx = getTodayOrderIdx();
+  const todayIdx = getTodayOrderIdx(); // 1 (Mon) .. 7 (Sun)
 
-  let daysUntil = dayIdx - todayIdx;
+  // Monday of the current calendar week
+  const monday = new Date(today);
+  monday.setHours(0, 0, 0, 0);
+  monday.setDate(today.getDate() - (todayIdx - 1));
 
-  if (daysUntil < 0) {
-    daysUntil += 7;
-  }
+  // Offset to target day (dayIdx: 1 Mon .. 7 Sun) and target week (0 = current, 1 = next)
+  const daysToAdd = (dayIdx - 1) + (weekOffset * 7);
+  const targetDate = new Date(monday);
+  targetDate.setDate(monday.getDate() + daysToAdd);
 
-  daysUntil += weekOffset * 7;
-
-  const date = new Date(today);
-  date.setHours(0, 0, 0, 0);
-  date.setDate(today.getDate() + daysUntil);
-
-  return date;
+  return targetDate;
 }
 
 function getTodayOrderIdx() {

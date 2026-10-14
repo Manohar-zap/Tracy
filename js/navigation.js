@@ -196,11 +196,20 @@ function setupGlobalEventListeners() {
         case "skip-guide":
           skipGuide();
           break;
+        case "prev-guide":
+          prevGuide();
+          break;
         case "next-guide":
           nextGuide();
           break;
         case "start-guide":
           startGuide();
+          break;
+        case "open-visual-guide":
+          const targetStep = parseInt(target.dataset.step || "0", 10);
+          const parentBackdrop = target.closest(".modal-backdrop");
+          if (parentBackdrop) parentBackdrop.classList.remove("open");
+          startGuide(isNaN(targetStep) ? 0 : targetStep);
           break;
         case "campus-tab":
           const tab = target.dataset.tab;

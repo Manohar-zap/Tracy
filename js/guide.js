@@ -1,161 +1,269 @@
+// ─────────────────────────────────────────────
+// ONBOARDING & GETTING STARTED VISUAL GUIDE
+// ─────────────────────────────────────────────
+
 const GUIDE_STEPS = [
   {
-    page: "dashboard",
-    target: "#uploadZone",
-    title: "📄 Upload Attendance",
-    text: "Upload your attendance report here.",
+    title: "1. Select Student Login",
+    text: "Visit the Presidency University Linways portal in your browser and click <b>Student Login</b> to begin.",
+    img: "guide/step-1.jpeg",
+    linkText: "Open Linways Portal",
+    linkUrl: "https://presidencyuniversity.linways.com",
   },
   {
-    page: "dashboard",
-    target: ".help-btn",
-    title: "ⓘ Help",
-    text: "Need help getting your Excel report?\nTap here anytime.",
+    title: "2. Sign In to Linways AMS",
+    text: "Enter your Student Roll/Admission Number and Password, then click <b>Sign in</b>.",
+    img: "guide/step-2.jpeg",
   },
   {
-    page: "calculator",
-    target: "#quickCalcHeading",
-    title: "🧮 Quick Calculator",
-    text: "Calculate attendance manually without an Excel upload.",
-    pos: "center",
+    title: "3. Open Navigation & Select Attendance",
+    text: "Tap the sidebar menu icon (☰) at the top-left, then select <b>Attendance</b> from the menu.",
+    img: "guide/step-3.jpeg",
   },
   {
-    page: "timetable",
-    target: "#ttDropdown",
-    title: "📅 Timetable",
-    text: "Select your class timetable for accurate predictions.",
+    title: "4. Download Attendance Spreadsheet",
+    text: "On the Attendance page, click the purple <b>Export</b> button to download your official <b>.xlsx</b> attendance report.",
+    img: "guide/step-4.jpeg",
+    linkText: "Direct Attendance Report Link",
+    linkUrl: "https://presidencyuniversity.linways.com/ams/attendance/consolidated-attendance-report?redir=true",
   },
   {
-    page: "prediction",
-    target: null,
-    title: "📈 Prediction Engine",
-    text: "View your attendance predictions and safe bunk limits.",
+    title: "5. Daily Attendance (Optional)",
+    text: "For day-by-day analysis in the Analytics tab, go to <b>Daily Attendance</b> and tap <b>Export</b> to get your session-wise report.",
+    img: "guide/step-5.jpeg",
+    linkText: "Direct Daily Report Link",
+    linkUrl: "https://presidencyuniversity.linways.com/ams/attendance/daily-attendance?redir=true",
   },
   {
-    page: "analytics",
-    target: "#dailyUploadBtn",
-    title: "📊 Daily Analysis",
-    text: "Upload your Daily Attendance Excel to analyze your progress.",
+    title: "6. Drop & Track in ZapTrack!",
+    text: "Return here to ZapTrack, drop or upload your downloaded <b>.xlsx</b> file, and start tracking your safe bunks, attendance stats, and timetable predictions!",
+    img: "guide/step-6.jpeg",
   },
 ];
 
 let guideIndex = 0;
+let guideTouchStartX = 0;
+let guideTouchEndX = 0;
+let guideGesturesInitialized = false;
 
-function startGuide() {
+// Preload images for instant switching
+function preloadGuideImages() {
+  GUIDE_STEPS.forEach((step) => {
+    if (step.img) {
+      const img = new Image();
+      img.src = step.img;
+    }
+  });
+}
+
+function startGuide(startIndex = 0) {
+  guideIndex = Math.max(0, Math.min(startIndex, GUIDE_STEPS.length - 1));
   guideMode = true;
-  guideIndex = 0;
 
-  document.body.classList.add("guide-active");
+  const modal = document.getElementById("guideModal");
+  if (!modal) return;
 
+  renderGuideDots();
+  setupGuideGestures();
+
+  modal.classList.add("open");
   showGuideStep();
 }
 
-let tries = 0;
+function renderGuideDots() {
+  const dotsContainer = document.getElementById("guideDots");
+  if (!dotsContainer) return;
+
+  dotsContainer.innerHTML = GUIDE_STEPS.map((_, idx) => `
+    <button type="button" class="guide-dot ${idx === guideIndex ? 'active' : ''}" data-idx="${idx}" title="Go to step ${idx + 1}" aria-label="Step ${idx + 1}"></button>
+  `).join("");
+
+  dotsContainer.querySelectorAll(".guide-dot").forEach((dot) => {
+    dot.addEventListener("click", (e) => {
+      const idx = parseInt(e.currentTarget.dataset.idx, 10);
+      if (!isNaN(idx)) goToGuideStep(idx);
+    });
+  });
+}
 
 function showGuideStep() {
-  const s = GUIDE_STEPS[guideIndex];
+  const step = GUIDE_STEPS[guideIndex];
+  if (!step) return;
+
   const modal = document.getElementById("guideModal");
+  if (!modal) return;
 
-  modal.classList.remove("guide-bottom", "guide-top", "open");
+  const titleEl = document.getElementById("guideTitle");
+  const textEl = document.getElementById("guideText");
+  const stepNumEl = document.getElementById("guideStepNum");
+  const stepTotalEl = document.getElementById("guideStepTotal");
+  const imgEl = document.getElementById("guideImage");
+  const prevBtn = document.getElementById("guidePrevBtn");
+  const nextBtn = document.getElementById("guideNextBtn");
+  const nextLabel = document.getElementById("guideNextLabel");
+  const nextIcon = document.getElementById("guideNextIcon");
+  const linkContainer = document.getElementById("guideLinkContainer");
+  const actionLink = document.getElementById("guideActionLink");
+  const actionText = document.getElementById("guideActionText");
+  const arrowPrev = modal.querySelector(".guide-nav-arrow.prev");
+  const arrowNext = modal.querySelector(".guide-nav-arrow.next");
 
-  // Close any stray modals/overlays before moving to next step
-  if (typeof closeConfirm === 'function') closeConfirm();
-  if (typeof closeSidebar === 'function') closeSidebar();
+  if (titleEl) titleEl.textContent = step.title;
+  if (textEl) textEl.innerHTML = step.text;
+  if (stepNumEl) stepNumEl.textContent = guideIndex + 1;
+  if (stepTotalEl) stepTotalEl.textContent = GUIDE_STEPS.length;
 
-  navigateTo(s.page);
-
-  let attempts = 0;
-  const findAndShow = () => {
-    const target = s.target ? document.querySelector(s.target) : null;
-
-    // Increased attempts and check for element existence/visibility
-    if (s.target && (!target || target.offsetParent === null) && attempts < 15) {
-      attempts++;
-      setTimeout(findAndShow, 150);
-      return;
-    }
-
-    document
-      .querySelectorAll(".guide-highlight")
-      .forEach((e) => e.classList.remove("guide-highlight"));
-
-    if (target) {
-      target.classList.add("guide-highlight");
-      if (typeof target.scrollIntoView === "function") {
-        target.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-      }
-
-      // Position modal away from target with a reliable delay
-      setTimeout(() => {
-        const rect = target.getBoundingClientRect();
-        const viewportHeight = window.innerHeight;
-
-        if (s.pos === "center") {
-          // Keep it centered (remove both top/bottom)
-        } else if (s.pos === "bottom") {
-          modal.classList.add("guide-bottom");
-        } else if (s.pos === "top") {
-          modal.classList.add("guide-top");
-        } else {
-          // Auto logic
-          if (rect.top < viewportHeight / 2) {
-            modal.classList.add("guide-bottom");
-          } else {
-            modal.classList.add("guide-top");
-          }
-        }
-        modal.classList.add("open");
-      }, 400);
+  // External Link button if available
+  if (linkContainer && actionLink && actionText) {
+    if (step.linkUrl && step.linkText) {
+      actionLink.href = step.linkUrl;
+      actionText.textContent = step.linkText;
+      linkContainer.classList.remove("hidden");
     } else {
-      modal.classList.add("open");
+      linkContainer.classList.add("hidden");
     }
+  }
 
-    document.getElementById("guideTitle").textContent = s.title;
-    document.getElementById("guideText").innerText = s.text;
-    document.getElementById("guideStep").textContent =
-      `${guideIndex + 1}/${GUIDE_STEPS.length}`;
+  // Smooth image swap
+  if (imgEl) {
+    imgEl.classList.add("fade-out");
+    setTimeout(() => {
+      imgEl.src = step.img;
+      imgEl.onload = () => imgEl.classList.remove("fade-out");
+      // Fallback if cached or load already fired
+      setTimeout(() => imgEl.classList.remove("fade-out"), 60);
+    }, 100);
+  }
 
-    document.getElementById("guideNextBtn").textContent =
-      guideIndex === GUIDE_STEPS.length - 1 ? "Finish" : "Next";
-  };
+  // Update dots
+  const dots = document.querySelectorAll("#guideDots .guide-dot");
+  dots.forEach((dot, idx) => {
+    dot.classList.toggle("active", idx === guideIndex);
+  });
 
-  // Initial delay to let page transition start
-  setTimeout(findAndShow, 400);
+  // Prev button state
+  const isFirst = guideIndex === 0;
+  if (prevBtn) {
+    prevBtn.disabled = isFirst;
+    prevBtn.classList.toggle("opacity-25", isFirst);
+    prevBtn.classList.toggle("pointer-events-none", isFirst);
+  }
+  if (arrowPrev) {
+    arrowPrev.classList.toggle("disabled", isFirst);
+  }
+
+  // Next button state
+  const isLast = guideIndex === GUIDE_STEPS.length - 1;
+  if (nextLabel) {
+    nextLabel.textContent = isLast ? "Get Started 🚀" : "Next";
+  }
+  if (nextIcon) {
+    nextIcon.className = isLast ? "fas fa-check text-[10px]" : "fas fa-arrow-right text-[10px]";
+  }
+  if (arrowNext) {
+    arrowNext.classList.toggle("disabled", isLast);
+  }
 }
 
 function nextGuide() {
-  guideIndex++;
-
-  if (guideIndex >= GUIDE_STEPS.length) {
-    localStorage.setItem("guideSeen", "true");
-
-    document.getElementById("guideModal").classList.remove("open");
-
-    document
-      .querySelectorAll(".guide-highlight")
-      .forEach((e) => e.classList.remove("guide-highlight"));
-
-    guideMode = false;
-    document.body.classList.remove("guide-active");
-
-    navigateTo("dashboard");
-    return;
+  if (guideIndex < GUIDE_STEPS.length - 1) {
+    guideIndex++;
+    showGuideStep();
+  } else {
+    finishGuide();
   }
+}
 
-  showGuideStep();
+function prevGuide() {
+  if (guideIndex > 0) {
+    guideIndex--;
+    showGuideStep();
+  }
+}
+
+function goToGuideStep(idx) {
+  if (idx >= 0 && idx < GUIDE_STEPS.length) {
+    guideIndex = idx;
+    showGuideStep();
+  }
+}
+
+function finishGuide() {
+  localStorage.setItem("guideSeen", "true");
+  localStorage.setItem("guideSeen_v2", "true");
+
+  const modal = document.getElementById("guideModal");
+  if (modal) modal.classList.remove("open");
+
+  guideMode = false;
+  if (typeof showToast === "function") {
+    showToast("Guide finished! Drop your Excel file to begin.");
+  }
 }
 
 function skipGuide() {
   localStorage.setItem("guideSeen", "true");
+  localStorage.setItem("guideSeen_v2", "true");
 
-  document.getElementById("guideModal").classList.remove("open");
-
-  document
-    .querySelectorAll(".guide-highlight")
-    .forEach((e) => e.classList.remove("guide-highlight"));
+  const modal = document.getElementById("guideModal");
+  if (modal) modal.classList.remove("open");
 
   guideMode = false;
-  document.body.classList.remove("guide-active");
 }
+
+function setupGuideGestures() {
+  if (guideGesturesInitialized) return;
+  guideGesturesInitialized = true;
+
+  const wrapper = document.getElementById("guideImgWrapper");
+  if (wrapper) {
+    wrapper.addEventListener("touchstart", (e) => {
+      guideTouchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    wrapper.addEventListener("touchend", (e) => {
+      guideTouchEndX = e.changedTouches[0].screenX;
+      handleGuideSwipe();
+    }, { passive: true });
+  }
+
+  // Keyboard navigation when guideModal is open
+  window.addEventListener("keydown", (e) => {
+    const modal = document.getElementById("guideModal");
+    if (!modal || !modal.classList.contains("open")) return;
+
+    if (e.key === "ArrowRight") {
+      nextGuide();
+    } else if (e.key === "ArrowLeft") {
+      prevGuide();
+    } else if (e.key === "Escape") {
+      skipGuide();
+    }
+  });
+
+  // Click outside to close (backdrop click)
+  const modal = document.getElementById("guideModal");
+  if (modal) {
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        skipGuide();
+      }
+    });
+  }
+}
+
+function handleGuideSwipe() {
+  const swipeDistance = guideTouchEndX - guideTouchStartX;
+  if (Math.abs(swipeDistance) > 40) {
+    if (swipeDistance < 0) {
+      // Swiped left -> next
+      nextGuide();
+    } else {
+      // Swiped right -> prev
+      prevGuide();
+    }
+  }
+}
+
+// Preload images immediately
+preloadGuideImages();

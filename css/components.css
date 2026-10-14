@@ -108,11 +108,7 @@
 .tt-table th:first-child,
 .tt-table td:first-child {
       border-left: 1px solid rgba(255, 255, 255, 0.07);
-      position: sticky;
-      left: 0;
-      z-index: 5;
       background: #121217;
-      border-right: 2px solid rgba(99, 102, 241, 0.25);
     }
 
 .tt-table th {
@@ -513,7 +509,8 @@ input[type=number] {
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       display: none;
-      z-index: 100;
+      z-index: 1000;
+      box-shadow: 0 14px 35px rgba(0, 0, 0, 0.6);
     }
 
 .dropdown-menu.show {

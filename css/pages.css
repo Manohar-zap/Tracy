@@ -348,38 +348,191 @@
       pointer-events: auto;
     }
 
-.guide-highlight {
-      position: relative;
-      z-index: 10001;
-      isolation: isolate;
-      border-radius: 16px;
-      box-shadow:
-        0 0 0 4px #6366f1,
-        0 0 40px rgba(99, 102, 241, .6);
-      animation: guidePulse 1.5s infinite;
-    }
+/* ─────────────────────────────────────────────
+   VISUAL ONBOARDING GUIDE MODAL
+   ───────────────────────────────────────────── */
+.guide-modal-backdrop {
+  z-index: 140;
+}
 
-.guide-bottom {
-      align-items: flex-end !important;
-      justify-content: center !important;
-      padding-bottom: 32px;
-    }
+.guide-modal-content {
+  max-width: 480px !important;
+  width: 92% !important;
+  padding: 18px 20px !important;
+  border-radius: 20px !important;
+  background: #121217 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.8) !important;
+}
 
-.guide-top {
-      align-items: flex-start !important;
-      justify-content: center !important;
-      padding-top: 32px;
-    }
+@media (max-width: 640px) {
+  .guide-modal-content {
+    width: 95% !important;
+    padding: 14px 14px !important;
+    max-height: 92vh !important;
+  }
+}
 
-/* Guide interaction lock */
-    body.guide-active .page,
-    body.guide-active .sidebar,
-    body.guide-active .mobile-nav,
-    body.guide-active #mobileOverlay {
-      pointer-events: none;
-    }
+.guide-step-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  letter-spacing: 0.02em;
+}
 
-body.guide-active #guideModal,
-    body.guide-active #guideModal * {
-      pointer-events: auto;
-    }
+.guide-close-btn {
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.guide-close-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.guide-img-container {
+  position: relative;
+  width: 100%;
+  background: #08080c;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-top: 12px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  max-height: 350px;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: pan-y;
+}
+
+@media (max-width: 640px) {
+  .guide-img-container {
+    min-height: 180px;
+    max-height: 270px;
+    margin-top: 10px;
+    margin-bottom: 6px;
+  }
+}
+
+.guide-img {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 350px;
+  object-fit: contain;
+  transition: opacity 0.2s ease-in-out;
+  display: block;
+}
+
+@media (max-width: 640px) {
+  .guide-img {
+    max-height: 270px;
+  }
+}
+
+.guide-img.fade-out {
+  opacity: 0.15;
+}
+
+.guide-nav-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(18, 18, 23, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.guide-nav-arrow:hover {
+  background: rgba(99, 102, 241, 0.9);
+  border-color: #6366f1;
+  transform: translateY(-50%) scale(1.06);
+}
+
+.guide-nav-arrow.prev {
+  left: 8px;
+}
+
+.guide-nav-arrow.next {
+  right: 8px;
+}
+
+.guide-nav-arrow.disabled {
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+.guide-swipe-hint {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  padding: 2px 8px;
+  border-radius: 9999px;
+  pointer-events: none;
+}
+
+.guide-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.guide-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  transition: all 0.25s ease;
+}
+
+.guide-dot:hover {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.guide-dot.active {
+  width: 22px;
+  border-radius: 9999px;
+  background: #6366f1;
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.6);
+}
