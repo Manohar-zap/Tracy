@@ -355,116 +355,137 @@
   z-index: 140;
 }
 
+/* Modal shell - tall mobile aspect to show full screenshot */
 .guide-modal-content {
-  max-width: 480px !important;
-  width: 92% !important;
-  padding: 18px 20px !important;
-  border-radius: 20px !important;
-  background: #121217 !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.8) !important;
+  width: 380px !important;
+  max-width: 95vw !important;
+  height: min(92vh, 760px) !important;
+  padding: 0 !important;
+  border-radius: 24px !important;
+  background: #0a0b12 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 25px 70px -10px rgba(0, 0, 0, 0.95),
+              0 0 0 1px rgba(99, 102, 241, 0.25) !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  position: relative !important;
 }
 
 @media (max-width: 640px) {
   .guide-modal-content {
     width: 95% !important;
-    padding: 14px 14px !important;
-    max-height: 92vh !important;
+    max-width: 360px !important;
+    height: min(94vh, 720px) !important;
+    border-radius: 20px !important;
   }
 }
 
+/* ── Hero image zone — fills vertical space ── */
+.guide-img-hero {
+  position: relative;
+  width: 100%;
+  flex: 1 1 0;
+  min-height: 0;
+  background: #050508;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: pan-y;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Subtle top vignette for badge/close button visibility */
+.guide-img-hero::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.45) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Full picture contained without any cropping */
+.guide-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: top center;
+  display: block;
+  transition: opacity 0.22s ease-in-out;
+}
+
+.guide-img.fade-out {
+  opacity: 0.08;
+}
+
+/* step badge — top-left */
 .guide-step-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 10;
   display: inline-flex;
   align-items: center;
-  background: rgba(99, 102, 241, 0.15);
+  gap: 4px;
+  background: rgba(8, 8, 15, 0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   color: #a5b4fc;
   font-size: 11px;
   font-weight: 600;
-  padding: 3px 10px;
+  padding: 4px 12px;
   border-radius: 9999px;
-  border: 1px solid rgba(99, 102, 241, 0.25);
+  border: 1px solid rgba(99, 102, 241, 0.38);
   letter-spacing: 0.02em;
 }
 
+/* close button — top-right */
 .guide-close-btn {
-  background: transparent;
-  border: none;
-  color: #9ca3af;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  background: rgba(8, 8, 15, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #d1d5db;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
+  font-size: 13px;
 }
 
 .guide-close-btn:hover {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  background: rgba(239, 68, 68, 0.75);
+  border-color: rgba(239, 68, 68, 0.5);
 }
 
-.guide-img-container {
-  position: relative;
-  width: auto;
-  max-width: 210px;
-  height: clamp(280px, 48vh, 380px);
-  aspect-ratio: 1 / 2;
-  margin: 12px auto 8px auto;
-  background: #000000;
-  border: 1.5px solid rgba(255, 255, 255, 0.14);
-  border-radius: 20px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 14px 35px -8px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(99, 102, 241, 0.2);
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: pan-y;
-}
-
-@media (max-width: 640px) {
-  .guide-img-container {
-    max-width: 185px;
-    height: clamp(250px, 45vh, 340px);
-    margin: 8px auto 6px auto;
-    border-radius: 18px;
-  }
-}
-
-.guide-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  transition: opacity 0.2s ease-in-out;
-  display: block;
-  border-radius: 18px;
-}
-
-@media (max-width: 640px) {
-  .guide-img {
-    border-radius: 16px;
-  }
-}
-
-.guide-img.fade-out {
-  opacity: 0.15;
-}
-
+/* side nav arrows — centred vertically on image */
 .guide-nav-arrow {
   position: absolute;
-  top: 50%;
+  top: 45%;
   transform: translateY(-50%);
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: rgba(18, 18, 23, 0.7);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: #ffffff;
+  background: rgba(8, 8, 15, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -477,53 +498,134 @@
 .guide-nav-arrow:hover {
   background: rgba(99, 102, 241, 0.9);
   border-color: #6366f1;
-  transform: translateY(-50%) scale(1.06);
+  transform: translateY(-50%) scale(1.08);
 }
 
-.guide-nav-arrow.prev {
-  left: 8px;
-}
-
-.guide-nav-arrow.next {
-  right: 8px;
-}
+.guide-nav-arrow.prev { left: 10px; }
+.guide-nav-arrow.next { right: 10px; }
 
 .guide-nav-arrow.disabled {
-  opacity: 0.2;
+  opacity: 0.18;
   pointer-events: none;
 }
 
-.guide-swipe-hint {
+/* ── Description overlay — bottom of image ── */
+.guide-desc-overlay {
   position: absolute;
-  bottom: 6px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.5);
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(4px);
-  padding: 2px 8px;
-  border-radius: 9999px;
-  pointer-events: none;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 6;
+  padding: 14px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  box-sizing: border-box;
+  background: linear-gradient(
+    to top,
+    rgba(10, 11, 18, 0.96) 0%,
+    rgba(10, 11, 18, 0.92) 80%,
+    transparent 100%
+  );
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* Caption badge showing what to do */
+.guide-caption-badge {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #c7d2fe;
+  background: rgba(99, 102, 241, 0.22);
+  border: 1px solid rgba(99, 102, 241, 0.45);
+  padding: 3px 10px;
+  border-radius: 9999px;
+  letter-spacing: 0.02em;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.guide-desc-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.3;
+  margin: 0;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+}
+
+.guide-desc-text {
+  font-size: 12px;
+  color: rgba(226, 232, 240, 0.9);
+  line-height: 1.45;
+  margin: 0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.guide-desc-link {
+  margin-top: 2px;
+}
+
+.guide-desc-link a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #a5b4fc;
+  background: rgba(99, 102, 241, 0.22);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(99, 102, 241, 0.38);
+  padding: 4px 12px;
+  border-radius: 9999px;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.guide-desc-link a:hover {
+  background: rgba(99, 102, 241, 0.45);
+  color: #c7d2fe;
+}
+
+/* ── Compact footer: dots + nav row ── */
+.guide-footer {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px 12px;
+  background: #0a0b12;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 8px;
+}
+
+.guide-footer-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Dot indicators ── */
 .guide-dots {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 6px;
-  padding: 4px 0;
 }
 
 .guide-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.2);
   cursor: pointer;
   border: none;
   padding: 0;
   transition: all 0.25s ease;
+  flex-shrink: 0;
 }
 
 .guide-dot:hover {
@@ -531,8 +633,8 @@
 }
 
 .guide-dot.active {
-  width: 22px;
+  width: 20px;
   border-radius: 9999px;
   background: #6366f1;
-  box-shadow: 0 0 12px rgba(99, 102, 241, 0.6);
-}
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.6);
+}

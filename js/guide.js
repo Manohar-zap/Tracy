@@ -5,38 +5,30 @@
 const GUIDE_STEPS = [
   {
     title: "1. Sign In to Linways AMS",
-    text: "Visit the Presidency University Linways portal and enter your student credentials to log in.",
+    caption: "Enter credentials & tap Sign In",
+    text: "Visit the Linways portal, enter your student username and password, then tap <b>Sign in</b>.",
     img: "guide/image_01.jpg",
     linkText: "Open Linways Portal",
     linkUrl: "https://presidencyuniversity.linways.com",
   },
   {
-    title: "2. Open Navigation Menu",
-    text: "Tap the sidebar menu icon (☰) at the top-left to reveal the student navigation options.",
-    img: "guide/image_02.jpg",
+    title: "2. Open Sidebar & Tap Attendance",
+    caption: "Tap 'Attendance' in sidebar (Red Box)",
+    text: "Tap the hamburger menu (☰) at top, then tap the highlighted <b>Attendance</b> section.",
+    img: "guide/image_04.jpg",
   },
   {
-    title: "3. Select Attendance",
-    text: "Tap <b>Attendance</b> in the sidebar menu to open your attendance section.",
-    img: "guide/image_03.jpg",
-  },
-  {
-    title: "4. Download Attendance Spreadsheet",
-    text: "On the Attendance page, tap the purple <b>Export</b> button to download your official <b>.xlsx</b> report.",
+    title: "3. Download Attendance Report",
+    caption: "Tap the 'Export' button (Red Box)",
+    text: "On the Attendance page, tap the purple <b>Export</b> button highlighted in red to download your <b>.xlsx</b> report.",
     img: "guide/image_05.jpg",
     linkText: "Direct Attendance Report Link",
     linkUrl: "https://presidencyuniversity.linways.com/ams/attendance/consolidated-attendance-report?redir=true",
   },
   {
-    title: "5. Daily Attendance (Optional)",
-    text: "For day-by-day analysis in the Analytics tab, open <b>Daily Attendance</b> and tap <b>Export</b>.",
-    img: "guide/image_07.jpg",
-    linkText: "Direct Daily Report Link",
-    linkUrl: "https://presidencyuniversity.linways.com/ams/attendance/daily-attendance?redir=true",
-  },
-  {
-    title: "6. Drop & Track in ZapTrack!",
-    text: "Return here to ZapTrack, drop or upload your downloaded <b>.xlsx</b> file into the box, and start tracking your safe bunks and stats!",
+    title: "4. Drop File in ZapTrack!",
+    caption: "Drop or tap the upload box (Red Box)",
+    text: "Return to ZapTrack and drop or tap the <b>dashed upload card</b> highlighted in red — your safe bunks and stats will load instantly!",
     img: "guide/image_06.jpg",
   },
 ];
@@ -95,6 +87,8 @@ function showGuideStep() {
 
   const titleEl = document.getElementById("guideTitle");
   const textEl = document.getElementById("guideText");
+  const captionEl = document.getElementById("guideCaption");
+  const captionContainer = document.getElementById("guideCaptionContainer");
   const stepNumEl = document.getElementById("guideStepNum");
   const stepTotalEl = document.getElementById("guideStepTotal");
   const imgEl = document.getElementById("guideImage");
@@ -110,6 +104,14 @@ function showGuideStep() {
 
   if (titleEl) titleEl.textContent = step.title;
   if (textEl) textEl.innerHTML = step.text;
+  if (captionEl) captionEl.textContent = step.caption || "";
+  if (captionContainer) {
+    if (step.caption) {
+      captionContainer.classList.remove("hidden");
+    } else {
+      captionContainer.classList.add("hidden");
+    }
+  }
   if (stepNumEl) stepNumEl.textContent = guideIndex + 1;
   if (stepTotalEl) stepTotalEl.textContent = GUIDE_STEPS.length;
 

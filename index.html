@@ -1375,31 +1375,24 @@
     <div id="guideModal" class="modal-backdrop guide-modal-backdrop">
       <div class="modal guide-modal-content">
 
-        <!-- Header -->
-        <div class="flex items-center justify-between pb-2 border-b border-white/10">
+        <!-- ── Hero Image Zone ── -->
+        <div class="guide-img-hero" id="guideImgWrapper">
+
+          <!-- Step badge overlaid top-left -->
           <span class="guide-step-badge">
-            <i class="fas fa-compass text-indigo-400 mr-1.5"></i>
-            Step <span id="guideStepNum">1</span> of <span id="guideStepTotal">6</span>
+            <i class="fas fa-compass"></i>
+            <span>Step</span>
+            <span id="guideStepNum">1</span>
+            <span>of</span>
+            <span id="guideStepTotal">4</span>
           </span>
+
+          <!-- Close button overlaid top-right -->
           <button type="button" class="guide-close-btn" data-action="skip-guide" title="Close guide">
             <i class="fas fa-times"></i>
           </button>
-        </div>
 
-        <!-- Title & Instruction -->
-        <div class="mt-2.5">
-          <h3 id="guideTitle" class="text-base sm:text-lg font-bold text-white tracking-tight"></h3>
-          <p id="guideText" class="text-xs sm:text-sm text-gray-300 mt-1 leading-relaxed"></p>
-          <div id="guideLinkContainer" class="mt-2 hidden">
-            <a id="guideActionLink" href="#" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors bg-indigo-500/10 hover:bg-indigo-500/20 px-2.5 py-1 rounded-md border border-indigo-500/25">
-              <span id="guideActionText">Open Portal</span>
-              <i class="fas fa-external-link-alt text-[10px]"></i>
-            </a>
-          </div>
-        </div>
-
-        <!-- Image Frame -->
-        <div class="guide-img-container" id="guideImgWrapper">
+          <!-- Nav arrows -->
           <button type="button" class="guide-nav-arrow prev" data-action="prev-guide" title="Previous step">
             <i class="fas fa-chevron-left"></i>
           </button>
@@ -1407,17 +1400,29 @@
           <button type="button" class="guide-nav-arrow next" data-action="next-guide" title="Next step">
             <i class="fas fa-chevron-right"></i>
           </button>
-          <div class="guide-swipe-hint">
-            <i class="fas fa-arrows-left-right text-[10px] mr-1"></i>Swipe or click arrows
+
+          <!-- ── Description overlay at bottom of image ── -->
+          <div class="guide-desc-overlay">
+            <div id="guideCaptionContainer" class="guide-caption-badge">
+              <i class="fas fa-bullseye mr-1.5 text-indigo-400"></i>
+              <span id="guideCaption"></span>
+            </div>
+            <h3 id="guideTitle" class="guide-desc-title"></h3>
+            <p id="guideText" class="guide-desc-text"></p>
+            <div id="guideLinkContainer" class="guide-desc-link hidden">
+              <a id="guideActionLink" href="#" target="_blank" rel="noopener noreferrer">
+                <span id="guideActionText">Open Portal</span>
+                <i class="fas fa-external-link-alt"></i>
+              </a>
+            </div>
           </div>
+
         </div>
 
-        <!-- Dot Indicators -->
-        <div id="guideDots" class="guide-dots"></div>
-
-        <!-- Footer Actions -->
-        <div class="flex items-center justify-between pt-2 border-t border-white/10 mt-1">
-          <div class="flex items-center gap-2">
+        <!-- ── Compact Footer: dots + nav ── -->
+        <div class="guide-footer">
+          <div id="guideDots" class="guide-dots"></div>
+          <div class="guide-footer-nav">
             <button type="button" id="guidePrevBtn" class="btn-ghost text-xs py-1.5 px-3 flex items-center gap-1" data-action="prev-guide">
               <i class="fas fa-arrow-left text-[10px]"></i>
               <span>Back</span>
@@ -1425,16 +1430,16 @@
             <button type="button" class="btn-ghost text-xs py-1.5 px-2.5 text-gray-500 hover:text-gray-300" data-action="skip-guide">
               Skip
             </button>
+            <button type="button" id="guideNextBtn" class="btn-primary text-xs py-1.5 px-4 flex items-center gap-1.5" data-action="next-guide">
+              <span id="guideNextLabel">Next</span>
+              <i id="guideNextIcon" class="fas fa-arrow-right text-[10px]"></i>
+            </button>
           </div>
-
-          <button type="button" id="guideNextBtn" class="btn-primary text-xs py-1.5 px-4 flex items-center gap-1.5" data-action="next-guide">
-            <span id="guideNextLabel">Next</span>
-            <i id="guideNextIcon" class="fas fa-arrow-right text-[10px]"></i>
-          </button>
         </div>
 
       </div>
     </div>
+
 
   </main>
 
