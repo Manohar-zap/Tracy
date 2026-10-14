@@ -1,4 +1,4 @@
-const CACHE_NAME = "tracy-v6.1.10"; // Secret Admin UI for holidays & remove target from quick calc
+const CACHE_NAME = "tracy-v6.1.11"; // Stealth admin security & persistent holiday sync
 
 const ASSETS = [
   "./",

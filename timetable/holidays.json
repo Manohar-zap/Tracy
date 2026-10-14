@@ -1,0 +1,10 @@
+{
+  "updatedAt": "2026-10-14T17:55:10.729Z",
+  "holidays": {
+    "2026-10-15": {
+      "name": "Thursday Holiday",
+      "isHoliday": true
+    }
+  },
+  "disabled": []
+}

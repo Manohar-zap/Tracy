@@ -1,61 +1,317 @@
 // ─────────────────────────────────────────────
-// ADMIN CONTROL PANEL (Secret 5s hold on thunder logo)
+// SYSTEM CONFIG & RUNTIME CONTROLLER
 // ─────────────────────────────────────────────
 
 (function () {
-  const HOLD_DURATION = 4800; // ~5 seconds with generous completion margin
+  // Obfuscated digest for authorization: sha256("zap007")
+  const AUTH_HASH = "2c486a90d89af9ab70d99a0c614198d50fce3aaf094884ce3eec6ddb4f0bffea";
+  const HOLD_DURATION = 4800; // ~5 seconds invisible hold
+
   let holdTimer = null;
   let holdStartTime = 0;
   let isHolding = false;
+  let isSessionUnlocked = false;
 
-  function initAdmin() {
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  }
+
+  function initController() {
     const logoContainer = document.getElementById("tracyLogoContainer");
-    const thunderBtn = document.getElementById("genZBtn");
-    const triggerEl = logoContainer || thunderBtn;
+    const boltIcon = document.getElementById("genZBtn");
+    const targetEl = logoContainer || boltIcon;
 
-    if (triggerEl) {
-      // Modern pointer events
-      triggerEl.addEventListener("pointerdown", (e) => {
-        try {
-          if (triggerEl.setPointerCapture && e.pointerId) {
-            triggerEl.setPointerCapture(e.pointerId);
-          }
-        } catch (err) {}
-        startAdminHold(e);
-      });
-      window.addEventListener("pointerup", cancelAdminHold);
-      window.addEventListener("pointercancel", cancelAdminHold);
+    if (targetEl) {
+      // Modern Pointer Events
+      targetEl.addEventListener("pointerdown", onHoldStart);
+      window.addEventListener("pointerup", onHoldCancel);
+      window.addEventListener("pointercancel", onHoldCancel);
 
-      // Desktop mouse events fallback
-      triggerEl.addEventListener("mousedown", startAdminHold);
-      window.addEventListener("mouseup", cancelAdminHold);
+      // Desktop & Mobile Touch Fallbacks
+      targetEl.addEventListener("mousedown", onHoldStart);
+      window.addEventListener("mouseup", onHoldCancel);
+      targetEl.addEventListener("touchstart", onHoldStart, { passive: true });
+      window.addEventListener("touchend", onHoldCancel);
+      window.addEventListener("touchcancel", onHoldCancel);
 
-      // Mobile touch events fallback
-      triggerEl.addEventListener("touchstart", startAdminHold, { passive: true });
-      window.addEventListener("touchend", cancelAdminHold);
-      window.addEventListener("touchcancel", cancelAdminHold);
-
-      // Prevent mobile long-press context menu
-      triggerEl.addEventListener("contextmenu", (e) => {
+      targetEl.addEventListener("contextmenu", (e) => {
         e.preventDefault();
         return false;
       });
     }
 
-    // Modal close buttons
-    document.querySelectorAll("[data-action='close-admin-modal']").forEach((btn) => {
-      btn.addEventListener("click", closeAdminModal);
+    // Escape key listener to close active overlays
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        destroyActiveOverlay();
+      }
     });
+  }
 
-    const adminModal = document.getElementById("adminModal");
-    if (adminModal) {
-      adminModal.addEventListener("click", (e) => {
-        if (e.target === adminModal) closeAdminModal();
-      });
+  function onHoldStart(e) {
+    if (isHolding) return;
+    isHolding = true;
+    holdStartTime = Date.now();
+
+    // Purely silent: no styles, no animations, no visual change
+    holdTimer = setTimeout(() => {
+      onHoldComplete();
+    }, HOLD_DURATION);
+  }
+
+  function onHoldCancel() {
+    if (!isHolding) return;
+
+    // Slight margin tolerance: if user held within 200ms of target, grant completion
+    if (Date.now() - holdStartTime >= HOLD_DURATION - 200) {
+      onHoldComplete();
+      return;
     }
 
-    // Modal action buttons
-    const toggleTomorrowBtn = document.getElementById("adminToggleTomorrowBtn");
+    isHolding = false;
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+  }
+
+  function onHoldComplete() {
+    isHolding = false;
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+
+    if ("vibrate" in navigator) {
+      try {
+        navigator.vibrate([80, 50, 100]);
+      } catch (err) {}
+    }
+
+    if (typeof closeSidebar === "function") {
+      closeSidebar();
+    }
+
+    if (isSessionUnlocked) {
+      createAndShowAdminPanel();
+    } else {
+      createAndShowPasskeyPrompt();
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // PASSKEY PROMPT (Dynamic Injection)
+  // ─────────────────────────────────────────────
+
+  function createAndShowPasskeyPrompt() {
+    destroyActiveOverlay();
+
+    const overlay = document.createElement("div");
+    overlay.id = "sysAuthOverlay";
+    overlay.className = "modal-backdrop open";
+    overlay.style.zIndex = "9999";
+
+    overlay.innerHTML = `
+      <div class="modal max-w-xs w-[90%] p-6 rounded-2xl bg-[#0e0f17] border border-white/10 shadow-2xl text-center">
+        <div class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-3 text-indigo-400">
+          <i class="fas fa-lock text-base"></i>
+        </div>
+        <h3 class="font-bold text-white text-base mb-1">Passkey Required</h3>
+        <p class="text-xs text-gray-400 mb-4">Enter security key to continue</p>
+
+        <form id="sysAuthForm" class="space-y-3">
+          <input
+            type="password"
+            id="sysAuthInput"
+            autocomplete="off"
+            placeholder="Passkey"
+            class="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-center text-sm text-white tracking-widest focus:outline-none focus:border-indigo-500 transition"
+          />
+          <div id="sysAuthError" class="text-[11px] text-red-400 hidden">Invalid Passkey</div>
+          <div class="flex gap-2 pt-1">
+            <button type="button" id="sysAuthCancel" class="btn-ghost text-xs flex-1 py-2 rounded-xl">Cancel</button>
+            <button type="submit" id="sysAuthSubmit" class="btn-primary text-xs flex-1 py-2 rounded-xl">Unlock</button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const input = document.getElementById("sysAuthInput");
+    const form = document.getElementById("sysAuthForm");
+    const cancelBtn = document.getElementById("sysAuthCancel");
+    const errorEl = document.getElementById("sysAuthError");
+
+    setTimeout(() => {
+      if (input) input.focus();
+    }, 100);
+
+    cancelBtn.addEventListener("click", destroyActiveOverlay);
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) destroyActiveOverlay();
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const val = (input.value || "").trim();
+      const hash = await sha256(val);
+
+      if (hash === AUTH_HASH) {
+        isSessionUnlocked = true;
+        destroyActiveOverlay();
+        createAndShowAdminPanel();
+        if (typeof showToast === "function") showToast("⚡ Admin Access Granted");
+      } else {
+        if (errorEl) {
+          errorEl.classList.remove("hidden");
+        }
+        input.value = "";
+        input.classList.add("border-red-500");
+        setTimeout(() => {
+          input.classList.remove("border-red-500");
+        }, 1500);
+      }
+    });
+  }
+
+  // ─────────────────────────────────────────────
+  // ADMIN PANEL (Dynamic Injection)
+  // ─────────────────────────────────────────────
+
+  function createAndShowAdminPanel() {
+    destroyActiveOverlay();
+
+    const overlay = document.createElement("div");
+    overlay.id = "sysPanelOverlay";
+    overlay.className = "modal-backdrop open";
+    overlay.style.zIndex = "9998";
+
+    overlay.innerHTML = `
+      <div class="modal max-w-lg w-[95%] p-5 sm:p-6 rounded-2xl bg-[#0d0e15] border border-purple-500/30 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <!-- Header -->
+        <div class="flex items-center justify-between pb-3 border-b border-white/10">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-purple-500/20">
+              <i class="fas fa-shield-halved text-sm"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-bold text-white text-base">Admin Holiday Control</h3>
+                <span class="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40">Verified</span>
+              </div>
+              <p class="text-xs text-gray-400">Modify timetable holidays for all users</p>
+            </div>
+          </div>
+          <button type="button" class="btn-ghost text-gray-400 hover:text-white p-1.5" id="sysPanelCloseBtn" title="Close">
+            <i class="fas fa-times text-base"></i>
+          </button>
+        </div>
+
+        <!-- Quick 1-Tap Toggles -->
+        <div class="mt-4">
+          <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 block flex items-center gap-1.5">
+            <i class="fas fa-bolt text-amber-400"></i> Quick 1-Tap Toggles
+          </label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <!-- Tomorrow Card -->
+            <div class="p-3 rounded-xl border border-white/10 bg-white/[0.03] flex flex-col justify-between gap-2.5">
+              <div>
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-white" id="dynTomorrowLabel">Tomorrow</span>
+                  <span id="dynTomorrowBadge" class="text-[10px] px-2 py-0.5 rounded-md font-semibold">...</span>
+                </div>
+                <div id="dynTomorrowDateStr" class="text-[11px] text-gray-400 mt-0.5">...</div>
+              </div>
+              <button type="button" id="dynToggleTomorrowBtn" class="btn-primary text-xs py-1.5 px-3 w-full flex items-center justify-center gap-1.5">
+                <i class="fas fa-toggle-on"></i>
+                <span id="dynTomorrowBtnText">Toggle Holiday</span>
+              </button>
+            </div>
+
+            <!-- Today Card -->
+            <div class="p-3 rounded-xl border border-white/10 bg-white/[0.03] flex flex-col justify-between gap-2.5">
+              <div>
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-white">Today</span>
+                  <span id="dynTodayBadge" class="text-[10px] px-2 py-0.5 rounded-md font-semibold">...</span>
+                </div>
+                <div id="dynTodayDateStr" class="text-[11px] text-gray-400 mt-0.5">...</div>
+              </div>
+              <button type="button" id="dynToggleTodayBtn" class="btn-primary text-xs py-1.5 px-3 w-full flex items-center justify-center gap-1.5">
+                <i class="fas fa-toggle-on"></i>
+                <span id="dynTodayBtnText">Toggle Holiday</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Specific Date Form -->
+        <div class="mt-4 p-3.5 rounded-xl border border-white/10 bg-white/[0.02]">
+          <label class="text-xs font-semibold text-gray-300 block mb-2 flex items-center gap-1.5">
+            <i class="fas fa-calendar-plus text-indigo-400"></i> Declare Custom Date Holiday / Working Day
+          </label>
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+            <div class="sm:col-span-5">
+              <input type="date" id="dynCustomDate" class="w-full text-xs bg-white/5 border border-white/10 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-purple-500" />
+            </div>
+            <div class="sm:col-span-4">
+              <input type="text" id="dynCustomName" placeholder="Holiday reason (optional)" class="w-full text-xs bg-white/5 border border-white/10 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-purple-500" />
+            </div>
+            <div class="sm:col-span-3">
+              <button type="button" id="dynAddHolidayBtn" class="w-full btn-primary text-xs py-2 px-3 flex items-center justify-center gap-1 bg-purple-600 hover:bg-purple-500 border-none text-white">
+                <i class="fas fa-plus text-[10px]"></i>
+                <span>Save</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Holidays & Overrides List -->
+        <div class="mt-4">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+              <i class="fas fa-list-check text-indigo-400"></i> Active Holidays & Overrides
+            </label>
+            <span id="dynHolidayCount" class="text-[11px] text-gray-400">...</span>
+          </div>
+          <div id="dynHolidaysList" class="space-y-1.5 max-h-48 overflow-y-auto pr-1"></div>
+        </div>
+
+        <!-- Shared Sync Controls (All Users) -->
+        <div class="mt-4 pt-3 border-t border-white/10 flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <button type="button" id="dynSyncAllBtn" class="btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 border-none text-white" title="Sync changes to shared timetable/holidays.json">
+              <i class="fas fa-cloud-arrow-up text-xs"></i>
+              <span>Save for All Users</span>
+            </button>
+            <button type="button" id="dynExportBtn" class="btn-ghost border border-white/15 text-xs py-1.5 px-2.5 text-gray-300 hover:text-white flex items-center gap-1" title="Download holidays.json">
+              <i class="fas fa-download text-[11px]"></i>
+              <span>Export</span>
+            </button>
+          </div>
+          <button type="button" class="btn-ghost text-xs py-1.5 px-3" id="dynPanelBottomCloseBtn">
+            Close
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Attach event listeners
+    const closeBtn = document.getElementById("sysPanelCloseBtn");
+    const bottomCloseBtn = document.getElementById("dynPanelBottomCloseBtn");
+    if (closeBtn) closeBtn.addEventListener("click", destroyActiveOverlay);
+    if (bottomCloseBtn) bottomCloseBtn.addEventListener("click", destroyActiveOverlay);
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) destroyActiveOverlay();
+    });
+
+    const toggleTomorrowBtn = document.getElementById("dynToggleTomorrowBtn");
     if (toggleTomorrowBtn) {
       toggleTomorrowBtn.addEventListener("click", () => {
         const d = getTomorrowDate();
@@ -65,7 +321,7 @@
       });
     }
 
-    const toggleTodayBtn = document.getElementById("adminToggleTodayBtn");
+    const toggleTodayBtn = document.getElementById("dynToggleTodayBtn");
     if (toggleTodayBtn) {
       toggleTodayBtn.addEventListener("click", () => {
         const d = new Date();
@@ -75,11 +331,11 @@
       });
     }
 
-    const addBtn = document.getElementById("adminAddHolidayBtn");
+    const addBtn = document.getElementById("dynAddHolidayBtn");
     if (addBtn) {
       addBtn.addEventListener("click", () => {
-        const dateInput = document.getElementById("adminCustomDate");
-        const nameInput = document.getElementById("adminCustomName");
+        const dateInput = document.getElementById("dynCustomDate");
+        const nameInput = document.getElementById("dynCustomName");
         const dateVal = dateInput ? dateInput.value.trim() : "";
         const nameVal = nameInput ? nameInput.value.trim() : "";
 
@@ -97,119 +353,35 @@
       });
     }
 
-    // Keyboard ESC to close admin
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        const modal = document.getElementById("adminModal");
-        if (modal && modal.classList.contains("open")) {
-          closeAdminModal();
-        }
-      }
-    });
-  }
-
-  function startAdminHold(e) {
-    // If already holding, ignore
-    if (isHolding) return;
-    isHolding = true;
-    holdStartTime = Date.now();
-
-    const logoContainer = document.getElementById("tracyLogoContainer");
-    const holdSvg = document.getElementById("adminHoldSvg");
-    const holdProgress = document.getElementById("adminHoldProgress");
-
-    if (logoContainer) {
-      logoContainer.classList.add("admin-hold-active");
+    const syncAllBtn = document.getElementById("dynSyncAllBtn");
+    if (syncAllBtn) {
+      syncAllBtn.addEventListener("click", syncHolidaysForOnlineUsers);
     }
 
-    if (holdSvg && holdProgress) {
-      holdSvg.classList.remove("opacity-0");
-      holdSvg.classList.add("opacity-100");
-      holdProgress.style.transition = `stroke-dashoffset ${HOLD_DURATION}ms linear`;
-      // Force reflow
-      void holdProgress.offsetWidth;
-      holdProgress.style.strokeDashoffset = "0";
+    const exportBtn = document.getElementById("dynExportBtn");
+    if (exportBtn) {
+      exportBtn.addEventListener("click", exportHolidaysJson);
     }
 
-    holdTimer = setTimeout(() => {
-      completeAdminHold();
-    }, HOLD_DURATION);
-  }
-
-  function resetHoldVisuals() {
-    isHolding = false;
-    if (holdTimer) {
-      clearTimeout(holdTimer);
-      holdTimer = null;
-    }
-
-    const logoContainer = document.getElementById("tracyLogoContainer");
-    const holdSvg = document.getElementById("adminHoldSvg");
-    const holdProgress = document.getElementById("adminHoldProgress");
-
-    if (logoContainer) {
-      logoContainer.classList.remove("admin-hold-active");
-    }
-
-    if (holdSvg && holdProgress) {
-      holdProgress.style.transition = "none";
-      holdProgress.style.strokeDashoffset = "94.25";
-      holdSvg.classList.remove("opacity-100");
-      holdSvg.classList.add("opacity-0");
-    }
-  }
-
-  function cancelAdminHold() {
-    if (!isHolding) return;
-
-    // If held for almost full duration (within 200ms), treat as successful complete
-    if (Date.now() - holdStartTime >= HOLD_DURATION - 200) {
-      completeAdminHold();
-      return;
-    }
-
-    resetHoldVisuals();
-  }
-
-  function completeAdminHold() {
-    resetHoldVisuals();
-
-    // Haptic feedback if supported
-    if ("vibrate" in navigator) {
-      try {
-        navigator.vibrate([100, 60, 120]);
-      } catch (err) {}
-    }
-
-    // Close mobile sidebar if open
-    if (typeof closeSidebar === "function") {
-      closeSidebar();
-    }
-
-    openAdminModal();
-    if (typeof showToast === "function") {
-      showToast("⚡ Admin Control Panel Activated");
-    }
-  }
-
-  function openAdminModal() {
-    const modal = document.getElementById("adminModal");
-    if (!modal) return;
-
-    renderAdminModal();
-    modal.classList.add("open");
-
-    // Set default custom date to tomorrow
-    const customDateInput = document.getElementById("adminCustomDate");
+    const customDateInput = document.getElementById("dynCustomDate");
     if (customDateInput && !customDateInput.value) {
       customDateInput.value = formatDateKey(getTomorrowDate());
     }
+
+    renderPanelContents();
   }
 
-  function closeAdminModal() {
-    const modal = document.getElementById("adminModal");
-    if (modal) modal.classList.remove("open");
+  function destroyActiveOverlay() {
+    const authOverlay = document.getElementById("sysAuthOverlay");
+    if (authOverlay) authOverlay.remove();
+
+    const panelOverlay = document.getElementById("sysPanelOverlay");
+    if (panelOverlay) panelOverlay.remove();
   }
+
+  // ─────────────────────────────────────────────
+  // HOLIDAY MANIPULATION & PROPAGATION
+  // ─────────────────────────────────────────────
 
   function getTomorrowDate() {
     const d = new Date();
@@ -241,7 +413,6 @@
     const currentlyHoliday = isUniversityHoliday(key);
 
     if (currentlyHoliday) {
-      // Turn into a Working Day
       STATE.customHolidays[key] = {
         name: "Working Day Override",
         isHoliday: false,
@@ -251,20 +422,14 @@
           STATE.disabledHolidays.push(key);
         }
       }
-      if (typeof showToast === "function") {
-        showToast(`Marked ${key} as a Working Day.`);
-      }
+      if (typeof showToast === "function") showToast(`Marked ${key} as Working Day`);
     } else {
-      // Turn into a Holiday
       STATE.customHolidays[key] = {
         name: defaultName || "Declared Holiday",
         isHoliday: true,
       };
-      // If was previously disabled from university list, re-enable
       STATE.disabledHolidays = STATE.disabledHolidays.filter((k) => k !== key);
-      if (typeof showToast === "function") {
-        showToast(`Marked ${key} as Holiday 🎉`);
-      }
+      if (typeof showToast === "function") showToast(`Marked ${key} as Holiday 🎉`);
     }
 
     applyChanges();
@@ -281,39 +446,32 @@
 
     if (isHoliday) {
       STATE.disabledHolidays = STATE.disabledHolidays.filter((k) => k !== key);
-      if (typeof showToast === "function") {
-        showToast(`Added holiday for ${key}: ${name}`);
-      }
+      if (typeof showToast === "function") showToast(`Added holiday for ${key}`);
     } else {
       if (Array.isArray(window.UNIVERSITY_HOLIDAYS) && window.UNIVERSITY_HOLIDAYS.includes(key)) {
         if (!STATE.disabledHolidays.includes(key)) STATE.disabledHolidays.push(key);
       }
-      if (typeof showToast === "function") {
-        showToast(`Overridden ${key} as Working Day`);
-      }
+      if (typeof showToast === "function") showToast(`Overridden ${key} as Working Day`);
     }
 
     applyChanges();
   }
 
   function removeHolidayOverride(key) {
-    if (STATE.customHolidays) {
-      delete STATE.customHolidays[key];
-    }
+    if (STATE.customHolidays) delete STATE.customHolidays[key];
     if (Array.isArray(STATE.disabledHolidays)) {
       STATE.disabledHolidays = STATE.disabledHolidays.filter((k) => k !== key);
     }
-    if (typeof showToast === "function") {
-      showToast(`Reset override for ${key}`);
-    }
-
+    if (typeof showToast === "function") showToast(`Reset override for ${key}`);
     applyChanges();
   }
 
   function applyChanges() {
     if (typeof saveState === "function") saveState();
 
-    // Re-render everything affected
+    // Auto-sync in background to local dev server so timetable/holidays.json is always synced
+    syncHolidaysForOnlineUsers(true);
+
     if (typeof renderUpcomingClasses === "function") renderUpcomingClasses();
     if (typeof renderDashboard === "function") renderDashboard();
     if (typeof renderTimetablePage === "function") renderTimetablePage();
@@ -321,10 +479,58 @@
     if (typeof renderAnalyticsPage === "function") renderAnalyticsPage();
     if (typeof renderCalc === "function") renderCalc();
 
-    renderAdminModal();
+    renderPanelContents();
   }
 
-  function renderAdminModal() {
+  async function syncHolidaysForOnlineUsers(silent) {
+    const payload = {
+      updatedAt: new Date().toISOString(),
+      customHolidays: STATE.customHolidays || {},
+      disabledHolidays: STATE.disabledHolidays || [],
+    };
+
+    try {
+      const res = await fetch("/api/save-holidays", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        if (!silent && typeof showToast === "function") {
+          showToast("Saved to timetable/holidays.json for all users!");
+        }
+        return true;
+      }
+    } catch (err) {
+      // Offline or remote host without local endpoint
+    }
+
+    if (!silent && typeof showToast === "function") {
+      showToast("Updated locally. Export holidays.json to deploy for all users.");
+    }
+    return false;
+  }
+
+  function exportHolidaysJson() {
+    const payload = {
+      updatedAt: new Date().toISOString(),
+      holidays: STATE.customHolidays || {},
+      disabled: STATE.disabledHolidays || [],
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "holidays.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    if (typeof showToast === "function") showToast("Downloaded holidays.json");
+  }
+
+  function renderPanelContents() {
     const today = new Date();
     const todayKey = formatDateKey(today);
     const tomorrow = getTomorrowDate();
@@ -333,20 +539,18 @@
     const isTodayHoliday = isUniversityHoliday(todayKey);
     const isTomorrowHoliday = isUniversityHoliday(tomorrowKey);
 
-    // ── Tomorrow Section ──
-    const tomLabel = document.getElementById("adminTomorrowLabel");
-    const tomDateStr = document.getElementById("adminTomorrowDateStr");
-    const tomBadge = document.getElementById("adminTomorrowBadge");
-    const tomBtn = document.getElementById("adminToggleTomorrowBtn");
-    const tomBtnText = document.getElementById("adminTomorrowBtnText");
+    // Tomorrow Card
+    const tomLabel = document.getElementById("dynTomorrowLabel");
+    const tomDateStr = document.getElementById("dynTomorrowDateStr");
+    const tomBadge = document.getElementById("dynTomorrowBadge");
+    const tomBtn = document.getElementById("dynToggleTomorrowBtn");
+    const tomBtnText = document.getElementById("dynTomorrowBtnText");
 
     if (tomLabel) {
       const tomDay = tomorrow.toLocaleDateString("en-US", { weekday: "long" });
       tomLabel.textContent = `Tomorrow (${tomDay})`;
     }
-    if (tomDateStr) {
-      tomDateStr.textContent = formatDisplayDate(tomorrowKey);
-    }
+    if (tomDateStr) tomDateStr.textContent = formatDisplayDate(tomorrowKey);
     if (tomBadge) {
       tomBadge.className = isTomorrowHoliday
         ? "text-[10px] px-2 py-0.5 rounded-md font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30"
@@ -358,19 +562,15 @@
         ? "btn-ghost border border-white/20 text-gray-300 hover:text-white text-xs py-1.5 px-3 w-full flex items-center justify-center gap-1.5"
         : "btn-primary text-xs py-1.5 px-3 w-full flex items-center justify-center gap-1.5 bg-amber-600 hover:bg-amber-500 border-none text-white";
     }
-    if (tomBtnText) {
-      tomBtnText.textContent = isTomorrowHoliday ? "Set as Working Day" : "Mark as Holiday 🎉";
-    }
+    if (tomBtnText) tomBtnText.textContent = isTomorrowHoliday ? "Set as Working Day" : "Mark as Holiday 🎉";
 
-    // ── Today Section ──
-    const todayDateStr = document.getElementById("adminTodayDateStr");
-    const todayBadge = document.getElementById("adminTodayBadge");
-    const todayBtn = document.getElementById("adminToggleTodayBtn");
-    const todayBtnText = document.getElementById("adminTodayBtnText");
+    // Today Card
+    const todayDateStr = document.getElementById("dynTodayDateStr");
+    const todayBadge = document.getElementById("dynTodayBadge");
+    const todayBtn = document.getElementById("dynToggleTodayBtn");
+    const todayBtnText = document.getElementById("dynTodayBtnText");
 
-    if (todayDateStr) {
-      todayDateStr.textContent = formatDisplayDate(todayKey);
-    }
+    if (todayDateStr) todayDateStr.textContent = formatDisplayDate(todayKey);
     if (todayBadge) {
       todayBadge.className = isTodayHoliday
         ? "text-[10px] px-2 py-0.5 rounded-md font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30"
@@ -382,23 +582,19 @@
         ? "btn-ghost border border-white/20 text-gray-300 hover:text-white text-xs py-1.5 px-3 w-full flex items-center justify-center gap-1.5"
         : "btn-primary text-xs py-1.5 px-3 w-full flex items-center justify-center gap-1.5 bg-amber-600 hover:bg-amber-500 border-none text-white";
     }
-    if (todayBtnText) {
-      todayBtnText.textContent = isTodayHoliday ? "Set as Working Day" : "Mark as Holiday 🎉";
-    }
+    if (todayBtnText) todayBtnText.textContent = isTodayHoliday ? "Set as Working Day" : "Mark as Holiday 🎉";
 
-    // ── Active Holidays & Overrides List ──
+    // Active Holidays List
     renderHolidaysList(todayKey);
   }
 
   function renderHolidaysList(todayKey) {
-    const listEl = document.getElementById("adminHolidaysList");
-    const countEl = document.getElementById("adminHolidayCount");
+    const listEl = document.getElementById("dynHolidaysList");
+    const countEl = document.getElementById("dynHolidayCount");
     if (!listEl) return;
 
-    // Gather all upcoming holidays
     const itemsMap = new Map();
 
-    // 1. Built-in holidays
     if (Array.isArray(window.UNIVERSITY_HOLIDAYS)) {
       window.UNIVERSITY_HOLIDAYS.forEach((k) => {
         const isDisabled = Array.isArray(STATE.disabledHolidays) && STATE.disabledHolidays.includes(k);
@@ -411,7 +607,6 @@
       });
     }
 
-    // 2. Custom entries
     if (STATE.customHolidays) {
       Object.entries(STATE.customHolidays).forEach(([k, val]) => {
         itemsMap.set(k, {
@@ -423,11 +618,10 @@
       });
     }
 
-    // Filter to future and recent (from today onwards, up to next 90 days)
     const sorted = Array.from(itemsMap.values())
       .filter((item) => item.key >= todayKey)
       .sort((a, b) => a.key.localeCompare(b.key))
-      .slice(0, 20);
+      .slice(0, 25);
 
     if (countEl) {
       const activeCount = sorted.filter((s) => s.isHoliday).length;
@@ -446,7 +640,7 @@
 
         const badgeHtml = isHoliday
           ? isCustom
-            ? `<span class="text-[10px] px-2 py-0.5 rounded font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30">Custom Holiday</span>`
+            ? `<span class="text-[10px] px-2 py-0.5 rounded font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30">Custom</span>`
             : `<span class="text-[10px] px-2 py-0.5 rounded font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30">University</span>`
           : `<span class="text-[10px] px-2 py-0.5 rounded font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Working Day Override</span>`;
 
@@ -457,16 +651,16 @@
               <span class="text-xs font-semibold text-white">${formatDisplayDate(item.key)}</span>
               ${badgeHtml}
             </div>
-            <div class="text-[11px] text-gray-400 truncate mt-0.5">${escapeHtml(item.name)}</div>
+            <div class="text-[11px] text-gray-400 truncate mt-0.5">${typeof escapeHtml === "function" ? escapeHtml(item.name) : item.name}</div>
           </div>
           <div class="flex items-center gap-1.5 flex-shrink-0">
             ${
               isCustom
-                ? `<button type="button" class="btn-ghost text-xs p-1.5 text-red-400 hover:text-red-300" onclick="window.AdminControl.remove('${item.key}')" title="Delete Override">
-                    <i class="fas fa-trash-can text-xs"></i>
+                ? `<button type="button" class="btn-ghost text-xs p-1.5 text-red-400 hover:text-red-300" data-del="${item.key}" title="Delete Override">
+                    <i class="fas fa-trash-can text-xs pointer-events-none"></i>
                   </button>`
-                : `<button type="button" class="btn-ghost text-xs py-1 px-2.5 ${isHoliday ? 'text-amber-400' : 'text-emerald-400'}" onclick="window.AdminControl.toggle('${item.key}', '${escapeHtml(item.name)}')" title="Toggle Working Day">
-                    ${isHoliday ? 'Make Working' : 'Make Holiday'}
+                : `<button type="button" class="btn-ghost text-xs py-1 px-2.5 ${isHoliday ? "text-amber-400" : "text-emerald-400"}" data-toggle="${item.key}" data-name="${item.name}" title="Toggle Working Day">
+                    ${isHoliday ? "Make Working" : "Make Holiday"}
                   </button>`
             }
           </div>
@@ -474,22 +668,25 @@
       `;
       })
       .join("");
+
+    // Attach row action listeners without exposing global functions
+    listEl.querySelectorAll("[data-del]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        removeHolidayOverride(btn.dataset.del);
+      });
+    });
+
+    listEl.querySelectorAll("[data-toggle]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        toggleHolidayKey(btn.dataset.toggle, btn.dataset.name);
+      });
+    });
   }
 
-  // Public API
-  window.AdminControl = {
-    open: openAdminModal,
-    close: closeAdminModal,
-    toggle: toggleHolidayKey,
-    set: setCustomHoliday,
-    remove: removeHolidayOverride,
-    init: initAdmin,
-  };
-
-  // Initialize once DOM is loaded
+  // Self-initialize without exposing to window
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initAdmin);
+    document.addEventListener("DOMContentLoaded", initController);
   } else {
-    initAdmin();
+    initController();
   }
 })();
