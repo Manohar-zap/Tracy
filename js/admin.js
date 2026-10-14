@@ -273,6 +273,42 @@
           </div>
         </div>
 
+        <!-- Declare Working Day for Sat/Sun (Weekday Timetable Order) -->
+        <div class="mt-4 p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/[0.03]">
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-xs font-semibold text-amber-300 block flex items-center gap-1.5">
+              <i class="fas fa-briefcase text-amber-400"></i> Declare Working Sat / Sun (Timetable Order)
+            </label>
+            <div class="flex gap-1.5">
+              <button type="button" id="dynQuickSatBtn" class="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30">Upcoming Sat</button>
+              <button type="button" id="dynQuickSunBtn" class="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30">Upcoming Sun</button>
+            </div>
+          </div>
+          <p class="text-[11px] text-gray-400 mb-2.5">Assign a Monday–Friday timetable to a Saturday or Sunday.</p>
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+            <div class="sm:col-span-4">
+              <label class="text-[10px] text-gray-400 block mb-1">Weekend / Date</label>
+              <input type="date" id="dynWorkingDate" class="w-full text-xs bg-white/5 border border-white/10 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-amber-500" />
+            </div>
+            <div class="sm:col-span-4">
+              <label class="text-[10px] text-gray-400 block mb-1">Follows Weekday Timetable</label>
+              <select id="dynWorkingDayOrder" class="w-full text-xs bg-[#161822] border border-white/10 rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-amber-500">
+                <option value="Monday">Monday Order</option>
+                <option value="Tuesday">Tuesday Order</option>
+                <option value="Wednesday">Wednesday Order</option>
+                <option value="Thursday">Thursday Order</option>
+                <option value="Friday">Friday Order</option>
+              </select>
+            </div>
+            <div class="sm:col-span-4 flex items-end">
+              <button type="button" id="dynAddWorkingBtn" class="w-full btn-primary text-xs py-2 px-3 flex items-center justify-center gap-1 bg-amber-600 hover:bg-amber-500 border-none text-white font-semibold">
+                <i class="fas fa-plus text-[10px]"></i>
+                <span>Add Working Day</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Active Holidays & Overrides List -->
         <div class="mt-4">
           <div class="flex items-center justify-between mb-2">
@@ -356,6 +392,41 @@
       });
     }
 
+    const quickSatBtn = document.getElementById("dynQuickSatBtn");
+    if (quickSatBtn) {
+      quickSatBtn.addEventListener("click", () => {
+        const d = getUpcomingWeekend(6);
+        const wInput = document.getElementById("dynWorkingDate");
+        if (wInput) wInput.value = formatDateKey(d);
+      });
+    }
+
+    const quickSunBtn = document.getElementById("dynQuickSunBtn");
+    if (quickSunBtn) {
+      quickSunBtn.addEventListener("click", () => {
+        const d = getUpcomingWeekend(0);
+        const wInput = document.getElementById("dynWorkingDate");
+        if (wInput) wInput.value = formatDateKey(d);
+      });
+    }
+
+    const addWorkingBtn = document.getElementById("dynAddWorkingBtn");
+    if (addWorkingBtn) {
+      addWorkingBtn.addEventListener("click", () => {
+        const wInput = document.getElementById("dynWorkingDate");
+        const oSelect = document.getElementById("dynWorkingDayOrder");
+        const dateVal = wInput ? wInput.value.trim() : "";
+        const orderVal = oSelect ? oSelect.value.trim() : "Monday";
+
+        if (!dateVal) {
+          if (typeof showToast === "function") showToast("Please select a date for the working day.");
+          return;
+        }
+
+        setCustomWorkingDay(dateVal, orderVal);
+      });
+    }
+
     const syncAllBtn = document.getElementById("dynSyncAllBtn");
     if (syncAllBtn) {
       syncAllBtn.addEventListener("click", syncHolidaysForOnlineUsers);
@@ -369,6 +440,11 @@
     const customDateInput = document.getElementById("dynCustomDate");
     if (customDateInput && !customDateInput.value) {
       customDateInput.value = formatDateKey(getTomorrowDate());
+    }
+
+    const workingDateInput = document.getElementById("dynWorkingDate");
+    if (workingDateInput && !workingDateInput.value) {
+      workingDateInput.value = formatDateKey(getUpcomingWeekend(6));
     }
 
     renderPanelContents();
@@ -469,6 +545,52 @@
     applyChanges();
   }
 
+  function getUpcomingWeekend(targetDayIdx) {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    const cur = d.getDay();
+    let diff = (targetDayIdx - cur + 7) % 7;
+    if (diff === 0) diff = 7;
+    d.setDate(d.getDate() + diff);
+    return d;
+  }
+
+  function setCustomWorkingDay(key, dayOrder, customName) {
+    if (!STATE.customWorkingDays) STATE.customWorkingDays = {};
+    const d = new Date(key + "T00:00:00");
+    const dayName = !isNaN(d.getTime()) ? d.toLocaleDateString("en-US", { weekday: "long" }) : "Working Day";
+    const label = customName || `${dayName} (${dayOrder} Order)`;
+
+    STATE.customWorkingDays[key] = {
+      dayOrder: dayOrder || "Monday",
+      name: label,
+    };
+
+    // Remove from customHolidays or disabledHolidays
+    if (STATE.customHolidays && STATE.customHolidays[key]) {
+      delete STATE.customHolidays[key];
+    }
+    if (Array.isArray(STATE.disabledHolidays)) {
+      if (!STATE.disabledHolidays.includes(key)) STATE.disabledHolidays.push(key);
+    }
+
+    if (typeof showToast === "function") {
+      showToast(`Added ${dayName} as Working Day (${dayOrder} Order) 💼`);
+    }
+
+    applyChanges();
+  }
+
+  function removeCustomWorkingDay(key) {
+    if (STATE.customWorkingDays && STATE.customWorkingDays[key]) {
+      delete STATE.customWorkingDays[key];
+      if (typeof showToast === "function") {
+        showToast(`Removed working day override for ${key}`);
+      }
+      applyChanges();
+    }
+  }
+
   function applyChanges() {
     if (typeof saveState === "function") saveState();
 
@@ -490,6 +612,7 @@
       updatedAt: new Date().toISOString(),
       customHolidays: STATE.customHolidays || {},
       disabledHolidays: STATE.disabledHolidays || [],
+      customWorkingDays: STATE.customWorkingDays || {},
     };
 
     try {
@@ -520,6 +643,7 @@
       updatedAt: new Date().toISOString(),
       holidays: STATE.customHolidays || {},
       disabled: STATE.disabledHolidays || [],
+      workingDays: STATE.customWorkingDays || {},
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -621,31 +745,50 @@
       });
     }
 
+    if (STATE.customWorkingDays) {
+      Object.entries(STATE.customWorkingDays).forEach(([k, val]) => {
+        itemsMap.set("wd_" + k, {
+          key: k,
+          name: val.name || `Working Day (${val.dayOrder} Order)`,
+          dayOrder: val.dayOrder || "Monday",
+          source: "working_day",
+          isHoliday: false,
+        });
+      });
+    }
+
     const sorted = Array.from(itemsMap.values())
       .filter((item) => item.key >= todayKey)
       .sort((a, b) => a.key.localeCompare(b.key))
-      .slice(0, 25);
+      .slice(0, 30);
 
     if (countEl) {
-      const activeCount = sorted.filter((s) => s.isHoliday).length;
-      countEl.textContent = `${activeCount} upcoming`;
+      const activeHolidayCount = sorted.filter((s) => s.isHoliday).length;
+      const activeWorkingCount = sorted.filter((s) => s.source === "working_day").length;
+      countEl.textContent = `${activeHolidayCount} holidays, ${activeWorkingCount} working weekends`;
     }
 
     if (sorted.length === 0) {
-      listEl.innerHTML = `<p class="text-xs text-gray-500 py-3 text-center">No upcoming holidays scheduled.</p>`;
+      listEl.innerHTML = `<p class="text-xs text-gray-500 py-3 text-center">No upcoming holidays or weekend overrides scheduled.</p>`;
       return;
     }
 
     listEl.innerHTML = sorted
       .map((item) => {
+        const isWorkingDay = item.source === "working_day";
         const isCustom = item.source === "custom";
         const isHoliday = item.isHoliday;
 
-        const badgeHtml = isHoliday
-          ? isCustom
-            ? `<span class="text-[10px] px-2 py-0.5 rounded font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30">Custom</span>`
-            : `<span class="text-[10px] px-2 py-0.5 rounded font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30">University</span>`
-          : `<span class="text-[10px] px-2 py-0.5 rounded font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Working Day Override</span>`;
+        let badgeHtml = "";
+        if (isWorkingDay) {
+          badgeHtml = `<span class="text-[10px] px-2 py-0.5 rounded font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">⚡ ${escapeHtml(item.dayOrder)} Order</span>`;
+        } else if (isHoliday) {
+          badgeHtml = isCustom
+            ? `<span class="text-[10px] px-2 py-0.5 rounded font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30">Custom Holiday</span>`
+            : `<span class="text-[10px] px-2 py-0.5 rounded font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30">University</span>`;
+        } else {
+          badgeHtml = `<span class="text-[10px] px-2 py-0.5 rounded font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Working Day Override</span>`;
+        }
 
         return `
         <div class="flex items-center justify-between p-2.5 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition">
@@ -658,7 +801,11 @@
           </div>
           <div class="flex items-center gap-1.5 flex-shrink-0">
             ${
-              isCustom
+              isWorkingDay
+                ? `<button type="button" class="btn-ghost text-xs p-1.5 text-red-400 hover:text-red-300" data-del-working="${item.key}" title="Delete Working Day Override">
+                    <i class="fas fa-trash-can text-xs pointer-events-none"></i>
+                  </button>`
+                : isCustom
                 ? `<button type="button" class="btn-ghost text-xs p-1.5 text-red-400 hover:text-red-300" data-del="${item.key}" title="Delete Override">
                     <i class="fas fa-trash-can text-xs pointer-events-none"></i>
                   </button>`
@@ -673,6 +820,12 @@
       .join("");
 
     // Attach row action listeners without exposing global functions
+    listEl.querySelectorAll("[data-del-working]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        removeCustomWorkingDay(btn.dataset.delWorking);
+      });
+    });
+
     listEl.querySelectorAll("[data-del]").forEach((btn) => {
       btn.addEventListener("click", () => {
         removeHolidayOverride(btn.dataset.del);

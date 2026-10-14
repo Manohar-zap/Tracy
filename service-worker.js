@@ -1,4 +1,4 @@
-const CACHE_NAME = "tracy-v6.1.11"; // Stealth admin security & persistent holiday sync
+const CACHE_NAME = "tracy-v6.1.12"; // Admin working weekend overrides & timetable day sync
 
 const ASSETS = [
   "./",

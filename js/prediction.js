@@ -112,6 +112,44 @@ function countSubjectInRows(
     });
   }
 
+  // Check for working weekend overrides (e.g. Saturday or Sunday following a weekday order)
+  if (typeof getWorkingDayOverride === "function" && typeof getDateForTimetableDay === "function") {
+    ["Saturday", "Sunday"].forEach((weekendDay) => {
+      const wDate = getDateForTimetableDay(weekendDay, weekOffset);
+      if (!wDate) return;
+      const wOverride = getWorkingDayOverride(wDate);
+      if (!wOverride || !wOverride.dayOrder) return;
+
+      const weekendOrderIdx = weekdayOrderIndex(weekendDay);
+      if (minOrderIdx !== undefined && weekendOrderIdx < minOrderIdx) return;
+
+      const mappedRow = rows.find((r) => weekdayOrderIndex(r.day) === weekdayOrderIndex(wOverride.dayOrder));
+      if (!mappedRow || mappedRow.isHoliday) return;
+
+      mappedRow.hours.forEach((cell) => {
+        const text = String(cell || "").trim();
+        if (!text || text.toLowerCase().includes("holiday")) return;
+
+        const subjectsInCell = text
+          .split(/\n|\/|,|&|\+/)
+          .map((s) => s.trim())
+          .filter(Boolean);
+
+        const cellMatches = subjectsInCell.some((sub) => {
+          let tKey = clean(sub);
+          if (SUBJECT_ALIASES[tKey]) {
+            tKey = SUBJECT_ALIASES[tKey];
+          }
+          return sKey.includes(tKey) || tKey.includes(sKey);
+        });
+
+        if (cellMatches) {
+          count++;
+        }
+      });
+    });
+  }
+
   return count;
 }
 
@@ -470,6 +508,51 @@ function openSubjectPredictionModal(id) {
         }
       });
     });
+
+    // Check for working weekend overrides
+    if (typeof getWorkingDayOverride === "function" && typeof getDateForTimetableDay === "function") {
+      ["Saturday", "Sunday"].forEach((weekendDay) => {
+        const wDate = getDateForTimetableDay(weekendDay, weekOffset);
+        if (!wDate) return;
+        const wOverride = getWorkingDayOverride(wDate);
+        if (!wOverride || !wOverride.dayOrder) return;
+
+        const weekendOrderIdx = weekdayOrderIndex(weekendDay);
+        if (weekOffset === 0 && weekendOrderIdx < effectiveTodayIdx) return;
+
+        const mappedRow = tt.rows.find((r) => weekdayOrderIndex(r.day) === weekdayOrderIndex(wOverride.dayOrder));
+        if (!mappedRow || mappedRow.isHoliday) return;
+
+        const dateStr = wDate.toISOString().split("T")[0];
+        const displayDate = wDate.toLocaleDateString("en-US", {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+        });
+
+        mappedRow.hours.forEach((cell, hIdx) => {
+          const text = String(cell || "").trim();
+          if (!text || text.toLowerCase().includes("holiday")) return;
+
+          const cellParts = text.toLowerCase().split(/[\/\n,&+]/).map(p => clean(p.trim())).filter(Boolean);
+          const subjectKey = clean(s.name);
+          const match = cellParts.some(part => {
+            const p = SUBJECT_ALIASES[part] || part;
+            return subjectKey.includes(p) || p.includes(subjectKey);
+          });
+
+          if (match) {
+            classes.push({
+              dateStr,
+              displayDate: `${displayDate} (${wOverride.dayOrder})`,
+              hourIdx: hIdx,
+              label: `${label} - ${weekendDay.slice(0, 3)} (${wOverride.dayOrder}) Hr ${hIdx + 1}`,
+              skipKey: `${dateStr}_${hIdx}`,
+            });
+          }
+        });
+      });
+    }
   };
 
   collect(w1, 0, "This Week");

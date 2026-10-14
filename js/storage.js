@@ -6,12 +6,13 @@ const CAL_SYNC_KEY = "_sys_cal_sync";
 function saveState() {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(STATE));
-    if (STATE.customHolidays || STATE.disabledHolidays) {
+    if (STATE.customHolidays || STATE.disabledHolidays || STATE.customWorkingDays) {
       localStorage.setItem(
         CAL_SYNC_KEY,
         JSON.stringify({
           customHolidays: STATE.customHolidays || {},
           disabledHolidays: STATE.disabledHolidays || [],
+          customWorkingDays: STATE.customWorkingDays || {},
         }),
       );
     }
@@ -40,6 +41,9 @@ function loadState() {
         }
         if (Array.isArray(cal.disabledHolidays)) {
           STATE.disabledHolidays = Array.from(new Set([...(STATE.disabledHolidays || []), ...cal.disabledHolidays]));
+        }
+        if (cal.customWorkingDays) {
+          STATE.customWorkingDays = Object.assign({}, STATE.customWorkingDays || {}, cal.customWorkingDays);
         }
       } catch (err) {}
     }
@@ -77,6 +81,16 @@ async function loadRemoteHolidays() {
       data.disabled.forEach((k) => {
         if (!STATE.disabledHolidays.includes(k)) {
           STATE.disabledHolidays.push(k);
+          updated = true;
+        }
+      });
+    }
+
+    if (data && typeof data.workingDays === "object") {
+      if (!STATE.customWorkingDays) STATE.customWorkingDays = {};
+      Object.entries(data.workingDays).forEach(([k, v]) => {
+        if (!STATE.customWorkingDays[k] || STATE.customWorkingDays[k].dayOrder !== v.dayOrder) {
+          STATE.customWorkingDays[k] = v;
           updated = true;
         }
       });
@@ -127,10 +141,11 @@ function fullReset() {
   try {
     // Preserve holiday calendar across resets so student full reset doesn't clear university holidays
     const savedHolidays = localStorage.getItem(CAL_SYNC_KEY) ||
-      (STATE.customHolidays || STATE.disabledHolidays
+      (STATE.customHolidays || STATE.disabledHolidays || STATE.customWorkingDays
         ? JSON.stringify({
             customHolidays: STATE.customHolidays || {},
             disabledHolidays: STATE.disabledHolidays || [],
+            customWorkingDays: STATE.customWorkingDays || {},
           })
         : null);
 

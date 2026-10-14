@@ -20,7 +20,8 @@ class TracyHandler(http.server.SimpleHTTPRequestHandler):
                 out_data = {
                     "updatedAt": data.get("updatedAt", ""),
                     "holidays": data.get("customHolidays", data.get("holidays", {})),
-                    "disabled": data.get("disabledHolidays", data.get("disabled", []))
+                    "disabled": data.get("disabledHolidays", data.get("disabled", [])),
+                    "workingDays": data.get("customWorkingDays", data.get("workingDays", {}))
                 }
                 with open(holidays_file, "w", encoding="utf-8") as f:
                     json.dump(out_data, f, indent=2)

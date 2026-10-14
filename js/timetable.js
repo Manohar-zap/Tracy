@@ -429,19 +429,46 @@ function renderTimetablePreview() {
   table.appendChild(thead);
 
   const tbody = document.createElement("tbody");
-  tt.rows.forEach((row) => {
+  const displayRows = [...tt.rows];
+
+  if (typeof getDateForTimetableDay === "function" && typeof getWorkingDayOverride === "function") {
+    ["Saturday", "Sunday"].forEach((weekendDay) => {
+      const wDate = getDateForTimetableDay(weekendDay, previewWeekNum - 1);
+      if (!wDate) return;
+      const wOverride = getWorkingDayOverride(wDate);
+      if (!wOverride || !wOverride.dayOrder) return;
+
+      const mappedRow = tt.rows.find((r) => weekdayOrderIndex(r.day) === weekdayOrderIndex(wOverride.dayOrder));
+      if (mappedRow) {
+        displayRows.push({
+          day: weekendDay,
+          hours: mappedRow.hours,
+          isHoliday: false,
+          isWorkingOverride: true,
+          dayOrder: wOverride.dayOrder,
+          overrideDate: wDate,
+        });
+      }
+    });
+  }
+
+  displayRows.forEach((row) => {
     const tr = document.createElement("tr");
     tr.className = "tt-row";
 
     const targetDate =
-      typeof isUniversityHoliday === "function" &&
+      row.overrideDate ||
+      (typeof isUniversityHoliday === "function" &&
       typeof getDateForTimetableDay === "function"
         ? getDateForTimetableDay(row.day, previewWeekNum - 1)
-        : null;
+        : null);
 
     const tdDay = document.createElement("td");
     tdDay.className = "font-medium text-gray-300";
-    if (targetDate) {
+    if (row.isWorkingOverride) {
+      const dNum = targetDate ? targetDate.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
+      tdDay.innerHTML = `<div>${escapeHtml(row.day)}</div><div class="text-[10px] text-amber-400 font-semibold">⚡ ${escapeHtml(row.dayOrder)} Order (${dNum})</div>`;
+    } else if (targetDate) {
       const dNum = targetDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
       tdDay.innerHTML = `<div>${escapeHtml(row.day)}</div><div class="text-[10px] text-gray-500 font-normal">${dNum}</div>`;
     } else {

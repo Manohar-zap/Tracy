@@ -56,8 +56,14 @@ function renderUpcomingClasses() {
         continue;
       }
 
-      const dayIdx = candidateDate.getDay();
-      const orderIdx = dayIdx === 0 ? 7 : dayIdx;
+      const workingDay = typeof getWorkingDayOverride === "function" ? getWorkingDayOverride(candidateDate) : null;
+      let orderIdx;
+      if (workingDay && workingDay.dayOrder) {
+        orderIdx = weekdayOrderIndex(workingDay.dayOrder);
+      } else {
+        const dayIdx = candidateDate.getDay();
+        orderIdx = dayIdx === 0 ? 7 : dayIdx;
+      }
 
       // Determine week timetable (week 1 vs week 2)
       const todayOrder = getTodayOrderIdx();
@@ -124,9 +130,17 @@ function renderUpcomingClasses() {
       return;
     }
 
-    const dayIdx = activeDate.getDay();
+    const workingDay = typeof getWorkingDayOverride === "function" ? getWorkingDayOverride(activeDate) : null;
+    let activeOrderIdx;
+    if (workingDay && workingDay.dayOrder) {
+      activeOrderIdx = weekdayOrderIndex(workingDay.dayOrder);
+    } else {
+      const dayIdx = activeDate.getDay();
+      activeOrderIdx = dayIdx === 0 ? 7 : dayIdx;
+    }
+
     activeRow = activeTt.rows.find(
-      (r) => weekdayOrderIndex(r.day) === (dayIdx === 0 ? 7 : dayIdx),
+      (r) => weekdayOrderIndex(r.day) === activeOrderIdx,
     );
   }
 
@@ -252,7 +266,12 @@ function renderUpcomingClasses() {
   // Update header badge
   const badgeEl = document.getElementById("upcomingDayBadge");
   if (badgeEl) {
-    if (isNextDay) {
+    const activeWorkingDay = typeof getWorkingDayOverride === "function" ? getWorkingDayOverride(activeDate) : null;
+    if (activeWorkingDay && activeWorkingDay.dayOrder) {
+      const dayPrefix = isNextDay ? (isTomorrow ? "Tomorrow" : activeDate.toLocaleDateString("en-US", { weekday: "short" })) : "Today";
+      badgeEl.textContent = `${dayPrefix} (${activeWorkingDay.dayOrder} Order)`;
+      badgeEl.classList.remove("hidden");
+    } else if (isNextDay) {
       badgeEl.textContent = isTomorrow ? "Tomorrow" : activeDate.toLocaleDateString("en-US", { weekday: "short" });
       badgeEl.classList.remove("hidden");
     } else {

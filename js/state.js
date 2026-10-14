@@ -32,6 +32,7 @@ const STATE = {
   quickCalcTarget: 75, // standalone calculator target toggle
   customHolidays: {}, // { "YYYY-MM-DD": { name: "...", isHoliday: true } }
   disabledHolidays: [], // ["YYYY-MM-DD"]
+  customWorkingDays: {}, // { "YYYY-MM-DD": { dayOrder: "Monday", name: "Saturday (Monday Order)" } }
   currentPage: "dashboard",
   dailySubjectMap: {},
   dailyOverallMap: {},
@@ -234,14 +235,31 @@ const UNIVERSITY_HOLIDAYS = [
   "2027-06-15", // Muharram
 ];
 
+function formatDateKey(date) {
+  if (!date) return "";
+  if (typeof date === "string") return date.slice(0, 10);
+  if (date instanceof Date && !isNaN(date.getTime())) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  }
+  return "";
+}
+
+function getWorkingDayOverride(date) {
+  if (!date) return null;
+  const key = formatDateKey(date);
+  if (STATE.customWorkingDays && STATE.customWorkingDays[key]) {
+    return STATE.customWorkingDays[key];
+  }
+  return null;
+}
+
 function isUniversityHoliday(date) {
   if (!date) return false;
-  let key = "";
-  if (typeof date === "string") {
-    key = date.slice(0, 10);
-  } else if (date instanceof Date && !isNaN(date.getTime())) {
-    key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-  } else {
+  const key = formatDateKey(date);
+  if (!key) return false;
+
+  // 0. If declared as a Working Day override, it is NOT a holiday
+  if (STATE.customWorkingDays && STATE.customWorkingDays[key]) {
     return false;
   }
 
@@ -278,6 +296,8 @@ function initSiteConfig() {
 window.STATE = STATE;
 window.UNIVERSITY_HOLIDAYS = UNIVERSITY_HOLIDAYS;
 window.isUniversityHoliday = isUniversityHoliday;
+window.getWorkingDayOverride = getWorkingDayOverride;
+window.formatDateKey = formatDateKey;
 window.escapeHtml = escapeHtml;
 window.validateUrl = validateUrl;
 window.clean = clean;
